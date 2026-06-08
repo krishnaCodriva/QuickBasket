@@ -21,7 +21,6 @@ export const LocalizationContextProvider = ({ children }: { children: React.Reac
     const [initLang, initialDispatch] = useReducer(reducer, initalValue)
 
     useEffect(() => {
-        // i18n.changeLanguage(initLang.lang);
         getActive(initLang.lange)
     }, [initLang])
 

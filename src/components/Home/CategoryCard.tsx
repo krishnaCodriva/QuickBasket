@@ -11,7 +11,7 @@ type Props = {
   onPress: () => void;
 };
 
-export default function CategoryCard({ name, emoji, colorName, onPress }: Props) {
+const CategoryCard = ({ name, emoji, colorName, onPress }: Props) => {
   const bgColor = useThemeColor({}, colorName);
   const innerBg = useThemeColor({}, 'transparentWhite04');
 
@@ -59,3 +59,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+
+export default React.memo(CategoryCard);

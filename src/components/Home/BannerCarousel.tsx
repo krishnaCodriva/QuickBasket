@@ -1,18 +1,25 @@
-import { Colors } from '../../constants/colors';
-import React, { useState } from 'react';
-import { View, StyleSheet, Dimensions, ImageBackground, ScrollView, TouchableOpacity } from 'react-native';
-import { ThemedText } from '../ThemedText';
-import { ThemeDimension } from '../../constants/ThemeDimension';
-import { useThemeColor } from '../../hooks';
+import { Colors } from "../../constants/colors";
+import React, { useState } from "react";
+import {
+  View,
+  StyleSheet,
+  Dimensions,
+  FlatList,
+  TouchableOpacity,
+} from "react-native";
+import { Image } from "expo-image";
+import { ThemedText } from "../ThemedText";
+import { ThemeDimension } from "../../constants/ThemeDimension";
+import { useThemeColor } from "../../hooks";
 
-const { width } = Dimensions.get('window');
-const BANNER_PADDING = ThemeDimension.spacing.xl;
-const BANNER_WIDTH = width - (BANNER_PADDING * 2);
+const { width } = Dimensions.get("window");
+const BANNER_PADDING = ThemeDimension.spacing.m;
+const BANNER_WIDTH = width - BANNER_PADDING * 2;
 
 export type BannerType = {
   id: string;
   source: any; // ImageSourcePropType
-  linkType?: 'product' | 'category' | 'offer';
+  linkType?: "product" | "category" | "offer";
   linkTarget?: string;
 };
 
@@ -22,54 +29,74 @@ type Props = {
 };
 
 const DEFAULT_BANNERS: BannerType[] = [
-  { id: '1', source: require('../../../assets/Section - Hero Carousel (Bento Style).png') },
-  { id: '2', source: require('../../../assets/Section - Hero Carousel (Bento Style).png') },
-  { id: '3', source: require('../../../assets/Section - Hero Carousel (Bento Style).png') },
+  {
+    id: "1",
+    source: require("../../../assets/Section - Hero Carousel (Bento Style).png"),
+  },
+  {
+    id: "2",
+    source: require("../../../assets/Section - Hero Carousel (Bento Style).png"),
+  },
+  {
+    id: "3",
+    source: require("../../../assets/Section - Hero Carousel (Bento Style).png"),
+  },
 ];
 
-export default function BannerCarousel({ banners = DEFAULT_BANNERS, onBannerPress }: Props) {
+function BannerCarousel({ banners = DEFAULT_BANNERS, onBannerPress }: Props) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const activeColor = useThemeColor({}, 'primary');
-  const inactiveColor = useThemeColor({}, 'gray300' as any);
-  const bannerBgColor = useThemeColor({ light: Colors.light.gray900, dark: Colors.dark.gray200 }, 'gray900' as any);
+  const activeColor = useThemeColor({}, "primary");
+  const inactiveColor = useThemeColor({}, "gray300" as any);
+  const bannerBgColor = useThemeColor(
+    { light: Colors.light.gray900, dark: Colors.dark.gray200 },
+    "gray900" as any,
+  );
+
+  const infiniteBanners = Array(3).fill(banners).flat();
+  const slideSize = BANNER_WIDTH + BANNER_PADDING;
 
   const handleScroll = (event: any) => {
     const offsetX = event.nativeEvent.contentOffset.x;
-    const slideSize = BANNER_WIDTH + BANNER_PADDING;
     const index = Math.round(offsetX / slideSize);
-    setActiveIndex(Math.max(0, Math.min(index, banners.length - 1)));
+    setActiveIndex(index % banners.length);
   };
 
-  const snapOffsets = banners.map((_, i) => i * (BANNER_WIDTH + BANNER_PADDING));
+  const getItemLayout = (_: any, index: number) => ({
+    length: slideSize,
+    offset: slideSize * index,
+    index,
+  });
+
+  const renderItem = ({ item, index }: { item: BannerType; index: number }) => (
+    <TouchableOpacity
+      activeOpacity={1}
+      onPress={() => onBannerPress && onBannerPress(item)}
+      style={{ marginRight: BANNER_PADDING }}
+    >
+      <Image
+        source={item.source}
+        style={[styles.banner, { backgroundColor: bannerBgColor }]}
+        contentFit="cover"
+        cachePolicy="memory-disk"
+      />
+    </TouchableOpacity>
+  );
 
   return (
     <View style={[styles.container, { marginHorizontal: -BANNER_PADDING }]}>
-      <ScrollView
+      <FlatList
+        data={infiniteBanners}
+        renderItem={renderItem}
+        keyExtractor={(_, index) => `banner-${index}`}
         horizontal
         showsHorizontalScrollIndicator={false}
-        snapToOffsets={snapOffsets}
-        snapToAlignment="center"
-        decelerationRate="fast"
-        disableIntervalMomentum={true}
+        removeClippedSubviews
+        initialScrollIndex={banners.length}
+        getItemLayout={getItemLayout}
         contentContainerStyle={{ paddingHorizontal: BANNER_PADDING }}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-      >
-        {banners.map((banner, index) => (
-          <TouchableOpacity
-            key={banner.id}
-            activeOpacity={1}
-            onPress={() => onBannerPress && onBannerPress(banner)}
-            style={{ marginRight: index === banners.length - 1 ? 0 : BANNER_PADDING }}
-          >
-            <ImageBackground
-              source={banner.source}
-              style={[styles.banner, { backgroundColor: bannerBgColor }]}
-              resizeMode="cover"
-            />
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+        onMomentumScrollEnd={handleScroll}
+      />
+      {/* 
       <View style={styles.paginationContainer}>
         {banners.map((_, index) => (
           <View
@@ -77,25 +104,29 @@ export default function BannerCarousel({ banners = DEFAULT_BANNERS, onBannerPres
             style={[
               styles.dot,
               {
-                backgroundColor: index === activeIndex ? activeColor : inactiveColor,
-                width: index === activeIndex ? 20 : 8
-              }
+                backgroundColor:
+                  index === activeIndex ? activeColor : inactiveColor,
+                width: index === activeIndex ? 20 : 8,
+              },
             ]}
           />
         ))}
       </View>
+      */}
     </View>
   );
 }
+
+export default React.memo(BannerCarousel);
 
 const styles = StyleSheet.create({
   container: {
     marginBottom: 24,
   },
   paginationContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: 16,
   },
   dot: {
@@ -108,8 +139,8 @@ const styles = StyleSheet.create({
     // Calculate the exact height based on the image's original 362x244 dimensions to prevent cropping
     height: BANNER_WIDTH * (244 / 362),
     borderRadius: 16,
-    overflow: 'hidden',
-    position: 'relative',
+    overflow: "hidden",
+    position: "relative",
     backgroundColor: Colors.light.gray900, // Dark fallback
   },
   imageOverlay: {
@@ -118,7 +149,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
-    justifyContent: 'center',
+    justifyContent: "center",
     flex: 1,
   },
   pill: {
@@ -126,26 +157,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     marginBottom: 12,
   },
   pillText: {
     color: Colors.light.blue900, // Dark blue text
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   title: {
     color: Colors.light.white,
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 8,
-    width: '70%',
+    width: "70%",
     lineHeight: 28,
   },
   subtitle: {
     color: Colors.light.gray300, // Light gray
     fontSize: 12,
-    width: '65%',
+    width: "65%",
     lineHeight: 18,
   },
 });
