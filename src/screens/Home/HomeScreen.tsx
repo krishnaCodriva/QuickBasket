@@ -27,7 +27,7 @@ const CATEGORIES = [
 
 
 const HOME_BANNERS = [
-  { id: '1', source: require('../../../assets/Section - Hero Carousel (Bento Style).png'), linkType: 'category', linkTarget: STRINGS.common.categories.fruits },
+  { id: '1', source: require('../../../assets/Section - Hero Carousel (Bento Style).png'), linkType: 'category', linkTarget: 'Fruits' },
   { id: '2', source: require('../../../assets/Section - Hero Carousel (Bento Style).png'), linkType: 'offer', linkTarget: 'Discount' },
   { id: '3', source: require('../../../assets/Section - Hero Carousel (Bento Style).png'), linkType: 'product', linkTarget: '1' },
 ];
@@ -52,22 +52,41 @@ export default function HomeScreen({ navigation }: Props) {
   const statusBarBg = useThemeColor({ light: Colors.light.white, dark: Colors.dark.black }, 'primaryBackground' as any);
 
   const { cartItems, addToCart, updateQuantity, totalItems } = useCart();
-  const [selectedTag, setSelectedTag] = useState(STRINGS.homeScreen.tags.all);
+  const [selectedTag, setSelectedTag] = useState(t(STRINGS.homeScreen.tags.all));
+
+  useEffect(() => {
+    if (selectedTag === t(STRINGS.homeScreen.tags.all)) {
+      setSelectedTag(t(STRINGS.homeScreen.tags.all));
+    }
+  }, [t]);
 
   const tagsList = [
-    { id: STRINGS.homeScreen.tags.all, label: t(STRINGS.homeScreen.tags.all) },
-    { id: STRINGS.homeScreen.tags.fresh, label: t(STRINGS.homeScreen.tags.fresh) },
-    { id: STRINGS.homeScreen.tags.trending, label: t(STRINGS.homeScreen.tags.trending) },
-    { id: STRINGS.homeScreen.tags.dailyEssentials, label: t(STRINGS.homeScreen.tags.dailyEssentials) },
-    { id: STRINGS.homeScreen.tags.fastDelivery, label: t(STRINGS.homeScreen.tags.fastDelivery) },
-    { id: STRINGS.homeScreen.tags.recommended, label: t(STRINGS.homeScreen.tags.recommended) },
-    { id: STRINGS.homeScreen.tags.bestSelling, label: t(STRINGS.homeScreen.tags.bestSelling) },
-    { id: STRINGS.homeScreen.tags.newArrivals, label: t(STRINGS.homeScreen.tags.newArrivals) },
+    t(STRINGS.homeScreen.tags.all),
+    t(STRINGS.homeScreen.tags.fresh),
+    t(STRINGS.homeScreen.tags.trending),
+    t(STRINGS.homeScreen.tags.dailyEssentials),
+    t(STRINGS.homeScreen.tags.fastDelivery),
+    t(STRINGS.homeScreen.tags.recommended),
+    t(STRINGS.homeScreen.tags.bestSelling),
+    t(STRINGS.homeScreen.tags.newArrivals),
   ];
 
   const filteredProducts = MOCK_PRODUCTS.filter(p => {
-    if (selectedTag === STRINGS.homeScreen.tags.all) return true;
-    return p.tags?.includes(selectedTag);
+    if (selectedTag === t(STRINGS.homeScreen.tags.all)) return true;
+    
+    // Mock tag filtering since mock products don't have tags array
+    if (selectedTag === t(STRINGS.homeScreen.tags.fresh)) {
+      return p.category === STRINGS.common.categories.fruits || p.category === STRINGS.common.categories.veg;
+    }
+    if (selectedTag === t(STRINGS.homeScreen.tags.dailyEssentials)) {
+      return p.category === STRINGS.common.categories.dairy || p.category === STRINGS.common.categories.bakery;
+    }
+    if (selectedTag === t(STRINGS.homeScreen.tags.trending) || selectedTag === t(STRINGS.homeScreen.tags.bestSelling)) {
+      return p.price > 5;
+    }
+    
+    // Fallback for other tags
+    return p.tags?.includes(selectedTag) || parseInt(p.id, 10) % 2 === 0;
   });
 
   const getProductQuantity = (id: string) => {

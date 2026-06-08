@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { StyleSheet, View, ScrollView, TouchableOpacity, Platform, StatusBar, FlatList, Modal, Dimensions, TouchableWithoutFeedback } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText, ThemedView, CustomButton, ProductCard, QuantitySelector } from '../../components';
 import { Colors, STRINGS } from '../../constants';
 import { useThemeColor } from '../../hooks';
@@ -19,6 +20,7 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export default function ProductDetailScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const iconColor = useThemeColor({ light: Colors.light.black, dark: Colors.light.white }, 'primaryText' as any);
   const primaryColor = useThemeColor({}, 'primary');
   const imageBgColor = useThemeColor({ light: Colors.light.gray100, dark: Colors.dark.secondaryBackground }, 'secondaryBackground' as any);
@@ -238,7 +240,7 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
   };
 
   const renderBottomBar = () => (
-    <View style={[styles.bottomBar, { backgroundColor: bottomBarBgColor, borderTopColor: bottomBarBorderColor }]}>
+    <View style={[styles.bottomBar, { backgroundColor: bottomBarBgColor, borderTopColor: bottomBarBorderColor, paddingBottom: Math.max(insets.bottom, 16) }]}>
       {cartQuantity === 0 ? (
         <CustomButton 
           title={t(STRINGS.productDetail.addToCart)} 

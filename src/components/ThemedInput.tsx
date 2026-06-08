@@ -7,7 +7,7 @@ import { useThemeColor } from '../hooks';
 interface ThemedInputProps extends TextInputProps {
   styleWrapper?: any;
   onClear?: () => void;
-  icon?: keyof typeof Ionicons.glyphMap;
+  icon?: keyof typeof Ionicons.glyphMap | null;
   isLoading?: boolean;
 }
 
@@ -27,7 +27,7 @@ const ThemedInput = ({
     const primary = useThemeColor({}, "primary")
     return (
         <View style={[styles.searchContainer, { backgroundColor: bg }, styleWrapper]}>
-            <Ionicons name={icon} size={20} color={Colors.light.gray400} />
+            {icon && <Ionicons name={icon} size={20} color={Colors.light.gray400} />}
             <TextInput
                 style={[{ color: text }, styles.input]}
                 placeholder={placeholder}

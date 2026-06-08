@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ThemedView,
   ThemedText,
@@ -21,6 +21,7 @@ export default function CartScreen() {
   const navigation = useNavigation<any>();
   const [isLoggedIn, setIsLoggedIn] = useState(false); // Mock auth state
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
 
   const { cartItems, updateQuantity, removeFromCart, totalItems, subtotal, hasOutOfStock } = useCart();
 
@@ -53,7 +54,7 @@ export default function CartScreen() {
         <ThemedText type="subtitle" style={styles.headerTitle}>{t(STRINGS.cartScreen.title)}</ThemedText>
         <ThemedText style={styles.headerSubtitle} useSecondaryText>({totalItems} {t(STRINGS.cartScreen.itemsCount)})</ThemedText>
       </View>
-      <TouchableOpacity onPress={() => navigation.navigate('MainTabs')}>
+      <TouchableOpacity onPress={() => navigation.navigate('HomeTab')}>
         <ThemedText style={[styles.continueShopping, { color: primaryColor }]}>{t(STRINGS.cartScreen.continueShopping)}</ThemedText>
       </TouchableOpacity>
     </View>
@@ -70,7 +71,7 @@ export default function CartScreen() {
             emoji="🛒"
             title={t(STRINGS.cartScreen.emptyCart)}
             buttonText={t(STRINGS.cartScreen.startShopping)}
-            onButtonPress={() => navigation.navigate('MainTabs')}
+            onButtonPress={() => navigation.navigate('HomeTab')}
           />
         ) : (
           <FlatList
@@ -97,7 +98,7 @@ export default function CartScreen() {
         )}
 
         {cartItems.length > 0 && (
-          <View style={[styles.bottomBar, { borderTopColor: separatorColor, backgroundColor: cardColor }]}>
+          <View style={[styles.bottomBar, { borderTopColor: separatorColor, backgroundColor: cardColor, paddingBottom: Math.max(insets.bottom, 16) }]}>
             <CustomButton
               title={t(STRINGS.cartScreen.proceedToCheckout)}
               type={hasOutOfStock ? "outline" : "primary"}

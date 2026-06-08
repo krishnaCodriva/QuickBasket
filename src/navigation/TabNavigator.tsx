@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '../../src/components';
 import { Colors, STRINGS } from '../constants';
@@ -26,14 +27,18 @@ const Tab = createBottomTabNavigator<TabParamList>();
 
 // Custom Tab Bar Component to match Figma (Blue Pill for active tab)
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  const insets = useSafeAreaInsets();
   const tabBarBg = useThemeColor({ light: Colors.light.white, dark: Colors.dark.secondaryBackground }, 'secondaryBackground' as any);
   const tabBarBorder = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray300 }, 'gray200' as any);
   const activeColor = useThemeColor({ light: Colors.light.blue900, dark: Colors.dark.blue900 }, 'primaryText' as any);
   const inactiveColor = useThemeColor({ light: Colors.light.gray500, dark: Colors.light.gray400 }, 'secondaryText' as any);
   const activeBg = useThemeColor({ light: Colors.light.blue100, dark: Colors.light.blue900 }, 'secondaryBackground' as any);
 
+  const paddingBottom = Math.max(insets.bottom, Platform.OS === 'ios' ? 20 : 10);
+  const height = (Platform.OS === 'ios' ? 65 : 60) + insets.bottom;
+
   return (
-    <View style={[styles.tabBar, { backgroundColor: tabBarBg, borderTopColor: tabBarBorder }]}>
+    <View style={[styles.tabBar, { backgroundColor: tabBarBg, borderTopColor: tabBarBorder, paddingBottom, height }]}>
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
         const label =

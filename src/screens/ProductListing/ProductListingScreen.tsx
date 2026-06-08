@@ -18,9 +18,11 @@ export default function ProductListingScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
+  const { t } = useTranslation();
   const { category = STRINGS.productListing.allProducts, query = '' } = route.params || {};
 
   const colorScheme = useColorScheme() ?? 'light';
+  const isDark = colorScheme === 'dark';
 
   const primaryColor = useThemeColor({}, 'primary');
   const iconColor = useThemeColor({ light: Colors.light.black, dark: Colors.light.white }, 'primaryText' as any);
@@ -49,7 +51,7 @@ export default function ProductListingScreen() {
   const [activeSort, setActiveSort] = useState(STRINGS.productListing.sortOptions.relevance);
   const [inStockOnly, setInStockOnly] = useState(false);
   const [outOfStockOnly, setOutOfStockOnly] = useState(false);
-
+  
   const [filterPrice, setFilterPrice] = useState<string | null>(null);
   const [filterCategory, setFilterCategory] = useState<string | null>(category === STRINGS.productListing.allProducts || category === 'Special Offers' ? null : category);
   const [filterTag, setFilterTag] = useState<string | null>(null);
@@ -149,7 +151,7 @@ export default function ProductListingScreen() {
       <TouchableOpacity style={styles.headerButton} onPress={() => navigation.navigate('Cart')}>
         <Ionicons name="cart-outline" size={26} color={iconColor} />
         {totalItems > 0 && (
-          <View style={styles.badge}>
+          <View style={[styles.badge, { borderColor: bgColor }]}>
             <ThemedText style={styles.badgeText}>{totalItems}</ThemedText>
           </View>
         )}
@@ -299,7 +301,7 @@ export default function ProductListingScreen() {
         <View style={styles.cartSummary}>
           <View>
             <ThemedText style={styles.cartCountText}>{totalItems} {t(STRINGS.productListing.items)}</ThemedText>
-            <ThemedText style={styles.cartTotalText}>${subtotal.toFixed(2)}</ThemedText>
+            <ThemedText style={styles.cartTotalText}>₹{subtotal.toFixed(2)}</ThemedText>
           </View>
           <TouchableOpacity style={styles.viewCartBtn} onPress={() => navigation.navigate('Cart')}>
             <ThemedText style={styles.viewCartText}>{t(STRINGS.productListing.viewCart)}</ThemedText>
@@ -387,9 +389,9 @@ const styles = StyleSheet.create({
     top: 0,
     right: 0,
     backgroundColor: Colors.light.red600,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1.5,
@@ -399,6 +401,7 @@ const styles = StyleSheet.create({
   badgeText: {
     color: Colors.light.white,
     fontSize: 10,
+    lineHeight: 12,
     fontWeight: 'bold',
     includeFontPadding: false,
     textAlignVertical: 'center',

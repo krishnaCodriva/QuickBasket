@@ -1,6 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { SplashScreen, LocationScreen, ManualLocationScreen, ProductListingScreen, ProductDetailScreen, CartScreen, LoginScreen, CheckoutScreen, OtpScreen, OrderConfirmationScreen, OrderTrackingScreen } from '../screens';
+import { SplashScreen, LocationScreen, ManualLocationScreen, ProductListingScreen, ProductDetailScreen, CartScreen, LoginScreen, CheckoutScreen, OtpScreen, OrderSuccessScreen, OrderStatusScreen, InvoiceScreen } from '../screens';
 import TabNavigator from './TabNavigator';
 
 export type RootStackParamList = {
@@ -14,8 +14,9 @@ export type RootStackParamList = {
   Login: undefined;
   OtpScreen: { phoneNumber: string };
   Checkout: undefined;
-  OrderConfirmation: { orderDetails?: any } | undefined;
-  OrderTracking: { orderId?: string } | undefined;
+  OrderSuccess: { txId: string };
+  OrderStatus: { orderId: string };
+  Invoice: { orderId: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -33,8 +34,9 @@ export default function AppNavigator() {
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="OtpScreen" component={OtpScreen} />
       <Stack.Screen name="Checkout" component={CheckoutScreen} />
-      <Stack.Screen name="OrderConfirmation" component={OrderConfirmationScreen} />
-      <Stack.Screen name="OrderTracking" component={OrderTrackingScreen} />
+      <Stack.Screen name="OrderSuccess" component={OrderSuccessScreen} />
+      <Stack.Screen name="OrderStatus" component={OrderStatusScreen} />
+      <Stack.Screen name="Invoice" component={InvoiceScreen} />
     </Stack.Navigator>
   );
 }

@@ -1,435 +1,521 @@
-import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useState } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, KeyboardAvoidingView, Platform } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Feather, Ionicons } from '@expo/vector-icons';
+import { ThemedView, ThemedText, CustomButton, CartItemCard, CartPriceSummary } from '../../components';
+import ThemedInput from '../../components/ThemedInput';
+import { useCart, useOrder } from '../../context';
+import { Colors, STRINGS } from '../../constants';
+import { useThemeColor } from '../../hooks';
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
-import { ThemedView } from '../../components/ThemedView';
-import { ThemedText } from '../../components/ThemedText';
-import { CustomButton } from '../../components/CustomButton';
-import { Colors, ThemeDimension } from '../../constants';
-import { useThemeColor } from '../../hooks';
-import { RootStackParamList } from '../../navigation/AppNavigator';
-import { useCart } from '../../context';
+let INITIAL_ADDRESSES = [
+  { id: 'addr_1', label: 'home', address: '123 Main St, Springfield, IL 62701', fullName: 'John Doe', mobile: '1234567890', flat: '123', street: 'Main St', landmark: '', city: 'Springfield', state: 'IL', pincode: '62701', type: 'home' },
+  { id: 'addr_2', label: 'work', address: '456 Business Rd, Suite 200, Springfield, IL 62704', fullName: 'John Doe', mobile: '1234567890', flat: 'Suite 200', street: 'Business Rd', landmark: '', city: 'Springfield', state: 'IL', pincode: '62704', type: 'work' }
+];
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+const MOCK_PAYMENT_METHODS = [
+  { id: 'pm_cod', label: 'Cash on Delivery', details: 'Pay when your order arrives' },
+  { id: 'pm_debit', label: 'Debit Card', details: 'Pay using your bank debit card' },
+  { id: 'pm_credit', label: 'Credit Card', details: '**** **** **** 1234' },
+  { id: 'pm_upi', label: 'UPI', details: 'Google Pay, PhonePe, Paytm, etc.' },
+  { id: 'pm_netbanking', label: 'Net Banking', details: 'All major banks available' }
+];
 
-// No longer using dummy cart data
+const SERVICEABLE_PINCODES = ['62701', '62704', '400001', '110001', '560001'];
 
 export default function CheckoutScreen() {
-  const navigation = useNavigation<NavigationProp>();
+  const { cartItems, subtotal, clearCart, totalItems } = useCart();
+  const { addOrder } = useOrder();
+  const navigation = useNavigation<any>();
   const { t } = useTranslation();
-  
-  // Theme Colors
-  const backgroundColor = useThemeColor({}, 'primaryBackground');
-  const secondaryBackgroundColor = useThemeColor({}, 'secondaryBackground');
-  const borderColor = useThemeColor({}, 'gray200' as any);
-  const primaryColor = useThemeColor({}, 'primary');
-  const textColor = useThemeColor({}, 'primaryText');
-  const errorColor = useThemeColor({}, 'error');
+  const insets = useSafeAreaInsets();
 
-  // Context
-  const { cartItems, subtotal: itemSubtotal, hasOutOfStock: anyOutOfStock, clearCart } = useCart();
-
-  // States
-  const [showAllItems, setShowAllItems] = useState(false);
-  const [selectedAddress, setSelectedAddress] = useState<any>(null);
-  const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
-  const [isAddressModalVisible, setAddressModalVisible] = useState(false);
+  const [addresses, setAddresses] = useState(INITIAL_ADDRESSES);
+  const [selectedAddress, setSelectedAddress] = useState<string>('');
+  const [selectedPayment, setSelectedPayment] = useState<string>('');
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
-  // Address Form States
-  const [formData, setFormData] = useState({
-    fullName: '',
-    mobileNumber: '',
-    houseFlatNo: '',
-    streetArea: '',
-    landmark: '',
-    city: '',
-    state: '',
-    pincode: '',
-    addressType: 'Home',
+  const [isAddressModalVisible, setAddressModalVisible] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
+
+  const [form, setForm] = useState({
+    fullName: '', mobile: '', flat: '', street: '', landmark: '', city: '', state: '', pincode: '', type: 'home'
   });
 
-  // Derived Values
-  const deliveryCharges = itemSubtotal > 500 ? 0 : 40;
-  const taxes = itemSubtotal * 0.05;
-  const totalPayable = itemSubtotal + deliveryCharges + taxes;
+  const [paymentDetails, setPaymentDetails] = useState({
+    cardNumber: '',
+    cardExpiry: '',
+    cardCvv: '',
+    upiId: ''
+  });
 
-  const canPlaceOrder = selectedAddress && selectedPayment && !anyOutOfStock;
+  const cardColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.secondaryBackground }, 'secondaryBackground');
+  const primaryColor = useThemeColor({}, 'primary');
+  const borderColor = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray300 }, 'gray200' as any);
+  const iconColor = useThemeColor({ light: Colors.light.black, dark: Colors.light.white }, 'primaryText' as any);
+  const modalBgColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.secondaryBackground }, 'secondaryBackground' as any);
+
+  const discount = subtotal > 0 ? 5 : 0; // Flat ₹5 mock discount for any order
+  const deliveryCharge = subtotal > 50 ? 0 : 5.99;
+  const taxes = subtotal * 0.08;
+  const totalPayable = subtotal - discount + deliveryCharge + taxes;
 
   const handlePlaceOrder = () => {
     if (!selectedAddress) {
-      Alert.alert('Validation Error', t('checkoutScreen.validation.selectAddress'));
+      Alert.alert(t(STRINGS.checkoutScreen.missingInfo), t(STRINGS.checkoutScreen.selectAddressError));
       return;
     }
     if (!selectedPayment) {
-      Alert.alert('Validation Error', t('checkoutScreen.validation.selectPayment'));
+      Alert.alert(t(STRINGS.checkoutScreen.missingInfo), t(STRINGS.checkoutScreen.selectPaymentError));
       return;
     }
-    if (anyOutOfStock) {
-      return;
+
+    if (selectedPayment === 'pm_credit' || selectedPayment === 'pm_debit') {
+      if (!/^\d{16}$/.test(paymentDetails.cardNumber.replace(/\s/g, ''))) {
+        Alert.alert("Invalid Card", "Please enter a valid 16-digit card number.");
+        return;
+      }
+      if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(paymentDetails.cardExpiry)) {
+        Alert.alert("Invalid Expiry", "Please enter expiry date in MM/YY format.");
+        return;
+      }
+      if (!/^\d{3}$/.test(paymentDetails.cardCvv)) {
+        Alert.alert("Invalid CVV", "Please enter a valid 3-digit CVV.");
+        return;
+      }
+    } else if (selectedPayment === 'pm_upi') {
+      if (!paymentDetails.upiId.includes('@')) {
+        Alert.alert("Invalid UPI ID", "Please enter a valid UPI ID.");
+        return;
+      }
     }
 
     setIsPlacingOrder(true);
+
+    const txId = 'TXN' + Math.floor(100000000 + Math.random() * 900000000);
+    const selectedAddrObj = addresses.find(a => a.id === selectedAddress);
+    const selectedPaymentObj = MOCK_PAYMENT_METHODS.find(p => p.id === selectedPayment);
+
+    const orderPayload = {
+      id: txId,
+      date: new Date().toISOString(),
+      items: cartItems,
+      subtotal,
+      discount,
+      deliveryCharge,
+      taxes,
+      totalPayable,
+      address: selectedAddrObj,
+      paymentMethod: selectedPaymentObj?.label || '',
+      estimatedDelivery: 'Arriving in 30-45 mins'
+    };
+
     setTimeout(() => {
       setIsPlacingOrder(false);
+      addOrder(orderPayload);
       clearCart();
-      navigation.navigate('OrderConfirmation');
+      navigation.navigate('OrderSuccess', { order: orderPayload });
     }, 2000);
   };
 
-  const handleSaveAddress = () => {
-    // Validate
-    if (!formData.fullName || !formData.mobileNumber || !formData.houseFlatNo || !formData.streetArea || !formData.city || !formData.state || !formData.pincode) {
-      Alert.alert('Error', t('checkoutScreen.validation.mandatoryFields'));
-      return;
+  const openAddressForm = (addr?: any) => {
+    if (addr) {
+      setEditingAddressId(addr.id);
+      setForm({ ...addr });
+    } else {
+      setEditingAddressId(null);
+      setForm({ fullName: '', mobile: '', flat: '', street: '', landmark: '', city: '', state: '', pincode: '', type: 'home' });
     }
-    if (formData.mobileNumber.length !== 10) {
-      Alert.alert('Error', t('checkoutScreen.validation.invalidMobile'));
-      return;
-    }
-    if (formData.pincode.length !== 6) {
-      Alert.alert('Error', t('checkoutScreen.validation.invalidPincode'));
+    setAddressModalVisible(true);
+  };
+
+  const saveAddress = () => {
+    if (!form.fullName || !form.mobile || !form.flat || !form.street || !form.city || !form.state || !form.pincode) {
+      Alert.alert(t(STRINGS.checkoutScreen.error), t(STRINGS.checkoutScreen.fillFieldsError) || "Please fill all mandatory fields.");
       return;
     }
 
-    setSelectedAddress({ ...formData, id: Date.now().toString() });
+    if (!/^\d{10}$/.test(form.mobile)) {
+      Alert.alert(t(STRINGS.checkoutScreen.error), "Please enter a valid 10-digit mobile number.");
+      return;
+    }
+
+    if (!/^\d{5,6}$/.test(form.pincode)) {
+      Alert.alert(t(STRINGS.checkoutScreen.error), "Please enter a valid 5 or 6-digit pincode.");
+      return;
+    }
+
+    if (!SERVICEABLE_PINCODES.includes(form.pincode)) {
+      Alert.alert("Location Not Serviceable", `Sorry, we do not deliver to pincode ${form.pincode} yet.`);
+      return;
+    }
+
+    const fullAddressString = `${form.flat}, ${form.street}, ${form.city}, ${form.state} ${form.pincode}`;
+
+    if (editingAddressId) {
+      setAddresses(prev => prev.map(a => a.id === editingAddressId ? { ...a, ...form, label: form.type, address: fullAddressString } : a));
+    } else {
+      const newId = `addr_${Date.now()}`;
+      setAddresses(prev => [...prev, { id: newId, ...form, label: form.type, address: fullAddressString }]);
+      setSelectedAddress(newId);
+    }
     setAddressModalVisible(false);
   };
 
-  return (
-    <SafeAreaView style={[{ flex: 1, backgroundColor }]}>
-      {/* Header */}
-      <View style={[styles.header, { borderBottomColor: borderColor }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <MaterialCommunityIcons name="arrow-left" size={24} color={textColor} />
-        </TouchableOpacity>
-        <ThemedText type="subtitle" style={styles.headerTitle}>{t('checkoutScreen.title')}</ThemedText>
-        <View style={styles.backBtn} />
+  const deleteAddress = (id: string) => {
+    Alert.alert(
+      "Delete Address",
+      "Are you sure you want to delete this address?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            setAddresses(prev => prev.filter(a => a.id !== id));
+            if (selectedAddress === id) setSelectedAddress('');
+          }
+        }
+      ]
+    );
+  };
+
+  const getAddressTypeLabel = (typeKey: string) => {
+    if (typeKey === 'home') return t(STRINGS.checkoutScreen.home);
+    if (typeKey === 'work') return t(STRINGS.checkoutScreen.work);
+    return t(STRINGS.checkoutScreen.other);
+  };
+
+  const getAddressTypeIcon = (typeKey: string): any => {
+    if (typeKey === 'home') return 'home';
+    if (typeKey === 'work') return 'briefcase';
+    return 'map-pin';
+  };
+
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBtn}>
+        <Feather name="arrow-left" size={24} color={iconColor} />
+      </TouchableOpacity>
+      <View style={styles.headerTitleContainer}>
+        <ThemedText type="subtitle" style={styles.headerTitle}>{t(STRINGS.checkoutScreen.title)}</ThemedText>
       </View>
+      <View style={{ width: 32 }} />
+    </View>
+  );
 
-      {cartItems.length === 0 ? (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-          <MaterialCommunityIcons name="cart-off" size={64} color={borderColor} />
-          <ThemedText style={{ marginTop: 16, textAlign: 'center' }}>{t('cartScreen.emptyCart')}</ThemedText>
-          <CustomButton 
-            title={t('checkoutScreen.goToCart')} 
-            onPress={() => navigation.navigate('Cart')}
-            style={{ marginTop: 24, width: '100%' }}
-          />
-        </View>
-      ) : (
-      <>
-      <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.scrollContent}>
-        {/* Out of Stock Banner */}
-        {anyOutOfStock && (
-          <View style={[styles.outOfStockBanner, { backgroundColor: Colors.light.red100, borderColor: errorColor }]}>
-            <MaterialCommunityIcons name="alert-circle-outline" size={20} color={errorColor} />
-            <View style={{ flex: 1, marginLeft: 8 }}>
-              <ThemedText style={{ color: errorColor, fontSize: 13 }}>{t('checkoutScreen.outOfStockBanner')}</ThemedText>
-            </View>
-            <TouchableOpacity onPress={() => navigation.navigate('Cart')}>
-              <ThemedText style={{ color: errorColor, fontWeight: 'bold' }}>{t('checkoutScreen.goToCart')}</ThemedText>
-            </TouchableOpacity>
-          </View>
-        )}
+  const renderAddressModal = () => (
+    <Modal visible={isAddressModalVisible} animationType="slide" transparent>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
+        <View style={[styles.modalContent, { backgroundColor: modalBgColor }]}>
+          <View style={styles.dragHandle} />
 
-        {/* Delivery Address Section */}
-        <View style={[styles.section, { backgroundColor: secondaryBackgroundColor }]}>
-          <View style={styles.sectionHeader}>
-            <ThemedText type="defaultSemiBold">{t('checkoutScreen.deliveryAddress')}</ThemedText>
-            {selectedAddress && (
-              <TouchableOpacity onPress={() => setAddressModalVisible(true)}>
-                <ThemedText style={{ color: primaryColor }}>{t('checkoutScreen.edit')}</ThemedText>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {selectedAddress ? (
-            <View style={[styles.addressCard, { borderColor: primaryColor }]}>
-              <View style={styles.addressRow}>
-                <ThemedText style={{ fontWeight: 'bold' }}>{selectedAddress.fullName}</ThemedText>
-                <ThemedText style={{ fontWeight: 'bold' }}>{selectedAddress.mobileNumber}</ThemedText>
-              </View>
-              <ThemedText style={{ marginTop: 4 }}>{selectedAddress.houseFlatNo}, {selectedAddress.streetArea}</ThemedText>
-              <ThemedText style={{ marginTop: 2 }}>{selectedAddress.city}, {selectedAddress.state} - {selectedAddress.pincode}</ThemedText>
-              
-              <View style={styles.addressFooter}>
-                <View style={[styles.addressBadge, { backgroundColor: Colors.light.transparentGreen015 }]}>
-                  <ThemedText style={{ color: primaryColor, fontSize: 12, fontWeight: 'bold' }}>{selectedAddress.addressType}</ThemedText>
-                </View>
-                <TouchableOpacity onPress={() => setAddressModalVisible(true)}>
-                  <ThemedText style={{ color: primaryColor, fontWeight: '600' }}>{t('checkoutScreen.change')}</ThemedText>
-                </TouchableOpacity>
-              </View>
-            </View>
-          ) : (
-            <CustomButton 
-              title={t('checkoutScreen.addDeliveryAddress')} 
-              type="secondary"
-              onPress={() => setAddressModalVisible(true)}
-              style={{ borderColor: primaryColor, marginTop: 10 }}
-            />
-          )}
-        </View>
-
-        {/* Order Items Section */}
-        <View style={[styles.section, { backgroundColor: secondaryBackgroundColor }]}>
-          <ThemedText type="defaultSemiBold" style={{ marginBottom: 10 }}>
-            {t('checkoutScreen.orderItems')} ({cartItems.length})
-          </ThemedText>
-          
-          {cartItems.slice(0, showAllItems ? cartItems.length : 2).map((item) => (
-            <View key={item.id} style={[styles.itemRow, { borderBottomColor: borderColor }]}>
-              <View style={styles.itemLeft}>
-                <ThemedText style={{ fontSize: 20 }}>{item.emoji}</ThemedText>
-                <View style={{ marginLeft: 10 }}>
-                  <ThemedText>{item.name}</ThemedText>
-                  <ThemedText useSecondaryText style={{ fontSize: 12 }}>Qty: {item.quantity}</ThemedText>
-                </View>
-              </View>
-              <ThemedText type="defaultSemiBold">₹{item.price * item.quantity}</ThemedText>
-            </View>
-          ))}
-
-          {cartItems.length > 2 && (
-            <TouchableOpacity onPress={() => setShowAllItems(!showAllItems)} style={styles.viewAllBtn}>
-              <ThemedText style={{ color: primaryColor, fontWeight: '600' }}>
-                {showAllItems ? 'Show Less' : t('checkoutScreen.viewAllItems').replace('{count}', cartItems.length.toString())}
-              </ThemedText>
-              <MaterialCommunityIcons name={showAllItems ? "chevron-up" : "chevron-down"} size={20} color={primaryColor} />
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Order Summary Section */}
-        <View style={[styles.section, { backgroundColor: secondaryBackgroundColor }]}>
-          <ThemedText type="defaultSemiBold" style={{ marginBottom: 10 }}>{t('checkoutScreen.orderSummary')}</ThemedText>
-          
-          <View style={styles.summaryRow}>
-            <ThemedText useSecondaryText>{t('checkoutScreen.itemSubtotal')}</ThemedText>
-            <ThemedText>₹{itemSubtotal}</ThemedText>
-          </View>
-          
-          <View style={styles.summaryRow}>
-            <ThemedText useSecondaryText>{t('checkoutScreen.deliveryCharges')}</ThemedText>
-            <ThemedText style={{ color: deliveryCharges === 0 ? primaryColor : textColor }}>
-              {deliveryCharges === 0 ? t('checkoutScreen.free') : `₹${deliveryCharges}`}
+          <View style={styles.modalHeader}>
+            <ThemedText type="subtitle" style={{ fontSize: 20 }}>
+              {editingAddressId ? t(STRINGS.checkoutScreen.editAddressTitle) : t(STRINGS.checkoutScreen.addAddressTitle)}
             </ThemedText>
+            <TouchableOpacity onPress={() => setAddressModalVisible(false)} style={styles.closeBtn}>
+              <Ionicons name="close" size={20} color={iconColor} />
+            </TouchableOpacity>
           </View>
-          
-          <View style={styles.summaryRow}>
-            <ThemedText useSecondaryText>{t('checkoutScreen.taxes')}</ThemedText>
-            <ThemedText>₹{taxes.toFixed(2)}</ThemedText>
-          </View>
-          
-          <View style={[styles.summaryDivider, { backgroundColor: borderColor }]} />
-          
-          <View style={styles.summaryRow}>
-            <ThemedText type="defaultSemiBold" style={{ fontSize: 18 }}>{t('checkoutScreen.totalPayable')}</ThemedText>
-            <ThemedText type="defaultSemiBold" style={{ fontSize: 18, color: primaryColor }}>₹{totalPayable.toFixed(2)}</ThemedText>
-          </View>
-        </View>
 
-        {/* Payment Method Section */}
-        <View style={[styles.section, { backgroundColor: secondaryBackgroundColor }]}>
-          <ThemedText type="defaultSemiBold" style={{ marginBottom: 10 }}>{t('checkoutScreen.paymentMethod')}</ThemedText>
-          
-          {[
-            { id: 'cod', title: t('checkoutScreen.cod'), icon: 'cash' },
-            { id: 'upi', title: t('checkoutScreen.upi'), icon: 'qrcode' },
-            { id: 'debit', title: t('checkoutScreen.debitCard'), icon: 'credit-card-outline' },
-            { id: 'credit', title: t('checkoutScreen.creditCard'), icon: 'credit-card' },
-            { id: 'netbanking', title: t('checkoutScreen.netBanking'), icon: 'bank' },
-          ].map((method) => {
-            const isSelected = selectedPayment === method.id;
-            return (
-              <TouchableOpacity
-                key={method.id}
-                onPress={() => setSelectedPayment(method.id)}
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+            <ThemedInput icon={null} placeholder={t(STRINGS.checkoutScreen.fullName)} value={form.fullName} onChangeText={(t) => setForm({ ...form, fullName: t })} styleWrapper={[styles.input, { borderColor: borderColor }]} />
+            <ThemedInput icon={null} placeholder={t(STRINGS.checkoutScreen.mobile)} value={form.mobile} onChangeText={(t) => setForm({ ...form, mobile: t })} keyboardType="phone-pad" styleWrapper={[styles.input, { borderColor: borderColor }]} />
+
+            <View style={styles.inputDivider} />
+
+            <ThemedInput icon={null} placeholder={t(STRINGS.checkoutScreen.flat)} value={form.flat} onChangeText={(t) => setForm({ ...form, flat: t })} styleWrapper={[styles.input, { borderColor: borderColor }]} />
+            <ThemedInput icon={null} placeholder={t(STRINGS.checkoutScreen.street)} value={form.street} onChangeText={(t) => setForm({ ...form, street: t })} styleWrapper={[styles.input, { borderColor: borderColor }]} />
+            <ThemedInput icon={null} placeholder={t(STRINGS.checkoutScreen.landmark)} value={form.landmark} onChangeText={(t) => setForm({ ...form, landmark: t })} styleWrapper={[styles.input, { borderColor: borderColor }]} />
+
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <ThemedInput icon={null} placeholder={t(STRINGS.checkoutScreen.city)} value={form.city} onChangeText={(t) => setForm({ ...form, city: t })} styleWrapper={[styles.input, { flex: 1, borderColor: borderColor }]} />
+              <ThemedInput icon={null} placeholder={t(STRINGS.checkoutScreen.state)} value={form.state} onChangeText={(t) => setForm({ ...form, state: t })} styleWrapper={[styles.input, { flex: 1, borderColor: borderColor }]} />
+            </View>
+            <ThemedInput icon={null} placeholder={t(STRINGS.checkoutScreen.pincode)} value={form.pincode} onChangeText={(t) => setForm({ ...form, pincode: t })} keyboardType="number-pad" styleWrapper={[styles.input, { borderColor: borderColor }]} />
+
+            <View style={styles.inputDivider} />
+
+            <ThemedText style={{ marginBottom: 12, fontSize: 16, fontWeight: '600' }}>
+              {t(STRINGS.checkoutScreen.addressType)}
+            </ThemedText>
+            <View style={styles.typeRow}>
+              {['home', 'work', 'other'].map(type => (
+                <TouchableOpacity
+                  key={type}
+                  style={[
+                    styles.typeBtn,
+                    form.type === type ? { backgroundColor: primaryColor, borderColor: primaryColor } : { borderColor: borderColor, backgroundColor: cardColor }
+                  ]}
+                  onPress={() => setForm({ ...form, type })}
+                >
+                  <Feather name={getAddressTypeIcon(type)} size={16} color={form.type === type ? '#FFF' : iconColor} style={{ marginRight: 6 }} />
+                  <ThemedText style={{ color: form.type === type ? '#FFF' : iconColor, fontWeight: form.type === type ? 'bold' : '500' }}>
+                    {getAddressTypeLabel(type)}
+                  </ThemedText>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <CustomButton
+              title={t(STRINGS.checkoutScreen.saveAddress)}
+              onPress={saveAddress}
+              style={styles.saveAddressBtn}
+            />
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+
+  if (cartItems.length === 0) {
+    return (
+      <ThemedView style={styles.emptyContainer}>
+        <ThemedText>{t(STRINGS.checkoutScreen.emptyCart)}</ThemedText>
+        <CustomButton title={t(STRINGS.checkoutScreen.goShopping)} onPress={() => navigation.navigate('Home')} style={{ marginTop: 20 }} />
+      </ThemedView>
+    );
+  }
+
+  return (
+    <ThemedView style={styles.container}>
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+        {renderHeader()}
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+
+          {/* Address Selection */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeaderRow}>
+              <ThemedText type="subtitle" style={styles.sectionTitle}>{t(STRINGS.checkoutScreen.deliveryAddress)}</ThemedText>
+              <TouchableOpacity onPress={() => openAddressForm()}>
+                <ThemedText style={{ color: primaryColor, fontWeight: 'bold' }}>{t(STRINGS.checkoutScreen.addNew)}</ThemedText>
+              </TouchableOpacity>
+            </View>
+
+            {addresses.map((addr) => (
+              <View
+                key={addr.id}
                 style={[
-                  styles.paymentCard,
-                  { borderColor: isSelected ? primaryColor : borderColor, backgroundColor: backgroundColor }
+                  styles.optionCard,
+                  { backgroundColor: cardColor, borderColor: selectedAddress === addr.id ? primaryColor : borderColor, borderWidth: selectedAddress === addr.id ? 2 : 1 }
                 ]}
               >
-                <View style={styles.paymentLeft}>
-                  <MaterialCommunityIcons name={method.icon as any} size={24} color={isSelected ? primaryColor : textColor} style={{ marginRight: 12 }} />
-                  <ThemedText style={{ fontWeight: isSelected ? '600' : 'normal' }}>{method.title}</ThemedText>
-                </View>
-                <MaterialCommunityIcons 
-                  name={isSelected ? "radiobox-marked" : "radiobox-blank"} 
-                  size={24} 
-                  color={isSelected ? primaryColor : Colors.light.gray400} 
-                />
-              </TouchableOpacity>
-            )
-          })}
-        </View>
-        
-        <View style={{ height: 100 }} />
-      </ScrollView>
-
-      {/* Place Order Bottom Bar */}
-      <View style={[styles.bottomBar, { backgroundColor, borderTopColor: borderColor }]}>
-        <CustomButton
-          title={`${t('checkoutScreen.placeOrder')} • ₹${totalPayable.toFixed(2)}`}
-          onPress={handlePlaceOrder}
-          disabled={!canPlaceOrder}
-          loading={isPlacingOrder}
-          style={{ marginBottom: 0, opacity: canPlaceOrder ? 1 : 0.5 }}
-        />
-      </View>
-      </>
-      )}
-
-      {/* Add Address Modal */}
-      <Modal visible={isAddressModalVisible} animationType="slide" transparent={true}>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor }]}>
-            <View style={styles.modalHeader}>
-              <ThemedText type="title">{t('checkoutScreen.addNewAddress')}</ThemedText>
-              <TouchableOpacity onPress={() => setAddressModalVisible(false)}>
-                <MaterialCommunityIcons name="close" size={24} color={textColor} />
-              </TouchableOpacity>
-            </View>
-            
-            <ScrollView style={styles.modalScroll}>
-              <TextInput style={[styles.input, { borderColor, color: textColor }]} placeholder={t('checkoutScreen.fullName')} placeholderTextColor={Colors.light.gray400} value={formData.fullName} onChangeText={(t) => setFormData({...formData, fullName: t})} />
-              <TextInput style={[styles.input, { borderColor, color: textColor }]} placeholder={t('checkoutScreen.mobileNumber')} placeholderTextColor={Colors.light.gray400} keyboardType="number-pad" maxLength={10} value={formData.mobileNumber} onChangeText={(t) => setFormData({...formData, mobileNumber: t})} />
-              <TextInput style={[styles.input, { borderColor, color: textColor }]} placeholder={t('checkoutScreen.houseFlatNo')} placeholderTextColor={Colors.light.gray400} value={formData.houseFlatNo} onChangeText={(t) => setFormData({...formData, houseFlatNo: t})} />
-              <TextInput style={[styles.input, { borderColor, color: textColor }]} placeholder={t('checkoutScreen.streetArea')} placeholderTextColor={Colors.light.gray400} value={formData.streetArea} onChangeText={(t) => setFormData({...formData, streetArea: t})} />
-              <TextInput style={[styles.input, { borderColor, color: textColor }]} placeholder={t('checkoutScreen.landmark')} placeholderTextColor={Colors.light.gray400} value={formData.landmark} onChangeText={(t) => setFormData({...formData, landmark: t})} />
-              <View style={styles.rowInputs}>
-                <TextInput style={[styles.input, styles.halfInput, { borderColor, color: textColor }]} placeholder={t('checkoutScreen.city')} placeholderTextColor={Colors.light.gray400} value={formData.city} onChangeText={(t) => setFormData({...formData, city: t})} />
-                <TextInput style={[styles.input, styles.halfInput, { borderColor, color: textColor }]} placeholder={t('checkoutScreen.state')} placeholderTextColor={Colors.light.gray400} value={formData.state} onChangeText={(t) => setFormData({...formData, state: t})} />
-              </View>
-              <TextInput style={[styles.input, { borderColor, color: textColor }]} placeholder={t('checkoutScreen.pincode')} placeholderTextColor={Colors.light.gray400} keyboardType="number-pad" maxLength={6} value={formData.pincode} onChangeText={(t) => setFormData({...formData, pincode: t})} />
-              
-              <ThemedText style={{ marginTop: 10, marginBottom: 10 }}>{t('checkoutScreen.addressType')}</ThemedText>
-              <View style={styles.addressTypeRow}>
-                {['Home', 'Work', 'Other'].map(type => (
-                  <TouchableOpacity
-                    key={type}
-                    onPress={() => setFormData({...formData, addressType: type})}
-                    style={[
-                      styles.typeBadge,
-                      { borderColor: formData.addressType === type ? primaryColor : borderColor },
-                      formData.addressType === type && { backgroundColor: Colors.light.transparentGreen015 }
-                    ]}
-                  >
-                    <ThemedText style={{ color: formData.addressType === type ? primaryColor : textColor }}>
-                      {type === 'Home' ? t('checkoutScreen.home') : type === 'Work' ? t('checkoutScreen.work') : t('checkoutScreen.other')}
-                    </ThemedText>
+                <TouchableOpacity
+                  style={{ flex: 1 }}
+                  onPress={() => {
+                    if (!SERVICEABLE_PINCODES.includes(addr.pincode)) {
+                      Alert.alert("Location Not Serviceable", `Sorry, we do not deliver to pincode ${addr.pincode}.`);
+                      return;
+                    }
+                    setSelectedAddress(addr.id);
+                  }}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                    <Feather name={getAddressTypeIcon(addr.label)} size={16} color={iconColor} style={{ marginRight: 6 }} />
+                    <ThemedText type="defaultSemiBold" style={{ fontSize: 16 }}>{getAddressTypeLabel(addr.label)}</ThemedText>
+                  </View>
+                  <ThemedText useSecondaryText style={{ fontSize: 14, lineHeight: 20 }}>{addr.address}</ThemedText>
+                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <TouchableOpacity onPress={() => openAddressForm(addr)} style={{ padding: 8 }}>
+                    <Feather name="edit-2" size={18} color={iconColor} />
                   </TouchableOpacity>
-                ))}
+                  <TouchableOpacity onPress={() => deleteAddress(addr.id)} style={{ padding: 8 }}>
+                    <Feather name="trash-2" size={18} color="#ef4444" />
+                  </TouchableOpacity>
+                </View>
               </View>
+            ))}
+          </View>
 
-              <CustomButton title={t('checkoutScreen.saveAddress')} onPress={handleSaveAddress} style={{ marginTop: 20, marginBottom: 40 }} />
-            </ScrollView>
+          {/* Order Items */}
+          <View style={styles.section}>
+            <ThemedText type="subtitle" style={styles.sectionTitle}>{t(STRINGS.checkoutScreen.orderItems)} ({totalItems})</ThemedText>
+            {cartItems.map((item) => (
+              <CartItemCard
+                key={item.id}
+                item={item}
+                readOnly={true}
+              />
+            ))}
+          </View>
+
+          {/* Payment Methods */}
+          <View style={styles.section}>
+            <ThemedText type="subtitle" style={[styles.sectionTitle, { marginBottom: 16 }]}>{t(STRINGS.checkoutScreen.paymentMethod)}</ThemedText>
+            {MOCK_PAYMENT_METHODS.map((pm) => (
+              <View key={pm.id} style={{ marginBottom: 12 }}>
+                <TouchableOpacity
+                  style={[
+                    styles.optionCard,
+                    { backgroundColor: cardColor, borderColor: selectedPayment === pm.id ? primaryColor : borderColor, borderWidth: selectedPayment === pm.id ? 2 : 1, marginBottom: 0 }
+                  ]}
+                  onPress={() => setSelectedPayment(pm.id)}
+                >
+                  <View style={{ flex: 1 }}>
+                    <ThemedText type="defaultSemiBold" style={{ fontSize: 16 }}>{pm.label}</ThemedText>
+                    <ThemedText useSecondaryText style={{ fontSize: 14 }}>{pm.details}</ThemedText>
+                  </View>
+                  <View style={[
+                    styles.radioButton,
+                    selectedPayment === pm.id ? { borderColor: primaryColor } : { borderColor: borderColor }
+                  ]}>
+                    {selectedPayment === pm.id && <View style={[styles.radioButtonInner, { backgroundColor: primaryColor }]} />}
+                  </View>
+                </TouchableOpacity>
+
+                {selectedPayment === pm.id && (pm.id === 'pm_credit' || pm.id === 'pm_debit') && (
+                  <View style={[styles.paymentForm, { backgroundColor: cardColor, borderColor: primaryColor }]}>
+                    <ThemedInput
+                      icon={null}
+                      placeholder="Card Number (16 digits)"
+                      keyboardType="number-pad"
+                      value={paymentDetails.cardNumber}
+                      onChangeText={(t) => setPaymentDetails({ ...paymentDetails, cardNumber: t })}
+                      styleWrapper={[styles.input, { borderColor: borderColor, marginBottom: 12 }]}
+                    />
+                    <View style={{ flexDirection: 'row', gap: 12 }}>
+                      <ThemedInput
+                        icon={null}
+                        placeholder="MM/YY"
+                        value={paymentDetails.cardExpiry}
+                        onChangeText={(t) => setPaymentDetails({ ...paymentDetails, cardExpiry: t })}
+                        styleWrapper={[styles.input, { flex: 1, borderColor: borderColor, marginBottom: 0 }]}
+                      />
+                      <ThemedInput
+                        icon={null}
+                        placeholder="CVV"
+                        keyboardType="number-pad"
+                        secureTextEntry
+                        value={paymentDetails.cardCvv}
+                        onChangeText={(t) => setPaymentDetails({ ...paymentDetails, cardCvv: t })}
+                        styleWrapper={[styles.input, { flex: 1, borderColor: borderColor, marginBottom: 0 }]}
+                      />
+                    </View>
+                  </View>
+                )}
+
+                {selectedPayment === pm.id && pm.id === 'pm_upi' && (
+                  <View style={[styles.paymentForm, { backgroundColor: cardColor, borderColor: primaryColor }]}>
+                    <ThemedInput
+                      icon={null}
+                      placeholder="Enter UPI ID (e.g. name@bank)"
+                      value={paymentDetails.upiId}
+                      onChangeText={(t) => setPaymentDetails({ ...paymentDetails, upiId: t })}
+                      styleWrapper={[styles.input, { borderColor: borderColor, marginBottom: 0 }]}
+                    />
+                  </View>
+                )}
+
+                {selectedPayment === pm.id && pm.id === 'pm_netbanking' && (
+                  <View style={[styles.paymentForm, { backgroundColor: cardColor, borderColor: primaryColor, paddingVertical: 16 }]}>
+                    <ThemedText useSecondaryText style={{ textAlign: 'center' }}>You will be redirected to your bank's portal to complete the payment.</ThemedText>
+                  </View>
+                )}
+              </View>
+            ))}
+          </View>
+
+          {/* Order Summary */}
+          <CartPriceSummary
+            subtotal={subtotal}
+            discount={discount}
+            deliveryCharge={deliveryCharge}
+            taxes={taxes}
+            totalPayable={totalPayable}
+          />
+
+        </ScrollView>
+
+        {/* Sticky Bottom Button */}
+        <View style={[
+          styles.bottomBar,
+          {
+            borderTopColor: borderColor,
+            backgroundColor: cardColor,
+            paddingBottom: Math.max(insets.bottom, 16)
+          }
+        ]}>
+          <View style={styles.bottomBarRow}>
+            <View>
+              <ThemedText useSecondaryText>{t(STRINGS.checkoutScreen.total)}</ThemedText>
+              <ThemedText type="subtitle">₹{totalPayable.toFixed(2)}</ThemedText>
+            </View>
+            <CustomButton
+              title={t(STRINGS.checkoutScreen.placeOrder)}
+              onPress={handlePlaceOrder}
+              loading={isPlacingOrder}
+              style={{ minWidth: 150 }}
+            />
           </View>
         </View>
-      </Modal>
 
-    </SafeAreaView>
+        {renderAddressModal()}
+      </SafeAreaView>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderBottomWidth: 1,
   },
-  backBtn: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
+  headerBtn: {
+    padding: 4,
+  },
+  headerTitleContainer: {
+    alignItems: 'center',
   },
   headerTitle: {
     fontSize: 18,
+    fontWeight: 'bold',
   },
-  scrollContainer: {
+  emptyContainer: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
   },
   scrollContent: {
-    padding: 16,
+    paddingBottom: 100,
   },
   section: {
-    padding: 16,
-    borderRadius: ThemeDimension.borderRadius.m,
-    marginBottom: 16,
+    paddingHorizontal: 16,
+    paddingTop: 24,
   },
-  sectionHeader: {
+  sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
   },
-  addressCard: {
-    borderWidth: 1,
-    borderRadius: ThemeDimension.borderRadius.s,
-    padding: 12,
+  sectionTitle: {
+    marginBottom: 0,
   },
-  addressRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 4,
-  },
-  addressFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  addressBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  itemRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  itemLeft: {
+  optionCard: {
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  viewAllBtn: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginVertical: 4,
-  },
-  summaryDivider: {
-    height: 1,
-    marginVertical: 8,
-  },
-  paymentCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 12,
-    borderWidth: 1,
-    borderRadius: ThemeDimension.borderRadius.s,
-    marginBottom: 8,
-  },
-  paymentLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  paymentForm: {
+    padding: 16,
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+    borderWidth: 2,
+    borderTopWidth: 0,
+    marginTop: -4,
   },
   bottomBar: {
     position: 'absolute',
@@ -437,31 +523,37 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     padding: 16,
-    borderTopWidth: 1,
+    borderTopWidth: StyleSheet.hairlineWidth,
     elevation: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  outOfStockBanner: {
+  bottomBarRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 12,
-    borderRadius: ThemeDimension.borderRadius.m,
-    borderWidth: 1,
-    marginBottom: 16,
   },
   modalOverlay: {
     flex: 1,
-    justifyContent: 'flex-end',
     backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
   },
   modalContent: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    maxHeight: '80%',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    maxHeight: '90%',
+  },
+  dragHandle: {
+    width: 40,
+    height: 5,
+    backgroundColor: '#D1D5DB', // Light gray drag handle
+    borderRadius: 3,
+    alignSelf: 'center',
+    marginBottom: 16,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -469,31 +561,54 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  modalScroll: {
-    //
+  closeBtn: {
+    padding: 4,
+    backgroundColor: '#F3F4F6', // very light gray circle for close
+    borderRadius: 16,
+  },
+  inputDivider: {
+    height: 1,
+    backgroundColor: '#E5E7EB', // gray-200
+    marginVertical: 16,
   },
   input: {
-    borderWidth: 1,
-    borderRadius: ThemeDimension.borderRadius.s,
-    padding: 12,
-    marginBottom: 12,
-    fontSize: 16,
+    marginBottom: 16,
+    borderRadius: 12, // More rounded inputs
+    borderWidth: 1, // Added border
   },
-  rowInputs: {
+  typeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-  },
-  halfInput: {
-    width: '48%',
-  },
-  addressTypeRow: {
-    flexDirection: 'row',
     gap: 12,
+    marginBottom: 24,
   },
-  typeBadge: {
+  typeBtn: {
+    flex: 1, // Make them equally sized
+    paddingVertical: 12,
+    borderRadius: 12,
     borderWidth: 1,
-    borderRadius: 20,
-    paddingVertical: 6,
-    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  saveAddressBtn: {
+    marginTop: 12,
+    backgroundColor: '#0f9b58', // Green background
+    borderRadius: 12,
+    paddingVertical: 14,
+  },
+  radioButton: {
+    height: 20,
+    width: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 12,
+  },
+  radioButtonInner: {
+    height: 10,
+    width: 10,
+    borderRadius: 5,
   }
 });
