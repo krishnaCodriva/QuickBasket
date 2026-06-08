@@ -105,7 +105,7 @@ export default function CategoriesScreen() {
                   imageUrl={item.imageUrl}
                   iconName={item.iconName}
                   span={item.span}
-                  onPress={() => navigation.navigate('ProductListing', { category: t(item.name) })}
+                  onPress={() => navigation.navigate('ProductListing', { category: item.name })}
                 />
               ))}
             </View>
