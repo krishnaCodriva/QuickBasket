@@ -18,7 +18,6 @@ export default function ProductListingScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const { t } = useTranslation();
   const { category = STRINGS.productListing.allProducts, query = '' } = route.params || {};
 
   const colorScheme = useColorScheme() ?? 'light';
@@ -51,7 +50,7 @@ export default function ProductListingScreen() {
   const [activeSort, setActiveSort] = useState(STRINGS.productListing.sortOptions.relevance);
   const [inStockOnly, setInStockOnly] = useState(false);
   const [outOfStockOnly, setOutOfStockOnly] = useState(false);
-  
+
   const [filterPrice, setFilterPrice] = useState<string | null>(null);
   const [filterCategory, setFilterCategory] = useState<string | null>(category === STRINGS.productListing.allProducts || category === 'Special Offers' ? null : category);
   const [filterTag, setFilterTag] = useState<string | null>(null);
