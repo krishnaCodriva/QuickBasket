@@ -10,10 +10,9 @@ type Props = {
   onSelectTag: (tag: string) => void;
 };
 
-export default function QuickFilters({ tags, selectedTag, onSelectTag }: Props) {
+const QuickFilters = ({ tags, selectedTag, onSelectTag }: Props) => {
   const primaryColor = useThemeColor({}, 'primary');
   const bgColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.primaryBackground }, 'primaryBackground' as any);
-  console.log("tags: ", tags);
   return (
     <View style={styles.container}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -63,3 +62,5 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
+export default React.memo(QuickFilters);

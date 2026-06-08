@@ -1,7 +1,21 @@
-import React from 'react';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { SplashScreen, LocationScreen, ManualLocationScreen, ProductListingScreen, ProductDetailScreen, CartScreen, LoginScreen, CheckoutScreen, OtpScreen, OrderSuccessScreen, OrderStatusScreen, InvoiceScreen } from '../screens';
-import TabNavigator from './TabNavigator';
+import React from "react";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import {
+  SplashScreen,
+  LocationScreen,
+  ManualLocationScreen,
+  ProductListingScreen,
+  ProductDetailScreen,
+  CartScreen,
+  LoginScreen,
+  CheckoutScreen,
+  OtpScreen,
+  OrderSuccessScreen,
+  OrderStatusScreen,
+  InvoiceScreen,
+} from "../screens";
+import TabNavigator from "./TabNavigator";
+import { useThemeColor } from "../hooks";
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -21,9 +35,29 @@ export type RootStackParamList = {
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
+// import { useColorScheme } from "react-native";
+import { Colors } from "../constants/colors";
+
 export default function AppNavigator() {
+  // const isDark = useColorScheme() === 'dark';
+  const isDark = useThemeColor(
+    { light: "primaryBackground" },
+    "primaryBackground",
+  );
+
   return (
-    <Stack.Navigator id="RootStack" initialRouteName="Splash" screenOptions={{ headerShown: false }}>
+    <Stack.Navigator
+      id="RootStack"
+      initialRouteName="Splash"
+      screenOptions={{
+        headerShown: false,
+        contentStyle: {
+          backgroundColor: isDark
+            ? Colors.dark.primaryBackground
+            : Colors.light.primaryBackground,
+        },
+      }}
+    >
       <Stack.Screen name="Splash" component={SplashScreen} />
       <Stack.Screen name="Location" component={LocationScreen} />
       <Stack.Screen name="ManualLocation" component={ManualLocationScreen} />

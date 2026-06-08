@@ -51,7 +51,7 @@ let activeLang = "en"
 export const getActive = (lang) => {
     activeLang = lang || activeLang;
     if (i18n.isInitialized) {
-        i18n.changeLanguage(activeLang);
+        return i18n.changeLanguage(activeLang);
     }
 }
 console.log("active lang : ", activeLang)

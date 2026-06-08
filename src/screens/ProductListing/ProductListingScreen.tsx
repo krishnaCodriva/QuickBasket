@@ -228,10 +228,10 @@ export default function ProductListingScreen() {
     return (
       <ProductCard
         id={item.id}
-        name={t(item.name)}
+        name={item.name}
         price={`$${item.price.toFixed(2)}`}
         mrp={`$${item.mrp.toFixed(2)}`}
-        category={t(item.category)}
+        category={item.category}
         weight={t(item.weight)}
         emoji={item.emoji}
         inStock={item.inStock}
