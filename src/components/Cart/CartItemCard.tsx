@@ -1,0 +1,136 @@
+import React from 'react';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
+import { Feather } from '@expo/vector-icons';
+import { ThemedText } from '../ThemedText';
+import QuantitySelector from '../QuantitySelector';
+import { Colors, STRINGS } from '../../constants';
+import { useTranslation } from 'react-i18next';
+import { useThemeColor } from '../../hooks';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const DELETE_BTN_WIDTH = 80;
+
+interface CartItemCardProps {
+  item: any;
+  onUpdateQuantity: (id: string, delta: number) => void;
+  onRemove: (id: string) => void;
+}
+
+export default function CartItemCard({ item, onUpdateQuantity, onRemove }: CartItemCardProps) {
+  const { t } = useTranslation();
+  const cardColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.secondaryBackground }, 'secondaryBackground');
+  const primaryColor = useThemeColor({}, 'primary');
+  const separatorColor = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray300 }, 'gray200' as any);
+  const dangerColor = useThemeColor({ light: Colors.light.red600, dark: Colors.dark.red600 }, 'red600' as any);
+  const imageBgColor = useThemeColor({ light: Colors.light.gray100, dark: Colors.dark.secondaryBackground }, 'gray100' as any);
+
+  return (
+    <View style={styles.cartItemWrapper}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        pagingEnabled
+        snapToInterval={SCREEN_WIDTH}
+        snapToAlignment="center"
+        bounces={false}
+      >
+        <View style={[styles.cartItemCard, { width: SCREEN_WIDTH, backgroundColor: cardColor, borderBottomColor: separatorColor }]}>
+          <View style={[styles.itemImageContainer, { backgroundColor: imageBgColor }]}>
+            <ThemedText style={styles.itemEmoji}>{item.emoji}</ThemedText>
+          </View>
+
+          <View style={styles.itemDetails}>
+            <ThemedText style={styles.itemName} numberOfLines={2}>{item.name}</ThemedText>
+            <ThemedText style={[styles.itemPrice, { color: primaryColor }]}>₹{item.price.toFixed(2)}</ThemedText>
+            {item.inStock ? (
+              <ThemedText style={styles.itemSubtotal} useSecondaryText>Subtotal: ₹{(item.price * item.quantity).toFixed(2)}</ThemedText>
+            ) : (
+              <View style={[styles.outOfStockBadge, { backgroundColor: dangerColor }]}>
+                <ThemedText style={styles.outOfStockText}>{t(STRINGS.cartScreen.outOfStockBadge)}</ThemedText>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.quantityContainer}>
+            <QuantitySelector
+              quantity={item.quantity}
+              onDecrease={() => onUpdateQuantity(item.id, -1)}
+              onIncrease={() => onUpdateQuantity(item.id, 1)}
+              disabled={!item.inStock}
+              size="small"
+            />
+          </View>
+        </View>
+
+        <TouchableOpacity
+          style={[styles.deleteAction, { width: DELETE_BTN_WIDTH, backgroundColor: dangerColor }]}
+          onPress={() => onRemove(item.id)}
+        >
+          <Feather name="trash-2" size={24} color="#FFF" />
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  cartItemWrapper: {
+    overflow: 'hidden',
+  },
+  cartItemCard: {
+    flexDirection: 'row',
+    padding: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+  },
+  itemImageContainer: {
+    width: 70,
+    height: 70,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  itemEmoji: {
+    fontSize: 32,
+  },
+  itemDetails: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  itemName: {
+    fontSize: 15,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  itemPrice: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  itemSubtotal: {
+    fontSize: 13,
+  },
+  outOfStockBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  outOfStockText: {
+    color: '#FFF',
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  quantityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 16,
+  },
+  deleteAction: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'transparent',
+  },
+});
