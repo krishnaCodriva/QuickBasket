@@ -58,7 +58,7 @@ export default function ManualLocationScreen({ navigation }: Props) {
       latitude: parseFloat(item.lat),
       longitude: parseFloat(item.lon)
     }));
-    navigation.navigate('MainTabs');
+    navigation.navigate('HomeTab');
   };
 
   const handleUseCurrentLocation = async () => {
@@ -69,7 +69,7 @@ export default function ManualLocationScreen({ navigation }: Props) {
       latitude: 28.6139,
       longitude: 77.2090
     }));
-    navigation.navigate('MainTabs');
+    navigation.navigate('HomeTab');
   };
 
 

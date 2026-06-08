@@ -7,7 +7,7 @@ export type RootStackParamList = {
   Splash: undefined;
   Location: undefined;
   ManualLocation: undefined;
-  MainTabs: undefined;
+  HomeTab: undefined;
   ProductListing: { category?: string; query?: string } | undefined;
   ProductDetail: { product: any } | undefined;
   Cart: undefined;
@@ -27,7 +27,7 @@ export default function AppNavigator() {
       <Stack.Screen name="Splash" component={SplashScreen} />
       <Stack.Screen name="Location" component={LocationScreen} />
       <Stack.Screen name="ManualLocation" component={ManualLocationScreen} />
-      <Stack.Screen name="MainTabs" component={TabNavigator} />
+      <Stack.Screen name="HomeTab" component={TabNavigator} />
       <Stack.Screen name="ProductListing" component={ProductListingScreen} />
       <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
       <Stack.Screen name="Cart" component={CartScreen} />

@@ -54,7 +54,7 @@ export default function CartScreen() {
         <ThemedText type="subtitle" style={styles.headerTitle}>{t(STRINGS.cartScreen.title)}</ThemedText>
         <ThemedText style={styles.headerSubtitle} useSecondaryText>({totalItems} {t(STRINGS.cartScreen.itemsCount)})</ThemedText>
       </View>
-      <TouchableOpacity onPress={() => navigation.navigate('HomeTab')}>
+      <TouchableOpacity onPress={() => navigation.navigate('HomeTab', { screen: 'Home' })}>
         <ThemedText style={[styles.continueShopping, { color: primaryColor }]}>{t(STRINGS.cartScreen.continueShopping)}</ThemedText>
       </TouchableOpacity>
     </View>
@@ -71,7 +71,7 @@ export default function CartScreen() {
             emoji="🛒"
             title={t(STRINGS.cartScreen.emptyCart)}
             buttonText={t(STRINGS.cartScreen.startShopping)}
-            onButtonPress={() => navigation.navigate('HomeTab')}
+            onButtonPress={() => navigation.navigate('HomeTab', { screen: 'Home' })}
           />
         ) : (
           <FlatList

@@ -40,7 +40,7 @@ export default function SplashScreen({ navigation }: Props) {
 
       // Navigate after splash simulation
       timer = setTimeout(() => {
-        navigation.replace(hasLocation ? 'MainTabs' : 'Location');
+        navigation.replace(hasLocation ? 'HomeTab' : 'Location');
       }, 2500);
     };
 

@@ -95,7 +95,7 @@ export default function LocationScreen({ navigation }: Props) {
           address: addressStr
         }));
         setLoading(false);
-        navigation.navigate('MainTabs');
+        navigation.navigate('HomeTab');
       }
     } catch (error) {
       setLoading(false);

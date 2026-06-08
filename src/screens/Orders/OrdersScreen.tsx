@@ -101,7 +101,7 @@ export default function OrdersScreen() {
             </ThemedText>
             <CustomButton 
               title={t(STRINGS.cartScreen.startShopping)} 
-              onPress={() => navigation.navigate('HomeTab')} 
+              onPress={() => navigation.navigate('HomeTab', { screen: 'Home' })} 
               style={{ width: 200 }}
             />
           </View>

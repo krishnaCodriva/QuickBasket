@@ -16,7 +16,7 @@ import {
 import { useThemeColor } from '../../src/hooks';
 
 export type TabParamList = {
-  HomeTab: undefined;
+  Home: undefined;
   CategoriesTab: undefined;
   OrdersTab: undefined;
   CartTab: undefined;
@@ -64,7 +64,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
         // Determine icon name
         let iconName: keyof typeof Ionicons.glyphMap = 'home-outline';
-        if (route.name === 'HomeTab') iconName = isFocused ? 'home' : 'home-outline';
+        if (route.name === 'Home') iconName = isFocused ? 'home' : 'home-outline';
         if (route.name === 'CategoriesTab') iconName = isFocused ? 'grid' : 'grid-outline';
         if (route.name === 'OrdersTab') iconName = isFocused ? 'receipt' : 'receipt-outline';
         if (route.name === 'CartTab') iconName = isFocused ? 'cart' : 'cart-outline';
@@ -116,7 +116,7 @@ export default function TabNavigator() {
       screenOptions={{ headerShown: false }}
     >
       <Tab.Screen 
-        name="HomeTab" 
+        name="Home" 
         component={HomeScreen} 
         options={{ tabBarLabel: t(STRINGS.navigation.home) }}
       />

@@ -34,7 +34,7 @@ export default function OrderSuccessScreen() {
     navigation.dispatch(
       CommonActions.reset({
         index: 0,
-        routes: [{ name: 'MainTabs' }],
+        routes: [{ name: 'HomeTab' }],
       })
     );
   };
@@ -43,7 +43,7 @@ export default function OrderSuccessScreen() {
     navigation.dispatch(
       CommonActions.reset({
         index: 0,
-        routes: [{ name: 'MainTabs', params: { screen: 'OrdersTab' } }],
+        routes: [{ name: 'HomeTab', params: { screen: 'OrdersTab' } }],
       })
     );
   };

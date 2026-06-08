@@ -34,7 +34,7 @@ export default function OrderConfirmationScreen({ route }: any) {
     navigation.dispatch(
       CommonActions.reset({
         index: 0,
-        routes: [{ name: 'MainTabs' }],
+        routes: [{ name: 'HomeTab' }],
       })
     );
   };
