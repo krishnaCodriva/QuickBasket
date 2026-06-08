@@ -27,8 +27,8 @@ const CATEGORIES = [
 
 
 const HOME_BANNERS = [
-  { id: '1', source: require('../../../assets/Section - Hero Carousel (Bento Style).png'), linkType: 'category', linkTarget: 'Fruits' },
-  { id: '2', source: require('../../../assets/Section - Hero Carousel (Bento Style).png'), linkType: 'offer', linkTarget: 'Discount' },
+  { id: '1', source: require('../../../assets/Section - Hero Carousel (Bento Style).png'), linkType: 'category', linkTarget: STRINGS.common.categories.fruits },
+  { id: '2', source: require('../../../assets/Section - Hero Carousel (Bento Style).png'), linkType: 'offer', linkTarget: 'Avocado' },
   { id: '3', source: require('../../../assets/Section - Hero Carousel (Bento Style).png'), linkType: 'product', linkTarget: '1' },
 ];
 
@@ -73,7 +73,7 @@ export default function HomeScreen({ navigation }: Props) {
 
   const filteredProducts = MOCK_PRODUCTS.filter(p => {
     if (selectedTag === t(STRINGS.homeScreen.tags.all)) return true;
-    
+
     // Mock tag filtering since mock products don't have tags array
     if (selectedTag === t(STRINGS.homeScreen.tags.fresh)) {
       return p.category === STRINGS.common.categories.fruits || p.category === STRINGS.common.categories.veg;
@@ -84,7 +84,7 @@ export default function HomeScreen({ navigation }: Props) {
     if (selectedTag === t(STRINGS.homeScreen.tags.trending) || selectedTag === t(STRINGS.homeScreen.tags.bestSelling)) {
       return p.price > 5;
     }
-    
+
     // Fallback for other tags
     return p.tags?.includes(selectedTag) || parseInt(p.id, 10) % 2 === 0;
   });

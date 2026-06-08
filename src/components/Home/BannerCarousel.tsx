@@ -58,7 +58,7 @@ export default function BannerCarousel({ banners = DEFAULT_BANNERS, onBannerPres
         {banners.map((banner, index) => (
           <TouchableOpacity
             key={banner.id}
-            activeOpacity={0.9}
+            activeOpacity={1}
             onPress={() => onBannerPress && onBannerPress(banner)}
             style={{ marginRight: index === banners.length - 1 ? 0 : BANNER_PADDING }}
           >
