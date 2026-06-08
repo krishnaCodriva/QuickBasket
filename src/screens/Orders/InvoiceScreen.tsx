@@ -48,7 +48,7 @@ ${t(STRINGS.invoiceScreen.title)}: ${invoiceNumber}
 ${t(STRINGS.invoiceScreen.orderId)} ${order.id}
 ${t(STRINGS.invoiceScreen.orderDate)} ${new Date(order.date).toLocaleDateString()}
 ${t(STRINGS.invoiceScreen.grandTotal)}: ₹${order.totalPayable.toFixed(2)}
-${t(STRINGS.checkoutScreen.paymentMethod)}: ${order.paymentMethod}
+${t(STRINGS.checkoutScreen.paymentMethod)}: ${order.paymentMethodId ? t(`checkoutScreen.paymentMethods.${order.paymentMethodId}_label` as any, { defaultValue: order.paymentMethod }) : order.paymentMethod}
 
 Thank you for shopping with QuickBasket!
       `.trim();
@@ -80,7 +80,7 @@ Thank you for shopping with QuickBasket!
             {/* Header */}
             <View style={[styles.section, { borderBottomColor: borderColor, borderBottomWidth: 1 }]}>
               <View style={styles.rowBetween}>
-                <ThemedText type="subtitle">QuickBasket Ltd.</ThemedText>
+                <ThemedText type="subtitle">{t(STRINGS.invoiceScreen.companyName as any)}</ThemedText>
                 <ThemedText style={{ fontWeight: 'bold' }}>{invoiceNumber}</ThemedText>
               </View>
               <ThemedText useSecondaryText>123 Grocery Lane, Fresh City</ThemedText>
@@ -147,10 +147,10 @@ Thank you for shopping with QuickBasket!
             {/* Payment Method */}
             <View style={styles.section}>
               <ThemedText useSecondaryText style={{ textAlign: 'center', fontSize: 12 }}>
-                {t(STRINGS.checkoutScreen.paymentMethod)}: {order.paymentMethod}
+                {t(STRINGS.checkoutScreen.paymentMethod)}: {order.paymentMethodId ? t(`checkoutScreen.paymentMethods.${order.paymentMethodId}_label` as any, { defaultValue: order.paymentMethod }) : order.paymentMethod}
               </ThemedText>
               <ThemedText useSecondaryText style={{ textAlign: 'center', fontSize: 12, marginTop: 4 }}>
-                This is a computer generated invoice and does not require a physical signature.
+                {t(STRINGS.invoiceScreen.computerGenerated as any)}
               </ThemedText>
             </View>
           </View>

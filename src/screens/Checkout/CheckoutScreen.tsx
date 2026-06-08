@@ -109,6 +109,7 @@ export default function CheckoutScreen() {
       totalPayable,
       address: selectedAddrObj,
       paymentMethod: selectedPaymentObj?.label || '',
+      paymentMethodId: selectedPaymentObj?.id || '',
       estimatedDelivery: 'Arriving in 30-45 mins'
     };
 
@@ -356,8 +357,12 @@ export default function CheckoutScreen() {
                   onPress={() => setSelectedPayment(pm.id)}
                 >
                   <View style={{ flex: 1 }}>
-                    <ThemedText type="defaultSemiBold" style={{ fontSize: 16 }}>{pm.label}</ThemedText>
-                    <ThemedText useSecondaryText style={{ fontSize: 14 }}>{pm.details}</ThemedText>
+                    <ThemedText type="defaultSemiBold" style={{ fontSize: 16 }}>
+                      {t(`checkoutScreen.paymentMethods.${pm.id}_label` as any, { defaultValue: pm.label })}
+                    </ThemedText>
+                    <ThemedText useSecondaryText style={{ fontSize: 14 }}>
+                      {t(`checkoutScreen.paymentMethods.${pm.id}_details` as any, { defaultValue: pm.details })}
+                    </ThemedText>
                   </View>
                   <View style={[
                     styles.radioButton,
@@ -371,7 +376,7 @@ export default function CheckoutScreen() {
                   <View style={[styles.paymentForm, { backgroundColor: cardColor, borderColor: primaryColor }]}>
                     <ThemedInput
                       icon={null}
-                      placeholder="Card Number (16 digits)"
+                      placeholder={t(STRINGS.checkoutScreen.paymentForms.cardNumber as any)}
                       keyboardType="number-pad"
                       value={paymentDetails.cardNumber}
                       onChangeText={(t) => setPaymentDetails({ ...paymentDetails, cardNumber: t })}
@@ -380,14 +385,14 @@ export default function CheckoutScreen() {
                     <View style={{ flexDirection: 'row', gap: 12 }}>
                       <ThemedInput
                         icon={null}
-                        placeholder="MM/YY"
+                        placeholder={t(STRINGS.checkoutScreen.paymentForms.expiryDate as any)}
                         value={paymentDetails.cardExpiry}
                         onChangeText={(t) => setPaymentDetails({ ...paymentDetails, cardExpiry: t })}
                         styleWrapper={[styles.input, { flex: 1, borderColor: borderColor, marginBottom: 0 }]}
                       />
                       <ThemedInput
                         icon={null}
-                        placeholder="CVV"
+                        placeholder={t(STRINGS.checkoutScreen.paymentForms.cvv as any)}
                         keyboardType="number-pad"
                         secureTextEntry
                         value={paymentDetails.cardCvv}
@@ -402,7 +407,7 @@ export default function CheckoutScreen() {
                   <View style={[styles.paymentForm, { backgroundColor: cardColor, borderColor: primaryColor }]}>
                     <ThemedInput
                       icon={null}
-                      placeholder="Enter UPI ID (e.g. name@bank)"
+                      placeholder={t(STRINGS.checkoutScreen.paymentForms.upiId as any)}
                       value={paymentDetails.upiId}
                       onChangeText={(t) => setPaymentDetails({ ...paymentDetails, upiId: t })}
                       styleWrapper={[styles.input, { borderColor: borderColor, marginBottom: 0 }]}
@@ -412,7 +417,7 @@ export default function CheckoutScreen() {
 
                 {selectedPayment === pm.id && pm.id === 'pm_netbanking' && (
                   <View style={[styles.paymentForm, { backgroundColor: cardColor, borderColor: primaryColor, paddingVertical: 16 }]}>
-                    <ThemedText useSecondaryText style={{ textAlign: 'center' }}>You will be redirected to your bank's portal to complete the payment.</ThemedText>
+                    <ThemedText useSecondaryText style={{ textAlign: 'center' }}>{t(STRINGS.checkoutScreen.paymentForms.netbankingRedirect as any)}</ThemedText>
                   </View>
                 )}
               </View>
