@@ -56,7 +56,7 @@ export default function OrderStatusScreen() {
   const getTranslatedStatus = (status: string) => {
     switch (status) {
       case 'Order Placed': return t(STRINGS.ordersScreen.status.placed);
-      case 'Confirmed': return t(STRINGS.ordersScreen.status.confirmed);
+      case 'Order Confirmed': return t(STRINGS.ordersScreen.status.confirmed);
       case 'Processing': return t(STRINGS.ordersScreen.status.processing);
       case 'Packed': return t(STRINGS.ordersScreen.status.packed);
       case 'Out for Delivery': return t(STRINGS.ordersScreen.status.outForDelivery);
@@ -150,7 +150,11 @@ export default function OrderStatusScreen() {
           <View style={styles.detailsContainer}>
             <View style={[styles.card, { backgroundColor: cardColor, borderColor }]}>
               <ThemedText type="subtitle" style={styles.cardTitle}>{t(STRINGS.orderStatusScreen.estimatedDelivery)}</ThemedText>
-              <ThemedText>{order.estimatedDelivery}</ThemedText>
+              <ThemedText>
+                {order.estimatedDelivery === 'Arriving in 30-45 mins' 
+                  ? t(STRINGS.orderStatusScreen.estimatedDeliveryMock as any) 
+                  : order.estimatedDelivery}
+              </ThemedText>
             </View>
 
             <View style={[styles.card, { backgroundColor: cardColor, borderColor }]}>
@@ -162,7 +166,11 @@ export default function OrderStatusScreen() {
 
             <View style={[styles.card, { backgroundColor: cardColor, borderColor }]}>
               <ThemedText type="subtitle" style={styles.cardTitle}>{t(STRINGS.checkoutScreen.paymentMethod)}</ThemedText>
-              <ThemedText>{order.paymentMethod}</ThemedText>
+              <ThemedText>
+                {order.paymentMethodId 
+                  ? t(`checkoutScreen.paymentMethods.${order.paymentMethodId}_label` as any, { defaultValue: order.paymentMethod })
+                  : order.paymentMethod}
+              </ThemedText>
             </View>
 
             <View style={[styles.card, { backgroundColor: cardColor, borderColor }]}>

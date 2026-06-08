@@ -72,7 +72,11 @@ export default function OrderSuccessScreen() {
             <View style={styles.detailsContainer}>
               <View style={[styles.card, { backgroundColor: cardColor, borderColor }]}>
                 <ThemedText type="subtitle" style={styles.cardTitle}>{t(STRINGS.orderStatusScreen.estimatedDelivery)}</ThemedText>
-                <ThemedText>{order.estimatedDelivery}</ThemedText>
+                <ThemedText>
+                  {order.estimatedDelivery === 'Arriving in 30-45 mins' 
+                    ? t(STRINGS.orderStatusScreen.estimatedDeliveryMock as any) 
+                    : order.estimatedDelivery}
+                </ThemedText>
               </View>
 
               <View style={[styles.card, { backgroundColor: cardColor, borderColor }]}>
@@ -84,7 +88,11 @@ export default function OrderSuccessScreen() {
 
               <View style={[styles.card, { backgroundColor: cardColor, borderColor }]}>
                 <ThemedText type="subtitle" style={styles.cardTitle}>{t(STRINGS.checkoutScreen.paymentMethod)}</ThemedText>
-                <ThemedText>{order.paymentMethod}</ThemedText>
+                <ThemedText>
+                  {order.paymentMethodId 
+                    ? t(`checkoutScreen.paymentMethods.${order.paymentMethodId}_label` as any, { defaultValue: order.paymentMethod })
+                    : order.paymentMethod}
+                </ThemedText>
               </View>
 
               <View style={[styles.card, { backgroundColor: cardColor, borderColor }]}>

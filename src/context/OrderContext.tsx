@@ -23,6 +23,7 @@ export type Order = {
   totalPayable: number;
   address: any;
   paymentMethod: string;
+  paymentMethodId?: string;
   estimatedDelivery: string;
   status: OrderStatus;
 };

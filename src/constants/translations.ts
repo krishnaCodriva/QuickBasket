@@ -184,7 +184,26 @@ export const translations = {
       error: 'Error',
       home: 'Home',
       work: 'Work',
-      other: 'Other'
+      other: 'Other',
+      paymentMethods: {
+        pm_cod_label: 'Cash on Delivery',
+        pm_cod_details: 'Pay when your order arrives',
+        pm_debit_label: 'Debit Card',
+        pm_debit_details: 'Pay using your bank debit card',
+        pm_credit_label: 'Credit Card',
+        pm_credit_details: '**** **** **** 1234',
+        pm_upi_label: 'UPI',
+        pm_upi_details: 'Google Pay, PhonePe, Paytm, etc.',
+        pm_netbanking_label: 'Net Banking',
+        pm_netbanking_details: 'All major banks available'
+      },
+      paymentForms: {
+        cardNumber: 'Card Number (16 digits)',
+        expiryDate: 'MM/YY',
+        cvv: 'CVV',
+        upiId: 'Enter UPI ID (e.g. name@bank)',
+        netbankingRedirect: "You will be redirected to your bank's portal to complete the payment."
+      }
     },
     orderSuccessScreen: {
       title: 'Order Confirmed!',
@@ -213,7 +232,8 @@ export const translations = {
       estimatedDelivery: 'Estimated Delivery',
       invoice: 'Invoice',
       viewInvoice: 'View Invoice',
-      downloadInvoice: 'Download Invoice'
+      downloadInvoice: 'Download Invoice',
+      estimatedDeliveryMock: 'Arriving in 30-45 mins'
     },
     invoiceScreen: {
       title: 'Invoice',
@@ -237,7 +257,9 @@ export const translations = {
       success: 'Success',
       savedTo: 'Invoice saved to',
       failed: 'Failed to download invoice',
-      error: 'Error'
+      error: 'Error',
+      companyName: 'QuickBasket Ltd.',
+      computerGenerated: 'This is a computer generated invoice and does not require a physical signature.'
     }
   },
   // You can easily add more languages here later:
@@ -423,7 +445,26 @@ export const translations = {
       error: 'त्रुटि',
       home: 'घर',
       work: 'काम',
-      other: 'अन्य'
+      other: 'अन्य',
+      paymentMethods: {
+        pm_cod_label: 'कैश ऑन डिलीवरी',
+        pm_cod_details: 'जब आपका ऑर्डर आए तब भुगतान करें',
+        pm_debit_label: 'डेबिट कार्ड',
+        pm_debit_details: 'अपने बैंक डेबिट कार्ड का उपयोग करके भुगतान करें',
+        pm_credit_label: 'क्रेडिट कार्ड',
+        pm_credit_details: '**** **** **** 1234',
+        pm_upi_label: 'यूपीआई',
+        pm_upi_details: 'गूगल पे, फोनपे, पेटीएम, आदि',
+        pm_netbanking_label: 'नेट बैंकिंग',
+        pm_netbanking_details: 'सभी प्रमुख बैंक उपलब्ध हैं'
+      },
+      paymentForms: {
+        cardNumber: 'कार्ड नंबर (16 अंक)',
+        expiryDate: 'महीना/वर्ष',
+        cvv: 'सीवीवी',
+        upiId: 'UPI ID दर्ज करें (जैसे name@bank)',
+        netbankingRedirect: 'भुगतान पूरा करने के लिए आपको आपके बैंक के पोर्टल पर पुनर्निर्देशित किया जाएगा।'
+      }
     },
     orderSuccessScreen: {
       title: 'ऑर्डर की पुष्टि हो गई!',
@@ -450,9 +491,11 @@ export const translations = {
       title: 'ऑर्डर ट्रैकिंग',
       deliveryAddress: 'डिलीवरी का पता',
       estimatedDelivery: 'अनुमानित डिलीवरी',
+      estimatedDeliveryMock: '30-45 मिनट में पहुंचेगा',
       invoice: 'चालान',
       viewInvoice: 'चालान देखें',
-      downloadInvoice: 'चालान डाउनलोड करें'
+      downloadInvoice: 'चालान डाउनलोड करें',
+      estimatedDeliveryMock: '30-45 मिनट में पहुंचेगा'
     },
     invoiceScreen: {
       title: 'चालान',
@@ -476,7 +519,9 @@ export const translations = {
       success: 'सफलता',
       savedTo: 'चालान यहां सहेजा गया',
       failed: 'चालान डाउनलोड करने में विफल',
-      error: 'त्रुटि'
+      error: 'त्रुटि',
+      companyName: 'क्विकबास्केट लिमिटेड',
+      computerGenerated: 'यह कंप्यूटर द्वारा तैयार किया गया चालान है और इसके लिए भौतिक हस्ताक्षर की आवश्यकता नहीं है।'
     }
   },
 
@@ -661,7 +706,26 @@ export const translations = {
       error: 'Error',
       home: 'Ghar',
       work: 'Work',
-      other: 'Other'
+      other: 'Other',
+      paymentMethods: {
+        pm_cod_label: 'Cash on Delivery',
+        pm_cod_details: 'Order aane par pay karein',
+        pm_debit_label: 'Debit Card',
+        pm_debit_details: 'Apne bank debit card se pay karein',
+        pm_credit_label: 'Credit Card',
+        pm_credit_details: '**** **** **** 1234',
+        pm_upi_label: 'UPI',
+        pm_upi_details: 'Google Pay, PhonePe, Paytm, etc.',
+        pm_netbanking_label: 'Net Banking',
+        pm_netbanking_details: 'Sabhi major banks available hain'
+      },
+      paymentForms: {
+        cardNumber: 'Card Number (16 digits)',
+        expiryDate: 'MM/YY',
+        cvv: 'CVV',
+        upiId: 'UPI ID daalein (e.g. name@bank)',
+        netbankingRedirect: 'Payment complete karne ke liye aapko bank ke portal par redirect kiya jayega.'
+      }
     },
     orderSuccessScreen: {
       title: 'Order Confirmed!',
@@ -690,7 +754,8 @@ export const translations = {
       estimatedDelivery: 'Estimated Delivery',
       invoice: 'Invoice',
       viewInvoice: 'View Invoice',
-      downloadInvoice: 'Download Invoice'
+      downloadInvoice: 'Download Invoice',
+      estimatedDeliveryMock: '30-45 mins mein aayega'
     },
     invoiceScreen: {
       title: 'Invoice',
@@ -714,7 +779,9 @@ export const translations = {
       success: 'Success',
       savedTo: 'Invoice saved to',
       failed: 'Failed to download invoice',
-      error: 'Error'
+      error: 'Error',
+      companyName: 'QuickBasket Ltd.',
+      computerGenerated: 'Yeh ek computer generated invoice hai aur physical signature ki zaroorat nahi hai.'
     }
   },
 
@@ -899,7 +966,26 @@ export const translations = {
       error: 'പിശക്',
       home: 'വീട്',
       work: 'ജോലിസ്ഥലം',
-      other: 'മറ്റുള്ളവ'
+      other: 'മറ്റുള്ളവ',
+      paymentMethods: {
+        pm_cod_label: 'ക്യാഷ് ഓൺ ഡെലിവറി',
+        pm_cod_details: 'നിങ്ങളുടെ ഓർഡർ ലഭിക്കുമ്പോൾ പണമടയ്ക്കുക',
+        pm_debit_label: 'ഡെബിറ്റ് കാർഡ്',
+        pm_debit_details: 'നിങ്ങളുടെ ബാങ്ക് ഡെബിറ്റ് കാർഡ് ഉപയോഗിച്ച് പണമടയ്ക്കുക',
+        pm_credit_label: 'ക്രെഡിറ്റ് കാർഡ്',
+        pm_credit_details: '**** **** **** 1234',
+        pm_upi_label: 'യുപിഐ',
+        pm_upi_details: 'ഗൂഗിൾ പേ, ഫോൺപേ, പേടിഎം, തുടങ്ങിയവ.',
+        pm_netbanking_label: 'നെറ്റ് ബാങ്കിംഗ്',
+        pm_netbanking_details: 'എല്ലാ പ്രധാന ബാങ്കുകളും ലഭ്യമാണ്'
+      },
+      paymentForms: {
+        cardNumber: 'കാർഡ് നമ്പർ (16 അക്കങ്ങൾ)',
+        expiryDate: 'MM/YY',
+        cvv: 'സിവിവി',
+        upiId: 'യുപിഐ ഐഡി നൽകുക (ഉദാ: name@bank)',
+        netbankingRedirect: 'പേയ്‌മെന്റ് പൂർത്തിയാക്കാൻ നിങ്ങളെ ബാങ്കിന്റെ പോർട്ടലിലേക്ക് റീഡയറക്‌ടുചെയ്യും.'
+      }
     },
     orderSuccessScreen: {
       title: 'ഓർഡർ സ്ഥിരീകരിച്ചു!',
@@ -928,7 +1014,8 @@ export const translations = {
       estimatedDelivery: 'കണക്കാക്കിയ ഡെലിവറി',
       invoice: 'ഇൻവോയ്സ്',
       viewInvoice: 'ഇൻവോയ്സ് കാണുക',
-      downloadInvoice: 'ഇൻവോയ്സ് ഡൗൺലോഡ് ചെയ്യുക'
+      downloadInvoice: 'ഇൻവോയ്സ് ഡൗൺലോഡ് ചെയ്യുക',
+      estimatedDeliveryMock: '30-45 മിനിറ്റിനുള്ളിൽ എത്തും'
     },
     invoiceScreen: {
       title: 'ഇൻവോയ്സ്',
@@ -952,7 +1039,9 @@ export const translations = {
       success: 'വിജയിച്ചു',
       savedTo: 'ഇൻവോയ്സ് സംരക്ഷിച്ചിരിക്കുന്നു',
       failed: 'ഇൻവോയ്സ് ഡൗൺലോഡ് പരാജയപ്പെട്ടു',
-      error: 'പിശക്'
+      error: 'പിശക്',
+      companyName: 'ക്വിക് ബാസ്കറ്റ് ലിമിറ്റഡ്',
+      computerGenerated: 'ഇതൊരു കമ്പ്യൂട്ടർ നിർമ്മിത ഇൻവോയ്സാണ്, ഇതിന് നേരിട്ടുള്ള ഒപ്പ് ആവശ്യമില്ല.'
     }
   }
 };

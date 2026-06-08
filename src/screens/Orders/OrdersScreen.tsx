@@ -28,7 +28,7 @@ export default function OrdersScreen() {
   const getTranslatedStatus = (status: string) => {
     switch (status) {
       case 'Order Placed': return t(STRINGS.ordersScreen.status.placed);
-      case 'Confirmed': return t(STRINGS.ordersScreen.status.confirmed);
+      case 'Order Confirmed': return t(STRINGS.ordersScreen.status.confirmed);
       case 'Processing': return t(STRINGS.ordersScreen.status.processing);
       case 'Packed': return t(STRINGS.ordersScreen.status.packed);
       case 'Out for Delivery': return t(STRINGS.ordersScreen.status.outForDelivery);
