@@ -147,6 +147,8 @@ export default function TabNavigator() {
 const styles = StyleSheet.create({
   tabBar: {
     flexDirection: 'row',
+    height: Platform.OS === 'ios' ? 85 : 70,
+    paddingBottom: Platform.OS === 'ios' ? 20 : 10,
     paddingTop: 10,
     borderTopWidth: 1,
     paddingHorizontal: 10,

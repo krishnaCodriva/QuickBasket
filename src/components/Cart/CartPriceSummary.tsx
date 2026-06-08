@@ -63,6 +63,7 @@ const styles = StyleSheet.create({
     margin: 16,
     borderRadius: 16,
     borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
   },
   summaryTitle: {
     marginBottom: 16,
