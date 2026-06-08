@@ -197,49 +197,51 @@ export default function HomeScreen({ navigation }: Props) {
     </View>
   );
 
-  const renderFilteredProducts = () => (
-    <View style={styles.section}>
-      <QuickFilters
-        tags={tagsList}
-        selectedTag={selectedTag}
-        onSelectTag={setSelectedTag}
-      />
-      {filteredProducts.length > 0 ? (
-        <FlatList
-          data={filteredProducts}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={item => item.id}
-          renderItem={({ item }) => (
-            <ProductCard
-              id={item.id}
-              name={item.name}
-              price={`₹${item.price.toFixed(2)}`}
-              mrp={item.mrp ? `₹${item.mrp.toFixed(2)}` : undefined}
-              category={item.category}
-              weight={item.weight}
-              emoji={item.emoji}
-              inStock={item.inStock}
-              quantity={getProductQuantity(item.id)}
-              onAdd={() => {
-                if (getProductQuantity(item.id) > 0) {
-                  updateQuantity(item.id, 1);
-                } else {
-                  addToCart(item, 1);
-                }
-              }}
-              onRemove={() => updateQuantity(item.id, -1)}
-              onPress={() => navigation.navigate('ProductDetail', { product: item })}
-            />
-          )}
+  const renderListHeader = () => (
+    <View>
+      {renderSearch()}
+      <BannerCarousel banners={HOME_BANNERS as any} onBannerPress={handleBannerPress} />
+      {renderCategories()}
+      <View style={{ marginBottom: 16 }}>
+        <QuickFilters
+          tags={tagsList}
+          selectedTag={selectedTag}
+          onSelectTag={setSelectedTag}
         />
-      ) : (
-        <View style={styles.emptyContainer}>
-          <Ionicons name="search" size={40} color={Colors.light.gray300} />
-          <ThemedText style={styles.emptyTitle}>{t(STRINGS.homeScreen.noProductsFound)}</ThemedText>
-        </View>
-      )}
+      </View>
     </View>
+  );
+
+  const renderEmptyState = () => (
+    <View style={styles.emptyContainer}>
+      <Ionicons name="search" size={40} color={Colors.light.gray300} />
+      <ThemedText style={styles.emptyTitle}>{t(STRINGS.homeScreen.noProductsFound)}</ThemedText>
+    </View>
+  );
+
+  const renderProductItem = ({ item }: { item: any }) => (
+    <ProductCard
+      id={item.id}
+      name={item.name}
+      price={`₹${item.price.toFixed(2)}`}
+      mrp={item.mrp ? `₹${item.mrp.toFixed(2)}` : undefined}
+      category={item.category}
+      weight={item.weight}
+      emoji={item.emoji}
+      inStock={item.inStock}
+      quantity={getProductQuantity(item.id)}
+      onAdd={() => {
+        if (getProductQuantity(item.id) > 0) {
+          updateQuantity(item.id, 1);
+        } else {
+          addToCart(item, 1);
+        }
+      }}
+      onRemove={() => updateQuantity(item.id, -1)}
+      onPress={() => navigation.navigate('ProductDetail', { product: item })}
+      isGrid={true}
+      containerStyle={{ width: '48%', marginBottom: 16 }}
+    />
   );
 
   const renderLocationModal = () => (
@@ -341,12 +343,17 @@ export default function HomeScreen({ navigation }: Props) {
     <ThemedView style={styles.container}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={statusBarBg} />
       {renderHeader()}
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {renderSearch()}
-        <BannerCarousel banners={HOME_BANNERS as any} onBannerPress={handleBannerPress} />
-        {renderCategories()}
-        {renderFilteredProducts()}
-      </ScrollView>
+      <FlatList
+        data={filteredProducts}
+        keyExtractor={item => item.id}
+        numColumns={2}
+        columnWrapperStyle={{ justifyContent: 'space-between' }}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        ListHeaderComponent={renderListHeader}
+        ListEmptyComponent={renderEmptyState}
+        renderItem={renderProductItem}
+      />
       {renderLocationModal()}
       {renderLanguageModal()}
     </ThemedView>
@@ -504,5 +511,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     color: Colors.light.gray400,
+  },
+  productGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    paddingTop: 8,
   }
 });

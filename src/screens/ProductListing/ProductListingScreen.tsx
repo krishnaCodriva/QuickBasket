@@ -15,6 +15,7 @@ const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 48) / 2; // 2 columns, padding 16 on sides and 16 between columns
 
 export default function ProductListingScreen() {
+  const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { t } = useTranslation();
@@ -146,7 +147,7 @@ export default function ProductListingScreen() {
       <TouchableOpacity style={styles.headerButton} onPress={() => navigation.goBack()}>
         <Ionicons name="arrow-back" size={24} color={iconColor} />
       </TouchableOpacity>
-      <ThemedText style={styles.headerTitle} numberOfLines={1}>{filterCategory ? t(filterCategory) : t(category)}</ThemedText>
+      <ThemedText style={styles.headerTitle} numberOfLines={1}>{t(filterCategory || category)}</ThemedText>
       <TouchableOpacity style={styles.headerButton} onPress={() => navigation.navigate('Cart')}>
         <Ionicons name="cart-outline" size={26} color={iconColor} />
         {totalItems > 0 && (
@@ -182,7 +183,7 @@ export default function ProductListingScreen() {
 
   const renderSortFilterRow = () => (
     <View style={styles.sortFilterRow}>
-      <ThemedText style={styles.resultsText}>{t(STRINGS.productListing.showingResults)}{products.length}{t(STRINGS.productListing.resultsText)}</ThemedText>
+      <ThemedText style={styles.resultsText}>{t(STRINGS.productListing.showingResults)} {products.length} {t(STRINGS.productListing.resultsText)}</ThemedText>
       <View style={styles.actionsRow}>
         <TouchableOpacity
           style={[styles.actionBtn]}
@@ -228,11 +229,11 @@ export default function ProductListingScreen() {
     return (
       <ProductCard
         id={item.id}
-        name={item.name}
-        price={`₹${item.price.toFixed(2)}`}
-        mrp={`₹${item.mrp.toFixed(2)}`}
-        category={item.category}
-        weight={item.weight}
+        name={t(item.name)}
+        price={`$${item.price.toFixed(2)}`}
+        mrp={`$${item.mrp.toFixed(2)}`}
+        category={t(item.category)}
+        weight={t(item.weight)}
         emoji={item.emoji}
         inStock={item.inStock}
         quantity={cartItems.find(i => i.id === item.id)?.quantity || 0}

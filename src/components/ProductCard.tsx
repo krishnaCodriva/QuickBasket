@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { Colors, STRINGS } from '../constants';
@@ -24,9 +24,11 @@ type Props = {
 };
 
 export default function ProductCard({ name, price, mrp, category, weight, emoji, quantity, inStock = true, isGrid = false, containerStyle, onAdd, onRemove, onPress }: Props) {
+  const [isFavorite, setIsFavorite] = useState(false);
   const { t } = useTranslation();
   const bg = useThemeColor({ light: Colors.light.gray100, dark: Colors.dark.primaryBackground }, "primaryBackground" as any);
-  const hearColor = useThemeColor({}, "heart")
+  const hearColor = useThemeColor({}, "heart");
+  const activeHeartColor = useThemeColor({ light: Colors.light.red600, dark: Colors.dark.error }, 'error' as any);
   const cardBg = useThemeColor({ light: Colors.light.white, dark: Colors.dark.secondaryBackground }, 'primaryBackground' as any);
   const borderColor = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray300 }, 'gray200' as any);
   const imageBg = useThemeColor({ light: Colors.light.gray100, dark: Colors.dark.gray300 }, 'gray100' as any);
@@ -45,10 +47,26 @@ export default function ProductCard({ name, price, mrp, category, weight, emoji,
     <TouchableOpacity activeOpacity={0.9} onPress={onPress} style={[styles.card, isGrid && styles.gridCard, containerStyle, { backgroundColor: cardBg, borderColor: borderColor }]}>
 
       <View style={[styles.imageContainer, isGrid && styles.gridImageContainer, { backgroundColor: isGrid ? imageBg : bg }]}>
-        <TouchableOpacity style={[styles.heartButton, isGrid && styles.gridHeartButton]}>
-          <Ionicons name="heart-outline" size={isGrid ? 20 : 24} color={hearColor} />
+        <TouchableOpacity 
+          style={[styles.heartButton, { backgroundColor: cardBg }, isGrid && styles.gridHeartButton]}
+          onPress={(e) => {
+            e.stopPropagation();
+            setIsFavorite(!isFavorite);
+          }}
+        >
+          <Ionicons name={isFavorite ? "heart" : "heart-outline"} size={isGrid ? 16 : 20} color={isFavorite ? activeHeartColor : hearColor} />
         </TouchableOpacity>
         <ThemedText style={[styles.emoji, isGrid && styles.gridEmoji]}>{emoji}</ThemedText>
+
+        <View style={styles.pillsContainer}>
+          <View style={[styles.pill, { backgroundColor: cardBg }]}>
+            <ThemedText numberOfLines={1} style={[styles.pillText, { color: categoryColor }]}>{t(category)}</ThemedText>
+          </View>
+          <View style={[styles.pill, { backgroundColor: cardBg }]}>
+            <ThemedText numberOfLines={1} style={[styles.pillText, { color: categoryColor }]}>{weight}</ThemedText>
+          </View>
+        </View>
+
         {!inStock && (
           <View style={[styles.outOfStockOverlay, { backgroundColor: outOfStockBg }]}>
             <ThemedText style={[styles.outOfStockText, { backgroundColor: outOfStockBadgeBg, color: outOfStockBadgeText }]}>
@@ -59,40 +77,41 @@ export default function ProductCard({ name, price, mrp, category, weight, emoji,
       </View>
 
       <View style={[styles.infoContainer, isGrid && styles.gridInfoContainer]}>
-        <ThemedText style={[styles.categoryLabel, isGrid && styles.gridCategoryLabel, { color: categoryColor }]}>{t(category)}</ThemedText>
         <ThemedText style={[styles.name, isGrid && styles.gridName, { color: nameColor }]} numberOfLines={2}>{name}</ThemedText>
-        <ThemedText useSecondaryText style={[styles.weight, isGrid && styles.gridWeight]}>{weight}</ThemedText>
-
-        <View style={[styles.priceRow, isGrid && styles.gridPriceRow]}>
-          <ThemedText style={[styles.price, isGrid && styles.gridPrice, { color: priceColor }]}>{price}</ThemedText>
-        </View>
-
-        {mrp && (
-          <View style={styles.mrpRow}>
-            <ThemedText style={[styles.mrp, { color: mrpColor }]}>{mrp}</ThemedText>
-          </View>
-        )}
 
         <View style={styles.bottomRow}>
-          {quantity > 0 ? (
-            <View style={[styles.quantityControl, { backgroundColor: actionBtnBg }, isGrid && styles.gridQuantityControl]}>
-              <TouchableOpacity onPress={() => inStock && onRemove()} style={styles.qtyBtn}>
-                <Ionicons name="remove" size={isGrid ? 14 : 16} color={actionBtnIcon} />
-              </TouchableOpacity>
-              <ThemedText style={[styles.qtyText, { color: actionBtnIcon }, isGrid && styles.gridQtyText]}>{quantity}</ThemedText>
-              <TouchableOpacity onPress={() => inStock && onAdd()} style={styles.qtyBtn}>
-                <Ionicons name="add" size={isGrid ? 14 : 16} color={actionBtnIcon} />
-              </TouchableOpacity>
+          <View style={styles.priceColumn}>
+            <View style={[styles.priceRow, isGrid && styles.gridPriceRow]}>
+              <ThemedText style={[styles.price, isGrid && styles.gridPrice, { color: priceColor }]}>{price}</ThemedText>
             </View>
-          ) : (
-            <TouchableOpacity
-              style={[styles.addButton, { backgroundColor: actionBtnBg, shadowColor: actionBtnBg }, isGrid && styles.gridAddButton, !inStock && { backgroundColor: disabledBtnBg, shadowOpacity: 0 }]}
-              onPress={() => inStock && onAdd()}
-              disabled={!inStock}
-            >
-              <Ionicons name="add" size={isGrid ? 18 : 20} color={actionBtnIcon} />
-            </TouchableOpacity>
-          )}
+            {mrp && (
+              <View style={styles.mrpRow}>
+                <ThemedText style={[styles.mrp, { color: mrpColor }]}>{mrp}</ThemedText>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.actionColumn}>
+            {quantity > 0 ? (
+              <View style={[styles.quantityControl, { backgroundColor: actionBtnBg }, isGrid && styles.gridQuantityControl]}>
+                <TouchableOpacity onPress={() => inStock && onRemove()} style={styles.qtyBtn}>
+                  <Ionicons name="remove" size={isGrid ? 14 : 16} color={actionBtnIcon} />
+                </TouchableOpacity>
+                <ThemedText style={[styles.qtyText, { color: actionBtnIcon }, isGrid && styles.gridQtyText]}>{quantity}</ThemedText>
+                <TouchableOpacity onPress={() => inStock && onAdd()} style={styles.qtyBtn}>
+                  <Ionicons name="add" size={isGrid ? 14 : 16} color={actionBtnIcon} />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={[styles.addButton, { backgroundColor: actionBtnBg, shadowColor: actionBtnBg }, isGrid && styles.gridAddButton, !inStock && { backgroundColor: disabledBtnBg, shadowOpacity: 0 }]}
+                onPress={() => inStock && onAdd()}
+                disabled={!inStock}
+              >
+                <Ionicons name="add" size={isGrid ? 18 : 20} color={actionBtnIcon} />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       </View>
     </TouchableOpacity>
@@ -102,63 +121,28 @@ export default function ProductCard({ name, price, mrp, category, weight, emoji,
 const styles = StyleSheet.create({
   card: {
     width: 170, // Slightly wider to match Figma proportions
-    borderRadius: 12,
+    borderRadius: 24,
     borderWidth: 1,
     marginRight: 16,
-    overflow: 'hidden', // Ensures the image container respects the border radius
+    padding: 12,
   },
   imageContainer: {
-    height: 120,
+    height: 170,
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
+    borderRadius: 16,
+    overflow: 'hidden',
   },
   heartButton: {
     position: 'absolute',
-    top: 10,
-    right: 10,
+    top: 8,
+    right: 8,
     zIndex: 1,
-  },
-  emoji: {
-    fontSize: 64,
-  },
-  infoContainer: {
-    padding: 12,
-    flex: 1,
-  },
-  categoryLabel: {
-    fontSize: 11,
-    fontWeight: '800',
-    marginBottom: 6,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  name: {
-    fontSize: 15,
-    fontWeight: '800',
-    marginBottom: 4,
-    minHeight: 40,
-    lineHeight: 20,
-  },
-  weight: {
-    fontSize: 13,
-    marginBottom: 12,
-  },
-  bottomRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 'auto',
-  },
-  price: {
-    fontSize: 18,
-    fontWeight: '900', // Extra bold price
-  },
-  addButton: {
-    width: 36, // Large circular button
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     shadowOffset: { width: 0, height: 2 },
@@ -166,36 +150,136 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  gridHeartButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+  },
+  pillsContainer: {
+    position: 'absolute',
+    bottom: 8,
+    left: 8,
+    right: 8,
+    flexDirection: 'row',
+    gap: 6,
+  },
+  pill: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    flexShrink: 1,
+  },
+  pillText: {
+    fontSize: 9,
+    fontWeight: 'bold',
+  },
+  emoji: {
+    fontSize: 74,
+  },
+  gridEmoji: {
+    fontSize: 64,
+  },
+  infoContainer: {
+    paddingTop: 12,
+    flex: 1,
+  },
+  gridInfoContainer: {
+    paddingTop: 12,
+  },
+  name: {
+    fontSize: 14,
+    fontWeight: '800',
+    marginBottom: 8,
+    minHeight: 40,
+    lineHeight: 18,
+  },
+  gridName: {
+    fontSize: 13,
+    minHeight: 36,
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 'auto',
+  },
+  priceColumn: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  actionColumn: {
+    marginLeft: 8,
+    justifyContent: 'center',
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  gridPriceRow: {
+    marginBottom: 0,
+  },
+  price: {
+    fontSize: 16,
+    fontWeight: '900', // Extra bold price
+  },
+  gridPrice: {
+    fontSize: 14,
+  },
+  mrpRow: {
+    marginTop: 2,
+  },
+  mrp: {
+    fontSize: 11,
+    textDecorationLine: 'line-through',
+  },
+  addButton: {
+    width: 34, // Large circular button
+    height: 34,
+    borderRadius: 17,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  gridAddButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+  },
   quantityControl: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderRadius: 18, // Match Add button height
-    height: 36,
-    paddingHorizontal: 8,
-    minWidth: 80,
+    borderRadius: 17, // Match Add button height
+    height: 34,
+    paddingHorizontal: 6,
+    minWidth: 70,
+  },
+  gridQuantityControl: {
+    height: 30,
+    borderRadius: 15,
+    paddingHorizontal: 4,
+    minWidth: 64,
   },
   qtyBtn: {
     padding: 4,
   },
   qtyText: {
     fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: 14,
+  },
+  gridQtyText: {
+    fontSize: 12,
   },
   gridCard: {
     width: 'auto',
     marginRight: 0,
-    marginBottom: 16,
+    marginBottom: 20,
   },
   gridImageContainer: {
-    height: 110,
-  },
-  gridHeartButton: {
-    top: 8,
-    right: 8,
-  },
-  gridEmoji: {
-    fontSize: 54,
+    height: 150,
   },
   outOfStockOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -208,51 +292,5 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     fontSize: 10,
     fontWeight: 'bold',
-  },
-  gridInfoContainer: {
-    padding: 12,
-  },
-  gridCategoryLabel: {
-    fontSize: 10,
-    marginBottom: 4,
-  },
-  gridName: {
-    fontSize: 14,
-    minHeight: 36,
-  },
-  gridWeight: {
-    fontSize: 12,
-    marginBottom: 8,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  gridPriceRow: {
-    marginBottom: 0,
-  },
-  gridPrice: {
-    fontSize: 16,
-  },
-  mrpRow: {
-    marginBottom: 8,
-  },
-  mrp: {
-    fontSize: 11,
-    textDecorationLine: 'line-through',
-  },
-  gridQuantityControl: {
-    height: 32,
-    borderRadius: 16,
-    paddingHorizontal: 6,
-    minWidth: 70,
-  },
-  gridQtyText: {
-    fontSize: 13,
-  },
-  gridAddButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
   }
 });
