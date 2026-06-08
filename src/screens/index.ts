@@ -10,6 +10,7 @@ export { default as ProductListingScreen } from './ProductListing/ProductListing
 export { default as ProductDetailScreen } from './ProductDetail/ProductDetailScreen';
 export { default as LoginScreen } from './Login/LoginScreen';
 export { default as OtpScreen } from './Login/OtpScreen';
+export { default as DummyGoogleScreen } from './Login/DummyGoogleScreen';
 export { default as CheckoutScreen } from './Checkout/CheckoutScreen';
 export { default as OrderSuccessScreen } from './Checkout/OrderSuccessScreen';
 export { default as OrderStatusScreen } from './Orders/OrderStatusScreen';

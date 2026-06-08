@@ -1,15 +1,21 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Image } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedView, ThemedText, CustomButton } from '../../components';
 import { Colors, ThemeDimension, STRINGS } from '../../constants';
 import { useThemeColor } from '../../hooks';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../context';
 
 export default function LoginScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
+  const returnTo = route.params?.returnTo;
+
+  const { signup } = useAuth(); // for google mock
+
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isOtpLoading, setIsOtpLoading] = useState(false);
@@ -26,11 +32,7 @@ export default function LoginScreen() {
   const showError = hasInteracted && !isPhoneValid && phoneNumber.length > 0;
 
   const handleGoogleLogin = () => {
-    setIsGoogleLoading(true);
-    setTimeout(() => {
-      setIsGoogleLoading(false);
-      navigation.replace('Checkout');
-    }, 1500);
+    navigation.navigate('DummyGoogleScreen', { returnTo });
   };
 
   const handleSendOtp = () => {
@@ -38,13 +40,13 @@ export default function LoginScreen() {
       setIsOtpLoading(true);
       setTimeout(() => {
         setIsOtpLoading(false);
-        navigation.navigate('OtpScreen', { phoneNumber: `+91 ${phoneNumber}` });
+        // Pass returnTo parameter so OtpScreen knows where to go after verifying
+        navigation.navigate('OtpScreen', { phoneNumber: `+91 ${phoneNumber}`, returnTo });
       }, 1000);
     }
   };
 
   const onChangePhone = (text: string) => {
-    // Only allow digits
     const cleaned = text.replace(/[^0-9]/g, '');
     setPhoneNumber(cleaned);
     setHasInteracted(true);
@@ -52,17 +54,17 @@ export default function LoginScreen() {
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: bgColor }]}>
-      {/* Cart Protection Banner */}
-      <View style={[styles.banner, { backgroundColor: Colors.light.transparentGreen015 }]}>
-        <Ionicons name="information-circle" size={20} color={primaryColor} style={styles.bannerIcon} />
-        <ThemedText style={[styles.bannerText, { color: primaryColor }]}>{t(STRINGS.auth.cartProtection)}</ThemedText>
-      </View>
+      {returnTo === 'Checkout' && (
+        <View style={[styles.banner, { backgroundColor: Colors.light.transparentGreen015 }]}>
+          <Ionicons name="information-circle" size={20} color={primaryColor} style={styles.bannerIcon} />
+          <ThemedText style={[styles.bannerText, { color: primaryColor }]}>{t(STRINGS.auth.cartProtection)}</ThemedText>
+        </View>
+      )}
 
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={24} color={textColor} />
@@ -73,7 +75,6 @@ export default function LoginScreen() {
 
         <View style={styles.content}>
           
-          {/* Google Sign In */}
           <TouchableOpacity
             style={[styles.googleButton, { backgroundColor: Colors.light.white, borderColor }]}
             onPress={handleGoogleLogin}
@@ -89,14 +90,12 @@ export default function LoginScreen() {
             )}
           </TouchableOpacity>
 
-          {/* Divider */}
           <View style={styles.dividerContainer}>
             <View style={[styles.dividerLine, { backgroundColor: borderColor }]} />
             <ThemedText style={styles.dividerText}>{t(STRINGS.auth.or)}</ThemedText>
             <View style={[styles.dividerLine, { backgroundColor: borderColor }]} />
           </View>
 
-          {/* Phone Number Section */}
           <ThemedText style={styles.sectionTitle}>{t(STRINGS.auth.loginWithMobile)}</ThemedText>
 
           <View style={[styles.phoneInputContainer, { borderColor: showError ? Colors.light.red600 : borderColor, backgroundColor: inputBgColor }]}>
@@ -127,7 +126,6 @@ export default function LoginScreen() {
           />
         </View>
 
-        {/* Bottom Text */}
         <View style={styles.footer}>
           <ThemedText style={styles.footerText} useSecondaryText>
             {t(STRINGS.auth.termsText)}
@@ -165,7 +163,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingTop: Platform.OS === 'ios' ? 50 : 30,
+    paddingBottom: 16,
   },
   backBtn: {
     padding: 4,
