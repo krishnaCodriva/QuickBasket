@@ -52,7 +52,7 @@ export default function BannerCarousel({ banners = DEFAULT_BANNERS, onBannerPres
         decelerationRate="fast"
         disableIntervalMomentum={true}
         contentContainerStyle={{ paddingHorizontal: BANNER_PADDING }}
-        onMomentumScrollEnd={handleScroll}
+        onScroll={handleScroll}
         scrollEventThrottle={16}
       >
         {banners.map((banner, index) => (
