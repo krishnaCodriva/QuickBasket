@@ -9,6 +9,7 @@ import ThemedInput from '../../components/ThemedInput';
 import { useThemeColor } from '../../hooks';
 import { useCart } from '../../context';
 import { MOCK_PRODUCTS } from '../../data/mockData';
+import { useTranslation } from 'react-i18next';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 48) / 2; // 2 columns, padding 16 on sides and 16 between columns
@@ -16,9 +17,11 @@ const CARD_WIDTH = (width - 48) / 2; // 2 columns, padding 16 on sides and 16 be
 export default function ProductListingScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
+  const { t } = useTranslation();
   const { category = STRINGS.productListing.allProducts, query = '' } = route.params || {};
 
   const colorScheme = useColorScheme() ?? 'light';
+  const isDark = colorScheme === 'dark';
 
   const primaryColor = useThemeColor({}, 'primary');
   const iconColor = useThemeColor({ light: Colors.light.black, dark: Colors.light.white }, 'primaryText' as any);
@@ -47,7 +50,7 @@ export default function ProductListingScreen() {
   const [activeSort, setActiveSort] = useState(STRINGS.productListing.sortOptions.relevance);
   const [inStockOnly, setInStockOnly] = useState(false);
   const [outOfStockOnly, setOutOfStockOnly] = useState(false);
-
+  
   const [filterPrice, setFilterPrice] = useState<string | null>(null);
   const [filterCategory, setFilterCategory] = useState<string | null>(category === STRINGS.productListing.allProducts || category === 'Special Offers' ? null : category);
   const [filterTag, setFilterTag] = useState<string | null>(null);
@@ -143,11 +146,11 @@ export default function ProductListingScreen() {
       <TouchableOpacity style={styles.headerButton} onPress={() => navigation.goBack()}>
         <Ionicons name="arrow-back" size={24} color={iconColor} />
       </TouchableOpacity>
-      <ThemedText style={styles.headerTitle} numberOfLines={1}>{filterCategory || category}</ThemedText>
+      <ThemedText style={styles.headerTitle} numberOfLines={1}>{filterCategory ? t(filterCategory) : t(category)}</ThemedText>
       <TouchableOpacity style={styles.headerButton} onPress={() => navigation.navigate('Cart')}>
         <Ionicons name="cart-outline" size={26} color={iconColor} />
         {totalItems > 0 && (
-          <View style={styles.badge}>
+          <View style={[styles.badge, { borderColor: bgColor }]}>
             <ThemedText style={styles.badgeText}>{totalItems}</ThemedText>
           </View>
         )}
@@ -157,7 +160,7 @@ export default function ProductListingScreen() {
 
   const renderSearchBar = () => (
     <ThemedInput
-      placeholder={STRINGS.productListing.searchPlaceholder}
+      placeholder={t(STRINGS.productListing.searchPlaceholder)}
       value={searchQuery}
       onChangeText={(text) => {
         setSearchQuery(text);
@@ -179,7 +182,7 @@ export default function ProductListingScreen() {
 
   const renderSortFilterRow = () => (
     <View style={styles.sortFilterRow}>
-      <ThemedText style={styles.resultsText}>{STRINGS.productListing.showingResults}{products.length}{STRINGS.productListing.resultsText}</ThemedText>
+      <ThemedText style={styles.resultsText}>{t(STRINGS.productListing.showingResults)}{products.length}{t(STRINGS.productListing.resultsText)}</ThemedText>
       <View style={styles.actionsRow}>
         <TouchableOpacity
           style={[styles.actionBtn]}
@@ -192,14 +195,14 @@ export default function ProductListingScreen() {
           onPress={() => setSortModalVisible(true)}
         >
           <Ionicons name="swap-vertical" size={16} color={activeSort !== STRINGS.productListing.sortOptions.relevance ? primaryColor : iconColor} />
-          <ThemedText style={[styles.actionBtnText, activeSort !== STRINGS.productListing.sortOptions.relevance && { color: primaryColor }]}>{STRINGS.productListing.sortBtn}</ThemedText>
+          <ThemedText style={[styles.actionBtnText, activeSort !== STRINGS.productListing.sortOptions.relevance && { color: primaryColor }]}>{t(STRINGS.productListing.sortBtn)}</ThemedText>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.actionBtn, (inStockOnly || outOfStockOnly) && { borderColor: primaryColor, backgroundColor: actionBtnBg }]}
           onPress={() => setFilterModalVisible(true)}
         >
           <Ionicons name="options-outline" size={16} color={(inStockOnly || outOfStockOnly) ? primaryColor : iconColor} />
-          <ThemedText style={[styles.actionBtnText, (inStockOnly || outOfStockOnly) && { color: primaryColor }]}>{STRINGS.productListing.filtersBtn}</ThemedText>
+          <ThemedText style={[styles.actionBtnText, (inStockOnly || outOfStockOnly) && { color: primaryColor }]}>{t(STRINGS.productListing.filtersBtn)}</ThemedText>
         </TouchableOpacity>
       </View>
     </View>
@@ -226,8 +229,8 @@ export default function ProductListingScreen() {
       <ProductCard
         id={item.id}
         name={item.name}
-        price={`$${item.price.toFixed(2)}`}
-        mrp={`$${item.mrp.toFixed(2)}`}
+        price={`₹${item.price.toFixed(2)}`}
+        mrp={`₹${item.mrp.toFixed(2)}`}
         category={item.category}
         weight={item.weight}
         emoji={item.emoji}
@@ -254,9 +257,9 @@ export default function ProductListingScreen() {
     return (
       <View style={styles.emptyContainer}>
         <Ionicons name="search" size={64} color={Colors.light.gray300} />
-        <ThemedText style={styles.emptyTitle}>{STRINGS.productListing.noProducts}</ThemedText>
+        <ThemedText style={styles.emptyTitle}>{t(STRINGS.productListing.noProducts)}</ThemedText>
         <CustomButton
-          title={STRINGS.productListing.clearFilters}
+          title={t(STRINGS.productListing.clearFilters)}
           type="primary"
           onPress={() => {
             setSearchQuery('');
@@ -296,11 +299,11 @@ export default function ProductListingScreen() {
       {totalItems > 0 && (
         <View style={styles.cartSummary}>
           <View>
-            <ThemedText style={styles.cartCountText}>{totalItems} {STRINGS.productListing.items}</ThemedText>
-            <ThemedText style={styles.cartTotalText}>${subtotal.toFixed(2)}</ThemedText>
+            <ThemedText style={styles.cartCountText}>{totalItems} {t(STRINGS.productListing.items)}</ThemedText>
+            <ThemedText style={styles.cartTotalText}>₹{subtotal.toFixed(2)}</ThemedText>
           </View>
           <TouchableOpacity style={styles.viewCartBtn} onPress={() => navigation.navigate('Cart')}>
-            <ThemedText style={styles.viewCartText}>{STRINGS.productListing.viewCart}</ThemedText>
+            <ThemedText style={styles.viewCartText}>{t(STRINGS.productListing.viewCart)}</ThemedText>
             <Ionicons name="chevron-forward" size={16} color={Colors.light.white} />
           </TouchableOpacity>
         </View>
@@ -311,7 +314,7 @@ export default function ProductListingScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: modalBgColor }]}>
             <View style={styles.modalHeader}>
-              <ThemedText type="subtitle">{STRINGS.productListing.sortBy}</ThemedText>
+              <ThemedText type="subtitle">{t(STRINGS.productListing.sortBy)}</ThemedText>
               <TouchableOpacity onPress={() => setSortModalVisible(false)}>
                 <Ionicons name="close" size={24} color={iconColor} />
               </TouchableOpacity>
@@ -329,7 +332,7 @@ export default function ProductListingScreen() {
                 }}
               >
                 <ThemedText style={[styles.modalOptionText, activeSort === option && { color: primaryColor, fontWeight: 'bold' }]}>
-                  {option}
+                  {t(option)}
                 </ThemedText>
                 {activeSort === option && <Ionicons name="checkmark" size={20} color={primaryColor} />}
               </TouchableOpacity>
@@ -385,9 +388,9 @@ const styles = StyleSheet.create({
     top: 0,
     right: 0,
     backgroundColor: Colors.light.red600,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1.5,
@@ -397,6 +400,7 @@ const styles = StyleSheet.create({
   badgeText: {
     color: Colors.light.white,
     fontSize: 10,
+    lineHeight: 12,
     fontWeight: 'bold',
     includeFontPadding: false,
     textAlignVertical: 'center',

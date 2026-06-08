@@ -4,11 +4,10 @@ import { ThemedText } from '../ThemedText';
 import { Colors } from '../../constants';
 import { useThemeColor } from '../../hooks';
 
-type Tag = { id: string; label: string };
 type Props = {
-  tags: Tag[];
+  tags: string[];
   selectedTag: string;
-  onSelectTag: (id: string) => void;
+  onSelectTag: (tag: string) => void;
 };
 
 export default function QuickFilters({ tags, selectedTag, onSelectTag }: Props) {
@@ -19,10 +18,10 @@ export default function QuickFilters({ tags, selectedTag, onSelectTag }: Props) 
     <View style={styles.container}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         {tags.map((tag) => {
-          const isSelected = tag.id === selectedTag;
+          const isSelected = tag === selectedTag;
           return (
             <TouchableOpacity
-              key={tag.id}
+              key={tag}
               style={[
                 styles.tag,
                 {
@@ -30,7 +29,7 @@ export default function QuickFilters({ tags, selectedTag, onSelectTag }: Props) 
                   borderColor: primaryColor,
                 },
               ]}
-              onPress={() => onSelectTag(tag.id)}
+              onPress={() => onSelectTag(tag)}
             >
               <ThemedText
                 style={[
@@ -38,7 +37,7 @@ export default function QuickFilters({ tags, selectedTag, onSelectTag }: Props) 
                   { color: isSelected ? Colors.light.white : primaryColor },
                 ]}
               >
-                {tag.label}
+                {tag}
               </ThemedText>
             </TouchableOpacity>
           );

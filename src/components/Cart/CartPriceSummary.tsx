@@ -7,25 +7,33 @@ import { useTranslation } from 'react-i18next';
 
 interface CartPriceSummaryProps {
   subtotal: number;
+  discount?: number;
   deliveryCharge: number;
   taxes: number;
   totalPayable: number;
 }
 
-export default function CartPriceSummary({ subtotal, deliveryCharge, taxes, totalPayable }: CartPriceSummaryProps) {
+export default function CartPriceSummary({ subtotal, discount = 0, deliveryCharge, taxes, totalPayable }: CartPriceSummaryProps) {
   const { t } = useTranslation();
   const primaryColor = useThemeColor({}, 'primary');
   const textColor = useThemeColor({}, 'primaryText');
   const separatorColor = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray300 }, 'gray200' as any);
 
   return (
-    <View style={styles.summaryContainer}>
+    <View style={[styles.summaryContainer, { borderColor: separatorColor }]}>
       <ThemedText type="subtitle" style={styles.summaryTitle}>{t(STRINGS.cartScreen.priceSummary)}</ThemedText>
       
       <View style={styles.summaryRow}>
         <ThemedText useSecondaryText>{t(STRINGS.cartScreen.itemSubtotal)}</ThemedText>
         <ThemedText>₹{subtotal.toFixed(2)}</ThemedText>
       </View>
+
+      {discount > 0 && (
+        <View style={styles.summaryRow}>
+          <ThemedText useSecondaryText>{t(STRINGS.cartScreen.discounts)}</ThemedText>
+          <ThemedText style={{ color: Colors.light.success || primaryColor }}>-₹{discount.toFixed(2)}</ThemedText>
+        </View>
+      )}
       
       <View style={styles.summaryRow}>
         <ThemedText useSecondaryText>{t(STRINGS.cartScreen.deliveryCharges)}</ThemedText>

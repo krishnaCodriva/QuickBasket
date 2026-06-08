@@ -12,11 +12,12 @@ const DELETE_BTN_WIDTH = 80;
 
 interface CartItemCardProps {
   item: any;
-  onUpdateQuantity: (id: string, delta: number) => void;
-  onRemove: (id: string) => void;
+  onUpdateQuantity?: (id: string, delta: number) => void;
+  onRemove?: (id: string) => void;
+  readOnly?: boolean;
 }
 
-export default function CartItemCard({ item, onUpdateQuantity, onRemove }: CartItemCardProps) {
+export default function CartItemCard({ item, onUpdateQuantity, onRemove, readOnly = false }: CartItemCardProps) {
   const { t } = useTranslation();
   const cardColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.secondaryBackground }, 'secondaryBackground');
   const primaryColor = useThemeColor({}, 'primary');
@@ -33,6 +34,7 @@ export default function CartItemCard({ item, onUpdateQuantity, onRemove }: CartI
         snapToInterval={SCREEN_WIDTH}
         snapToAlignment="center"
         bounces={false}
+        scrollEnabled={!readOnly}
       >
         <View style={[styles.cartItemCard, { width: SCREEN_WIDTH, backgroundColor: cardColor, borderBottomColor: separatorColor }]}>
           <View style={[styles.itemImageContainer, { backgroundColor: imageBgColor }]}>
@@ -52,19 +54,23 @@ export default function CartItemCard({ item, onUpdateQuantity, onRemove }: CartI
           </View>
 
           <View style={styles.quantityContainer}>
-            <QuantitySelector
-              quantity={item.quantity}
-              onDecrease={() => onUpdateQuantity(item.id, -1)}
-              onIncrease={() => onUpdateQuantity(item.id, 1)}
-              disabled={!item.inStock}
-              size="small"
-            />
+            {readOnly ? (
+              <ThemedText style={{ fontWeight: 'bold', fontSize: 16 }}>x{item.quantity}</ThemedText>
+            ) : (
+              <QuantitySelector
+                quantity={item.quantity}
+                onDecrease={() => onUpdateQuantity && onUpdateQuantity(item.id, -1)}
+                onIncrease={() => onUpdateQuantity && onUpdateQuantity(item.id, 1)}
+                disabled={!item.inStock}
+                size="small"
+              />
+            )}
           </View>
         </View>
 
         <TouchableOpacity
           style={[styles.deleteAction, { width: DELETE_BTN_WIDTH, backgroundColor: dangerColor }]}
-          onPress={() => onRemove(item.id)}
+          onPress={() => onRemove && onRemove(item.id)}
         >
           <Feather name="trash-2" size={24} color="#FFF" />
         </TouchableOpacity>

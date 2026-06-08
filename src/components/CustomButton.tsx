@@ -26,7 +26,7 @@ export function CustomButton({
   const secondaryTextColor = useThemeColor({ light: Colors.light.gray900, dark: Colors.light.white }, 'primaryText' as any);
   const borderColor = useThemeColor({}, 'gray300' as any);
 
-  const buttonStyle = isPrimary ? styles.primaryButton : [styles.secondaryButton, { borderColor: borderColor }];
+  const buttonStyle = isPrimary ? [styles.primaryButton, { backgroundColor: primaryColor }] : [styles.secondaryButton, { borderColor: borderColor }];
   const textStyle = isPrimary ? styles.primaryButtonText : [styles.secondaryButtonText, { color: secondaryTextColor }];
 
   return (

@@ -11,5 +11,6 @@ export { default as ProductDetailScreen } from './ProductDetail/ProductDetailScr
 export { default as LoginScreen } from './Login/LoginScreen';
 export { default as OtpScreen } from './Login/OtpScreen';
 export { default as CheckoutScreen } from './Checkout/CheckoutScreen';
-export { default as OrderConfirmationScreen } from './Checkout/OrderConfirmationScreen';
-export { default as OrderTrackingScreen } from './Checkout/OrderTrackingScreen';
+export { default as OrderSuccessScreen } from './Checkout/OrderSuccessScreen';
+export { default as OrderStatusScreen } from './Orders/OrderStatusScreen';
+export { default as InvoiceScreen } from './Orders/InvoiceScreen';
