@@ -108,6 +108,12 @@ export default function LocationScreen({ navigation }: Props) {
     navigation.navigate('ManualLocation'); 
   };
 
+  const handleSkip = () => {
+    // Navigate to Home without saving location to AsyncStorage
+    // This ensures SplashScreen will redirect here again next time
+    navigation.navigate('HomeTab');
+  };
+
   const handleBack = () => {
     if (navigation.canGoBack()) {
       navigation.goBack();
@@ -157,7 +163,7 @@ export default function LocationScreen({ navigation }: Props) {
 
       <View style={styles.bottomContainer}>
         <PrimaryButton title={t(STRINGS.locationScreen.enableButton)} onPress={enableLocation} />
-        <TouchableOpacity style={styles.textLinkButton} onPress={handleManualAddress}>
+        <TouchableOpacity style={styles.textLinkButton} onPress={handleSkip}>
           <ThemedText style={styles.textLink}>{t(STRINGS.locationScreen.chooseManuallyButton)}</ThemedText>
         </TouchableOpacity>
       </View>
