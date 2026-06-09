@@ -54,6 +54,8 @@ export const translations = {
       failedTitle: 'Location Fetch Failed',
       failedSubtitle: 'We couldn\'t pinpoint your current location. This helps us show accurate inventory and delivery options in your area.',
       retryButton: 'Retry',
+      currentAddress: 'Current Address',
+      searchNewLocation: 'Search New Location',
     },
     homeScreen: {
       welcomeTitle: 'Welcome to QuickBasket!',
@@ -327,6 +329,8 @@ export const translations = {
       failedTitle: 'लोकेशन प्राप्त नहीं हो सकी',
       failedSubtitle: 'हम आपकी वर्तमान लोकेशन नहीं ढूंढ पाए।',
       retryButton: 'पुनः प्रयास करें',
+      currentAddress: 'वर्तमान पता',
+      searchNewLocation: 'नया स्थान खोजें',
     },
     homeScreen: {
       welcomeTitle: 'क्विकबास्केट में आपका स्वागत है!',
@@ -597,9 +601,10 @@ export const translations = {
       openSettingsButton: 'Settings Kholen',
       enterAddressButton: 'Address Manually Enter Karein',
 
-      failedTitle: 'Location Nahi Mili',
       failedSubtitle: 'Hum aapki current location nahi dhoondh paaye.',
       retryButton: 'Dobara Try Karein',
+      currentAddress: 'Current Address',
+      searchNewLocation: 'Naya Location Search Karein',
     },
     homeScreen: {
       welcomeTitle: 'QuickBasket Mein Swagat Hai!',
@@ -872,6 +877,8 @@ export const translations = {
       failedTitle: 'ലൊക്കേഷൻ ലഭിച്ചില്ല',
       failedSubtitle: 'നിങ്ങളുടെ നിലവിലെ ലൊക്കേഷൻ കണ്ടെത്താനായില്ല.',
       retryButton: 'വീണ്ടും ശ്രമിക്കുക',
+      currentAddress: 'നിലവിലെ വിലാസം',
+      searchNewLocation: 'പുതിയ സ്ഥലം തിരയുക',
     },
     homeScreen: {
       welcomeTitle: 'ക്വിക് ബാസ്കറ്റിലേക്ക് സ്വാഗതം!',

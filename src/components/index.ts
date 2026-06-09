@@ -11,3 +11,4 @@ export { default as CartItemCard } from './Cart/CartItemCard';
 export { default as CartPriceSummary } from './Cart/CartPriceSummary';
 export { default as CartWarningBanner } from './Cart/CartWarningBanner';
 export { default as ImageCategoryCard } from './Categories/ImageCategoryCard';
+export * from './TranslatedText';
