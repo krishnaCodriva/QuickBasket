@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, ScrollView, TouchableOpacity, Image, Modal, TouchableWithoutFeedback } from 'react-native';
+const fs = require('fs');
+const path = './src/screens/Profile/ProfileScreen.tsx';
+
+const code = `import React from 'react';
+import { StyleSheet, View, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ThemedView, ThemedText, CustomButton } from '../../components';
+import { ThemedView, ThemedText } from '../../components';
 import { useTranslation } from 'react-i18next';
 import { Colors, STRINGS } from '../../constants';
 import { useThemeColor } from '../../hooks';
@@ -13,7 +16,6 @@ export default function ProfileScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const { user, logout } = useAuth();
-  const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
 
   const cardColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.gray100 }, 'secondaryBackground' as any);
   const borderColor = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray300 }, 'gray200' as any);
@@ -22,12 +24,7 @@ export default function ProfileScreen() {
   const dangerColor = useThemeColor({ light: Colors.light.red600, dark: Colors.dark.error }, 'error' as any);
   const screenBg = useThemeColor({}, 'primaryBackground' as any);
 
-  const handleLogoutPress = () => {
-    setIsLogoutModalVisible(true);
-  };
-
-  const confirmLogout = () => {
-    setIsLogoutModalVisible(false);
+  const handleLogout = () => {
     logout();
     navigation.reset({
       index: 0,
@@ -111,53 +108,12 @@ export default function ProfileScreen() {
           </View>
 
           {/* Logout Button */}
-          <TouchableOpacity style={[styles.logoutBtn, { backgroundColor: cardColor, borderColor }]} onPress={handleLogoutPress}>
+          <TouchableOpacity style={[styles.logoutBtn, { backgroundColor: cardColor, borderColor }]} onPress={handleLogout}>
             <Feather name="log-out" size={20} color={dangerColor} style={{ marginRight: 12 }} />
             <ThemedText style={[styles.logoutText, { color: dangerColor }]}>{t(STRINGS.profileScreen.logout)}</ThemedText>
           </TouchableOpacity>
 
         </ScrollView>
-
-      {/* Logout Confirmation Modal */}
-      <Modal
-        visible={isLogoutModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setIsLogoutModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <TouchableOpacity 
-            style={{ flex: 1 }} 
-            activeOpacity={1} 
-            onPress={() => setIsLogoutModalVisible(false)}
-          />
-          <View style={[styles.modalContent, { backgroundColor: cardColor }]}>
-            <View style={styles.modalHandle} />
-            
-            <View style={[styles.modalIconContainer, { backgroundColor: dangerColor + '20' }]}>
-              <Feather name="log-out" size={28} color={dangerColor} />
-            </View>
-            
-            <ThemedText type="title" style={styles.modalTitle}>{t(STRINGS.profileScreen.logout)}</ThemedText>
-            <ThemedText useSecondaryText style={styles.modalSubtitle}>
-              {t(STRINGS.profileScreen.logoutConfirmDesc as any)}
-            </ThemedText>
-            
-            <CustomButton 
-              title={t(STRINGS.profileScreen.logout)} 
-              onPress={confirmLogout} 
-              style={[styles.modalBtn, { backgroundColor: Colors.light.red600 }]} // Always red as per screenshot
-            />
-            <CustomButton 
-              title={t(STRINGS.profileScreen.cancel as any)} 
-              type="secondary"
-              onPress={() => setIsLogoutModalVisible(false)} 
-              style={styles.modalBtn}
-            />
-          </View>
-        </View>
-      </Modal>
-
       </SafeAreaView>
     </ThemedView>
   );
@@ -298,50 +254,9 @@ const styles = StyleSheet.create({
   logoutText: {
     fontSize: 16,
     fontWeight: '600',
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    alignItems: 'center',
-    paddingBottom: 40,
-    width: '100%',
-  },
-  modalHandle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#D1D5DB',
-    marginBottom: 24,
-  },
-  modalIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  modalSubtitle: {
-    textAlign: 'center',
-    fontSize: 15,
-    marginBottom: 32,
-    paddingHorizontal: 20,
-    lineHeight: 22,
-  },
-  modalBtn: {
-    width: '100%',
-    marginBottom: 12,
   }
 });
+`;
 
+fs.writeFileSync(path, code, 'utf8');
+console.log('ProfileScreen.tsx rewritten');

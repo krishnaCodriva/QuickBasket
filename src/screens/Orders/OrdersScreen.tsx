@@ -18,10 +18,12 @@ export default function OrdersScreen() {
   const borderColor = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray300 }, 'gray200' as any);
   const primaryColor = useThemeColor({}, 'primary');
   const iconColor = useThemeColor({ light: Colors.light.black, dark: Colors.light.white }, 'primaryText' as any);
+  const errorColor = useThemeColor({ light: Colors.light.red600, dark: Colors.dark.error }, 'error' as any);
+  const successColor = useThemeColor({ light: Colors.light.success, dark: Colors.dark.success }, 'success' as any);
 
   const getStatusColor = (status: string) => {
-    if (status === 'Delivered') return '#22c55e'; // Green
-    if (status === 'Cancelled') return '#ef4444'; // Red
+    if (status === 'Delivered') return successColor;
+    if (status === 'Cancelled') return errorColor;
     return primaryColor; // Active color for processing, packed, out for delivery
   };
 
@@ -95,9 +97,9 @@ export default function OrdersScreen() {
           </View>
           <View style={styles.emptyContainer}>
             <Feather name="shopping-bag" size={64} color={borderColor} style={{ marginBottom: 16 }} />
-            <ThemedText style={{ fontSize: 18, marginBottom: 8 }}>No Orders Yet</ThemedText>
+            <ThemedText style={{ fontSize: 18, marginBottom: 8 }}>{t(STRINGS.ordersScreen.noOrders)}</ThemedText>
             <ThemedText useSecondaryText style={{ textAlign: 'center', marginBottom: 24 }}>
-              Looks like you haven't placed any orders yet.
+              {t(STRINGS.ordersScreen.noOrdersSub)}
             </ThemedText>
             <CustomButton 
               title={t(STRINGS.cartScreen.startShopping)} 

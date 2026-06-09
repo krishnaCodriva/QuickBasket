@@ -56,6 +56,7 @@ export default function CheckoutScreen() {
   const borderColor = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray300 }, 'gray200' as any);
   const iconColor = useThemeColor({ light: Colors.light.black, dark: Colors.light.white }, 'primaryText' as any);
   const modalBgColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.secondaryBackground }, 'secondaryBackground' as any);
+  const errorColor = useThemeColor({ light: Colors.light.red600, dark: Colors.dark.error }, 'error' as any);
 
   const discount = subtotal > 0 ? 5 : 0; // Flat ₹5 mock discount for any order
   const deliveryCharge = subtotal > 50 ? 0 : 5.99;
@@ -325,7 +326,7 @@ export default function CheckoutScreen() {
                     <Feather name="edit-2" size={18} color={iconColor} />
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => deleteAddress(addr.id)} style={{ padding: 8 }}>
-                    <Feather name="trash-2" size={18} color="#ef4444" />
+                    <Feather name="trash-2" size={18} color={errorColor} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -598,7 +599,6 @@ const styles = StyleSheet.create({
   },
   saveAddressBtn: {
     marginTop: 12,
-    backgroundColor: '#0f9b58', // Green background
     borderRadius: 12,
     paddingVertical: 14,
   },

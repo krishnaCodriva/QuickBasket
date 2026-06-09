@@ -1,6 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { SplashScreen, LocationScreen, ManualLocationScreen, ProductListingScreen, ProductDetailScreen, CartScreen, LoginScreen, CheckoutScreen, OtpScreen, DummyGoogleScreen, OrderSuccessScreen, OrderStatusScreen, InvoiceScreen } from '../screens';
+import { SplashScreen, LocationScreen, ManualLocationScreen, ProductListingScreen, ProductDetailScreen, CartScreen, LoginScreen, CheckoutScreen, OtpScreen, DummyGoogleScreen, OrderSuccessScreen, OrderStatusScreen, InvoiceScreen, EditProfileScreen } from '../screens';
 import TabNavigator from './TabNavigator';
 import { useThemeColor } from "../hooks";
 
@@ -19,6 +19,7 @@ export type RootStackParamList = {
   OrderSuccess: { txId: string };
   OrderStatus: { orderId: string };
   Invoice: { orderId: string };
+  EditProfile: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -60,6 +61,7 @@ export default function AppNavigator() {
       <Stack.Screen name="OrderSuccess" component={OrderSuccessScreen} />
       <Stack.Screen name="OrderStatus" component={OrderStatusScreen} />
       <Stack.Screen name="Invoice" component={InvoiceScreen} />
+      <Stack.Screen name="EditProfile" component={EditProfileScreen} />
     </Stack.Navigator>
   );
 }
