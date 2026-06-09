@@ -22,6 +22,8 @@ export default function OrderStatusScreen() {
   const borderColor = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray300 }, 'gray200' as any);
   const primaryColor = useThemeColor({}, 'primary');
   const iconColor = useThemeColor({ light: Colors.light.black, dark: Colors.light.white }, 'primaryText' as any);
+  const errorColor = useThemeColor({ light: Colors.light.error, dark: Colors.dark.error }, 'error' as any);
+  const successColor = useThemeColor({ light: Colors.light.success, dark: Colors.dark.success }, 'success' as any);
 
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -71,9 +73,9 @@ export default function OrderStatusScreen() {
       return (
         <View style={styles.timelineContainer}>
           <View style={styles.timelineStep}>
-            <View style={[styles.timelineDot, { backgroundColor: '#ef4444', borderColor: '#ef4444' }]} />
+            <View style={[styles.timelineDot, { backgroundColor: errorColor, borderColor: errorColor }]} />
             <View style={styles.timelineTextContainer}>
-              <ThemedText style={[styles.timelineTitle, { color: '#ef4444' }]}>{t(STRINGS.ordersScreen.status.cancelled)}</ThemedText>
+              <ThemedText style={[styles.timelineTitle, { color: errorColor }]}>{t(STRINGS.ordersScreen.status.cancelled)}</ThemedText>
             </View>
           </View>
         </View>
@@ -187,7 +189,7 @@ export default function OrderStatusScreen() {
             <View style={[styles.card, { backgroundColor: cardColor, borderColor }]}>
               <ThemedText type="subtitle" style={styles.cardTitle}>{t(STRINGS.checkoutScreen.total)}</ThemedText>
               <View style={styles.amountRow}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.itemSubtotal)}</ThemedText><ThemedText>₹{order.subtotal?.toFixed(2)}</ThemedText></View>
-              {order.discount > 0 && <View style={styles.amountRow}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.discounts)}</ThemedText><ThemedText style={{ color: '#22c55e' }}>-₹{order.discount?.toFixed(2)}</ThemedText></View>}
+              {order.discount > 0 && <View style={styles.amountRow}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.discounts)}</ThemedText><ThemedText style={{ color: successColor }}>-₹{order.discount?.toFixed(2)}</ThemedText></View>}
               <View style={styles.amountRow}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.deliveryCharges)}</ThemedText><ThemedText>₹{order.deliveryCharge?.toFixed(2)}</ThemedText></View>
               <View style={styles.amountRow}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.taxes)}</ThemedText><ThemedText>₹{order.taxes?.toFixed(2)}</ThemedText></View>
               <View style={[styles.amountRow, { borderTopWidth: 1, borderTopColor: borderColor, paddingTop: 12, marginTop: 12 }]}><ThemedText style={{ fontWeight: 'bold', fontSize: 16 }}>{t(STRINGS.cartScreen.totalPayable)}</ThemedText><ThemedText style={{ fontWeight: 'bold', fontSize: 16 }}>₹{order.totalPayable?.toFixed(2)}</ThemedText></View>

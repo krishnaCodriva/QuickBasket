@@ -18,11 +18,13 @@ export default function OrdersScreen() {
   const borderColor = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray300 }, 'gray200' as any);
   const primaryColor = useThemeColor({}, 'primary');
   const iconColor = useThemeColor({ light: Colors.light.black, dark: Colors.light.white }, 'primaryText' as any);
+  const errorColor = useThemeColor({ light: Colors.light.error, dark: Colors.dark.error }, 'error' as any);
+  const successColor = useThemeColor({ light: Colors.light.success, dark: Colors.dark.success }, 'success' as any);
 
   const getStatusColor = (status: string) => {
-    if (status === 'Delivered') return '#22c55e'; // Green
-    if (status === 'Cancelled') return '#ef4444'; // Red
-    return primaryColor; // Active color for processing, packed, out for delivery
+    if (status === 'Delivered') return successColor;
+    if (status === 'Cancelled') return errorColor;
+    return primaryColor; // use existing primaryColor
   };
 
   const getTranslatedStatus = (status: string) => {

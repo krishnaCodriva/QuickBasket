@@ -1,13 +1,16 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { STRINGS } from '../../constants';
 import { ThemedText } from '../../components/ThemedText';
 import { ThemedView } from '../../components/ThemedView';
 
 export default function OrderTrackingScreen({ route, navigation }: any) {
+  const { t } = useTranslation();
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title">Order Tracking</ThemedText>
-      <ThemedText style={{ marginTop: 10 }}>Track your order here.</ThemedText>
+      <ThemedText type="title">{t(STRINGS.orderTrackingScreen.title)}</ThemedText>
+      <ThemedText style={{ marginTop: 10 }}>{t(STRINGS.orderTrackingScreen.subtitle)}</ThemedText>
     </ThemedView>
   );
 }

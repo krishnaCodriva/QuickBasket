@@ -274,10 +274,24 @@ export const translations = {
       error: 'Error',
       companyName: 'QuickBasket Ltd.',
       computerGenerated: 'This is a computer generated invoice and does not require a physical signature.'
+    },
+    orderTrackingScreen: {
+      title: 'Order Tracking',
+      subtitle: 'Track your order here.',
+    },
+    manualLocationScreen: {
+      searchPlaceholder: 'Search for area, street, city...',
+      noResults: 'No results found',
+      useCurrentLocation: 'Use my current location',
+    },
+    profileScreen: {
+      comingSoon: 'Profile Coming Soon',
     }
   },
+
   // You can easily add more languages here later:
   // es: { common: { ... }, navigation: { ... } }
+
   hi: {
     common: {
       appName: 'क्विकबास्केट',
@@ -550,6 +564,18 @@ export const translations = {
       error: 'त्रुटि',
       companyName: 'क्विकबास्केट लिमिटेड',
       computerGenerated: 'यह कंप्यूटर द्वारा तैयार किया गया चालान है और इसके लिए भौतिक हस्ताक्षर की आवश्यकता नहीं है।'
+    },
+    orderTrackingScreen: {
+      title: 'ऑर्डर ट्रैकिंग',
+      subtitle: 'अपना ऑर्डर यहां ट्रैक करें।',
+    },
+    manualLocationScreen: {
+      searchPlaceholder: 'क्षेत्र, सड़क, शहर खोजें...',
+      noResults: 'कोई परिणाम नहीं मिला',
+      useCurrentLocation: 'मेरे वर्तमान स्थान का उपयोग करें',
+    },
+    profileScreen: {
+      comingSoon: 'प्रोफ़ाइल जल्द ही आ रही है',
     }
   },
 
@@ -826,6 +852,8 @@ export const translations = {
     }
   },
 
+
+
   ml: {
     common: {
       appName: 'ക്വിക് ബാസ്കറ്റ്',
@@ -1097,7 +1125,8 @@ export const translations = {
       error: 'പിശക്',
       companyName: 'ക്വിക് ബാസ്കറ്റ് ലിമിറ്റഡ്',
       computerGenerated: 'ഇതൊരു കമ്പ്യൂട്ടർ നിർമ്മിത ഇൻവോയ്സാണ്, ഇതിന് നേരിട്ടുള്ള ഒപ്പ് ആവശ്യമില്ല.'
-    }
+    },
+
   }
 };
 

@@ -104,7 +104,7 @@ export default function OtpScreen() {
       if (returnTo) {
         navigation.replace(returnTo);
       } else {
-        navigation.navigate('Home', { screen: 'Home' }); // default fallback
+        navigation.navigate('HomeTab', { screen: 'Home' }); // default fallback
       }
     } catch (error: any) {
       setErrorMsg(error.message || t(STRINGS.auth.invalidOtp));

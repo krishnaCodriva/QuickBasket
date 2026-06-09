@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Share } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Share, ActivityIndicator, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedView, ThemedText, CustomButton } from '../../components';
 import { Feather } from '@expo/vector-icons';
@@ -8,15 +8,42 @@ import { Colors, STRINGS } from '../../constants';
 import { useThemeColor } from '../../hooks';
 import { useOrder } from '../../context';
 import { useTranslation } from 'react-i18next';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as IntentLauncher from 'expo-intent-launcher';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+
 
 export default function InvoiceScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { getOrderById } = useOrder();
   const { t } = useTranslation();
+  const [isGenerating, setIsGenerating] = useState(false);
   
   const orderId = route.params?.orderId;
   const order = getOrderById(orderId);
+  const [isSharing, setIsSharing] = useState(false);
+
+  const openPdf = async (fileUri: string) => {
+    try {
+      let contentUri = fileUri;
+      if (fileUri.startsWith('file://')) {
+        contentUri = await FileSystem.getContentUriAsync(fileUri);
+      }
+      
+      await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
+        data: contentUri,
+        flags: 1,
+        type: 'application/pdf'
+      });
+    } catch (err) {
+      console.log("Error opening PDF: ", err);
+      Alert.alert("Error", "Could not open the PDF. Please check your chosen folder to view it.");
+    }
+  };
 
   const cardColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.secondaryBackground }, 'secondaryBackground');
   const borderColor = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray300 }, 'gray200' as any);
@@ -43,22 +70,195 @@ export default function InvoiceScreen() {
   
   const handleShare = async () => {
     try {
-      const message = `
-${t(STRINGS.invoiceScreen.title)}: ${invoiceNumber}
-${t(STRINGS.invoiceScreen.orderId)} ${order.id}
-${t(STRINGS.invoiceScreen.orderDate)} ${new Date(order.date).toLocaleDateString()}
-${t(STRINGS.invoiceScreen.grandTotal)}: ₹${order.totalPayable.toFixed(2)}
-${t(STRINGS.checkoutScreen.paymentMethod)}: ${order.paymentMethodId ? t(`checkoutScreen.paymentMethods.${order.paymentMethodId}_label` as any, { defaultValue: order.paymentMethod }) : order.paymentMethod}
-
-Thank you for shopping with QuickBasket!
-      `.trim();
+      setIsSharing(true);
+      const html = generateInvoiceHtml();
       
-      await Share.share({
-        message,
-        title: `Invoice ${invoiceNumber}`,
-      });
+      const { uri } = await Print.printToFileAsync({ html });
+      
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri, { 
+          UTI: '.pdf', 
+          mimeType: 'application/pdf',
+          dialogTitle: 'Share Invoice'
+        });
+      } else {
+        Alert.alert("Error", "Sharing is not available on this device.");
+      }
     } catch (error) {
       console.log('Error sharing invoice:', error);
+      Alert.alert("Error", "Could not share the invoice.");
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  const generateInvoiceHtml = () => {
+    const itemsHtml = order.items.map((item: any) => `
+      <tr>
+        <td>${item.name}</td>
+        <td class="text-center">${item.quantity}</td>
+        <td class="text-right">₹${(item.price * item.quantity).toFixed(2)}</td>
+      </tr>
+    `).join('');
+
+    return `
+      <html>
+        <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+          <style>
+            body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #333; }
+            .header { text-align: center; border-bottom: 2px solid #0f9b58; padding-bottom: 20px; margin-bottom: 20px; }
+            .company-name { font-size: 28px; font-weight: bold; color: #0f9b58; }
+            .invoice-title { font-size: 20px; color: #555; margin-top: 5px; }
+            .row { display: flex; justify-content: space-between; margin-bottom: 10px; }
+            .section-title { font-size: 18px; font-weight: bold; margin-top: 30px; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+            th { background-color: #f8f9fa; color: #333; }
+            .text-right { text-align: right; }
+            .text-center { text-align: center; }
+            .totals-container { margin-top: 30px; width: 50%; float: right; }
+            .total-row { display: flex; justify-content: space-between; padding: 8px 0; }
+            .grand-total { font-size: 20px; font-weight: bold; border-top: 2px solid #333; padding-top: 10px; margin-top: 10px; }
+            .footer { margin-top: 100px; text-align: center; color: #888; font-size: 12px; clear: both; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="company-name">QuickBasket</div>
+            <div class="invoice-title">Tax Invoice / Bill of Supply</div>
+          </div>
+
+          <div class="row">
+            <div>
+              <div class="section-title" style="margin-top:0;">Billed To</div>
+              <strong>${order.address?.fullName}</strong><br />
+              ${order.address?.address}<br />
+              Mobile: ${order.address?.mobile}
+            </div>
+            <div class="text-right">
+              <div class="section-title" style="margin-top:0;">Invoice Details</div>
+              <strong>Invoice #:</strong> ${invoiceNumber}<br />
+              <strong>Order ID:</strong> ${order.id}<br />
+              <strong>Order Date:</strong> ${new Date(order.date).toLocaleDateString()}<br />
+              <strong>Payment Method:</strong> ${order.paymentMethodId ? t(`checkoutScreen.paymentMethods.${order.paymentMethodId}_label` as any, { defaultValue: order.paymentMethod }) : order.paymentMethod}
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Item Description</th>
+                <th class="text-center">Qty</th>
+                <th class="text-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+            </tbody>
+          </table>
+
+          <div class="totals-container">
+            <div class="total-row">
+              <span>Subtotal</span>
+              <span>₹${order.subtotal?.toFixed(2)}</span>
+            </div>
+            ${order.discount > 0 ? `
+            <div class="total-row" style="color: #22c55e;">
+              <span>Discount</span>
+              <span>-₹${order.discount?.toFixed(2)}</span>
+            </div>` : ''}
+            <div class="total-row">
+              <span>Delivery</span>
+              <span>₹${order.deliveryCharge?.toFixed(2)}</span>
+            </div>
+            <div class="total-row">
+              <span>Taxes</span>
+              <span>₹${order.taxes?.toFixed(2)}</span>
+            </div>
+            <div class="total-row grand-total">
+              <span>Grand Total</span>
+              <span>₹${order.totalPayable?.toFixed(2)}</span>
+            </div>
+          </div>
+
+          <div class="footer">
+            This is a computer-generated invoice and does not require a physical signature.<br />
+            Thank you for shopping with QuickBasket!
+          </div>
+        </body>
+      </html>
+    `;
+  };
+
+  const savePdfToAndroidDir = async (pdfUri: string, directoryUri: string, invoiceNum: string) => {
+    const base64 = await FileSystem.readAsStringAsync(pdfUri, { encoding: FileSystem.EncodingType.Base64 });
+    const savedUri = await FileSystem.StorageAccessFramework.createFileAsync(directoryUri, invoiceNum, 'application/pdf');
+    await FileSystem.writeAsStringAsync(savedUri, base64, { encoding: FileSystem.EncodingType.Base64 });
+    
+    Alert.alert(
+      'Download Complete',
+      `${invoiceNum}.pdf has been saved to your chosen folder.`,
+      [
+        { text: 'Later', style: 'cancel' },
+        { text: 'Open File', onPress: () => openPdf(savedUri) }
+      ]
+    );
+  };
+
+  const handleDownloadInvoice = async () => {
+    try {
+      setIsGenerating(true);
+      const html = generateInvoiceHtml();
+      
+      const { uri } = await Print.printToFileAsync({ html });
+      
+      if (Platform.OS === 'android') {
+        const savedDirUri = await AsyncStorage.getItem('downloadDirectoryUri');
+
+        if (savedDirUri) {
+          try {
+            await savePdfToAndroidDir(uri, savedDirUri, invoiceNumber);
+            return;
+          } catch (e) {
+            // Permission might have been revoked or folder deleted, fall through to ask again
+            console.log("Failed to use saved directory URI, asking again.");
+          }
+        }
+
+        // If no saved dir or it failed, ask once
+        Alert.alert(
+          "One-Time Setup",
+          "Android requires you to select a folder (like Downloads) to save your invoices. We will remember this folder for all future automatic downloads.",
+          [
+            { text: "Cancel", style: "cancel" },
+            { 
+              text: "Select Folder", 
+              onPress: async () => {
+                const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+                if (permissions.granted) {
+                  await AsyncStorage.setItem('downloadDirectoryUri', permissions.directoryUri);
+                  await savePdfToAndroidDir(uri, permissions.directoryUri, invoiceNumber);
+                }
+              }
+            }
+          ]
+        );
+      } else {
+        // iOS: The standard way to download a file is through the share sheet (Save to Files)
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(uri, { 
+            UTI: '.pdf', 
+            mimeType: 'application/pdf',
+            dialogTitle: 'Download Invoice'
+          });
+        }
+      }
+    } catch (error) {
+      console.log('Error generating PDF:', error);
+      Alert.alert("Error", "Could not download the invoice.");
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -157,10 +357,18 @@ Thank you for shopping with QuickBasket!
 
           <View style={styles.footer}>
             <CustomButton 
-              title={t(STRINGS.invoiceScreen.share)} 
-              icon="share-2"
+              title={isGenerating ? "Generating PDF..." : "Download PDF Invoice"} 
+              icon="download"
+              onPress={handleDownloadInvoice} 
+              style={[styles.actionBtn, { marginBottom: 12 }]}
+              loading={isGenerating}
+            />
+            <CustomButton 
+              title={isSharing ? "Preparing PDF..." : t(STRINGS.invoiceScreen.share)} 
+              icon="share-variant"
               onPress={handleShare} 
-              style={styles.actionBtn}
+              style={[styles.actionBtn, { backgroundColor: cardColor, borderColor: primaryColor, borderWidth: 1 }]}
+              loading={isSharing}
             />
           </View>
         </ScrollView>

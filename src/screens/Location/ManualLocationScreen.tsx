@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { ThemedView, ThemedText, ThemedInput } from '../../components';
-import { ThemeDimension, Colors } from '../../constants';
+import { ThemeDimension, Colors, STRINGS } from '../../constants';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -14,6 +15,7 @@ type Props = {
 };
 
 export default function ManualLocationScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const iconColor = useThemeColor({ light: Colors.light.black, dark: Colors.light.white }, 'primaryText' as any);
   const locationIconBg = useThemeColor({ light: Colors.light.gray100, dark: Colors.dark.gray300 }, 'gray100' as any);
   const locationIconColor = useThemeColor({ light: Colors.light.gray500, dark: Colors.light.gray400 }, 'gray500' as any);
@@ -86,7 +88,7 @@ export default function ManualLocationScreen({ navigation }: Props) {
         </View>
 
         <ThemedInput
-          placeholder="Search for area, street, city..."
+          placeholder={t(STRINGS.manualLocationScreen.searchPlaceholder)}
           autoFocus
           value={query}
           onChangeText={setQuery}
@@ -104,7 +106,7 @@ export default function ManualLocationScreen({ navigation }: Props) {
             ListEmptyComponent={
               !isLoading ? (
                 <View style={styles.content}>
-                  <ThemedText style={styles.placeholderText}>No results found</ThemedText>
+                  <ThemedText style={styles.placeholderText}>{t(STRINGS.manualLocationScreen.noResults)}</ThemedText>
                 </View>
               ) : null
             }
@@ -130,7 +132,7 @@ export default function ManualLocationScreen({ navigation }: Props) {
             <TouchableOpacity style={styles.currentLocationBtn} onPress={handleUseCurrentLocation}>
               <Ionicons name="locate" size={20} color={primaryColor} />
               <ThemedText style={[styles.currentLocationText, { color: primaryColor }]}>
-                Use my current location
+                {t(STRINGS.manualLocationScreen.useCurrentLocation)}
               </ThemedText>
             </TouchableOpacity>
             
