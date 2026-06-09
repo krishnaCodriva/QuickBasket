@@ -6,6 +6,7 @@ import { ThemedView, ThemedText, CustomButton } from '../../components';
 import { Colors, ThemeDimension, STRINGS } from '../../constants';
 import { useThemeColor } from '../../hooks';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../context';
 
 const OTP_LENGTH = 6;
 const CORRECT_OTP = '123456';
@@ -15,7 +16,9 @@ export default function OtpScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const { phoneNumber } = route.params || { phoneNumber: '+91 0000000000' };
+  const { phoneNumber, returnTo } = route.params || { phoneNumber: '+91 0000000000' };
+  
+  const { verifyOtp } = useAuth();
 
   const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''));
   const [timer, setTimer] = useState(TIMER_START);
@@ -83,7 +86,7 @@ export default function OtpScreen() {
     }
   };
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     if (!isOtpComplete) return;
 
     if (timer === 0) {
@@ -92,17 +95,24 @@ export default function OtpScreen() {
     }
 
     setIsVerifying(true);
-    setTimeout(() => {
-      setIsVerifying(false);
+    try {
       const enteredOtp = otp.join('');
-      if (enteredOtp === CORRECT_OTP) {
-        navigation.replace('Checkout');
+      // In a real app, you would pass the phone number and OTP to your backend.
+      // Here, verifyOtp just expects '1234' for simplicity.
+      await verifyOtp(phoneNumber, enteredOtp);
+      
+      if (returnTo) {
+        navigation.replace(returnTo);
       } else {
-        setErrorMsg(t(STRINGS.auth.invalidOtp));
-        setOtp(Array(OTP_LENGTH).fill(''));
-        inputRefs.current[0]?.focus();
+        navigation.navigate('Home', { screen: 'Home' }); // default fallback
       }
-    }, 1500);
+    } catch (error: any) {
+      setErrorMsg(error.message || t(STRINGS.auth.invalidOtp));
+      setOtp(Array(OTP_LENGTH).fill(''));
+      inputRefs.current[0]?.focus();
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   const handleResend = () => {

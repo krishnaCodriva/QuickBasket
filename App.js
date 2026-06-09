@@ -7,7 +7,7 @@ import {
 } from "@react-navigation/native";
 import { View } from "react-native";
 import AppNavigator from "./src/navigation/AppNavigator";
-import { CartProvider, OrderProvider } from "./src/context";
+import { CartProvider, OrderProvider, AuthProvider } from "./src/context";
 import { LocalizationContextProvider } from "./src/context/localizationContext/LocaleContext";
 import { Colors } from "./src/constants/colors";
 import { useThemeColor } from "./src/hooks";
@@ -36,6 +36,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
+    <AuthProvider>
       <CartProvider>
         <OrderProvider>
           <LocalizationContextProvider>
@@ -58,6 +59,7 @@ export default function App() {
           </LocalizationContextProvider>
         </OrderProvider>
       </CartProvider>
+     </AuthProvider>
     </SafeAreaProvider>
   );
 }

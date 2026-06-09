@@ -14,12 +14,12 @@ import {
 } from '../../components';
 import { Colors, STRINGS } from '../../constants';
 import { useThemeColor } from '../../hooks';
-import { useCart } from '../../context';
+import { useCart, useAuth } from '../../context';
 import { useTranslation } from 'react-i18next';
 
 export default function CartScreen() {
   const navigation = useNavigation<any>();
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Mock auth state
+  const { user } = useAuth();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
@@ -38,8 +38,8 @@ export default function CartScreen() {
   // Handlers
   const handleCheckout = () => {
     if (hasOutOfStock) return;
-    if (!isLoggedIn) {
-      navigation.navigate('Login');
+    if (!user) {
+      navigation.navigate('Login', { returnTo: 'Checkout' });
     } else {
       navigation.navigate('Checkout');
     }
