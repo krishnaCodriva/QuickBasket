@@ -29,13 +29,13 @@ const ThemedInput = ({
         <View style={[styles.searchContainer, { backgroundColor: bg }, styleWrapper]}>
             {icon && <Ionicons name={icon} size={20} color={Colors.light.gray400} />}
             <TextInput
-                style={[{ color: text }, styles.input]}
                 placeholder={placeholder}
                 placeholderTextColor={Colors.light.gray400}
                 value={value}
                 onChangeText={onChangeText}
                 keyboardType={keyboardType}
                 {...rest}
+                style={[{ color: text }, styles.input, rest.style]}
             />
             {isLoading ? (
               <ActivityIndicator size="small" color={primary} />

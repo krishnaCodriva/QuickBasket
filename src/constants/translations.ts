@@ -56,6 +56,9 @@ export const translations = {
       retryButton: 'Retry',
       currentAddress: 'Current Address',
       searchNewLocation: 'Search New Location',
+      turnOnGpsTitle: 'Turn on GPS',
+      turnOnGpsMessage: 'Please turn on GPS to fetch your location',
+      unknownLocation: 'Unknown Location',
     },
     homeScreen: {
       welcomeTitle: 'Welcome to QuickBasket!',
@@ -238,7 +241,9 @@ export const translations = {
         outForDelivery: 'Out for Delivery',
         delivered: 'Delivered',
         cancelled: 'Cancelled'
-      }
+      },
+      noOrders: 'No Orders Yet',
+      noOrdersSub: 'Looks like you haven\'t placed any orders yet.'
     },
     orderStatusScreen: {
       title: 'Order Tracking',
@@ -274,6 +279,60 @@ export const translations = {
       error: 'Error',
       companyName: 'QuickBasket Ltd.',
       computerGenerated: 'This is a computer generated invoice and does not require a physical signature.'
+    },
+    manualLocationScreen: {
+      title: 'Enter Address',
+      placeholder: 'Search for area, street, city...',
+      noResults: 'No results found',
+      useCurrent: 'Use my current location',
+      deliverySearch: 'Search for your delivery address'
+    },
+    profileScreen: {
+      comingSoon: 'Profile Coming Soon',
+      myOrders: 'My Orders',
+      myOrdersDesc: 'Track current and past orders',
+      savedAddresses: 'Saved Addresses',
+      savedAddressesDesc: 'Manage delivery locations',
+      notifications: 'Notifications',
+      notificationsDesc: 'Manage alerts and promos',
+      helpSupport: 'Help & Support',
+      helpSupportDesc: 'Contact us, FAQs',
+      logout: 'Logout',
+      orders: 'Orders',
+      status: 'Status',
+      elite: 'Elite',
+      guestUser: 'Guest User',
+      guestEmail: 'guest@example.com',
+      myAccount: 'My Account',
+      accountSection: 'ACCOUNT',
+      supportSection: 'SUPPORT',
+      settings: 'Settings',
+      helpCenter: 'Help Center',
+      contactSupport: 'Contact Support',
+      editProfileTitle: 'Edit Profile'
+,
+      logoutConfirmDesc: 'Are you sure you want to logout from QuickBasket?',
+      cancel: 'Cancel'
+    },
+    editProfileScreen: {
+      title: 'Edit Profile',
+      fullName: 'Full Name',
+      email: 'Email Address',
+      mobile: 'Mobile Number',
+      saveChanges: 'Save Changes',
+      cancel: 'Cancel',
+      validationError: 'Validation Error',
+      mandatoryFields: 'Mandatory fields cannot be blank',
+      invalidEmail: 'Invalid email format',
+      success: 'Success',
+      profileUpdated: 'Profile updated successfully',
+      changePicture: 'Change Picture',
+      permissionRequired: 'Permission Required',
+      galleryPermission: 'Permission to access gallery is required!'
+    },
+    orderTrackingScreen: {
+      title: 'Order Tracking',
+      subtitle: 'Track your order here.'
     }
   },
   // You can easily add more languages here later:
@@ -331,6 +390,9 @@ export const translations = {
       retryButton: 'पुनः प्रयास करें',
       currentAddress: 'वर्तमान पता',
       searchNewLocation: 'नया स्थान खोजें',
+      turnOnGpsTitle: 'GPS चालू करें',
+      turnOnGpsMessage: 'कृपया अपनी लोकेशन प्राप्त करने के लिए GPS चालू करें',
+      unknownLocation: 'अज्ञात स्थान',
     },
     homeScreen: {
       welcomeTitle: 'क्विकबास्केट में आपका स्वागत है!',
@@ -513,7 +575,9 @@ export const translations = {
         outForDelivery: 'वितरण के लिए तैयार',
         delivered: 'वितरित',
         cancelled: 'रद्द'
-      }
+      },
+      noOrders: 'अभी तक कोई ऑर्डर नहीं',
+      noOrdersSub: 'ऐसा लगता है कि आपने अभी तक कोई ऑर्डर नहीं दिया है।'
     },
     orderStatusScreen: {
       title: 'ऑर्डर ट्रैकिंग',
@@ -550,6 +614,60 @@ export const translations = {
       error: 'त्रुटि',
       companyName: 'क्विकबास्केट लिमिटेड',
       computerGenerated: 'यह कंप्यूटर द्वारा तैयार किया गया चालान है और इसके लिए भौतिक हस्ताक्षर की आवश्यकता नहीं है।'
+    },
+    manualLocationScreen: {
+      title: 'पता दर्ज करें',
+      placeholder: 'क्षेत्र, सड़क, शहर खोजें...',
+      noResults: 'कोई परिणाम नहीं मिला',
+      useCurrent: 'मेरे वर्तमान स्थान का उपयोग करें',
+      deliverySearch: 'अपने डिलीवरी पते की खोज करें'
+    },
+    profileScreen: {
+      comingSoon: 'प्रोफ़ाइल जल्द आ रही है',
+      myOrders: 'मेरे आदेश',
+      myOrdersDesc: 'वर्तमान और पिछले आदेशों को ट्रैक करें',
+      savedAddresses: 'सहेजे गए पते',
+      savedAddressesDesc: 'वितरण स्थान प्रबंधित करें',
+      notifications: 'सूचनाएं',
+      notificationsDesc: 'अलर्ट और प्रोमो प्रबंधित करें',
+      helpSupport: 'सहायता और समर्थन',
+      helpSupportDesc: 'हमसे संपर्क करें, सामान्य प्रश्न',
+      logout: 'लॉग आउट',
+      orders: 'आदेश',
+      status: 'स्थिति',
+      elite: 'एलीट',
+      guestUser: 'अतिथि उपयोगकर्ता',
+      guestEmail: 'guest@example.com',
+      myAccount: 'मेरा खाता',
+      accountSection: 'खाता',
+      supportSection: 'समर्थन',
+      settings: 'समायोजन',
+      helpCenter: 'सहायता केंद्र',
+      contactSupport: 'संपर्क समर्थन',
+      editProfileTitle: 'प्रोफ़ाइल संपादित करें'
+,
+      logoutConfirmDesc: 'क्या आप वाकई QuickBasket से लॉगआउट करना चाहते हैं?',
+      cancel: 'रद्द करें'
+    },
+    editProfileScreen: {
+      title: 'प्रोफ़ाइल संपादित करें',
+      fullName: 'पूरा नाम',
+      email: 'ईमेल पता',
+      mobile: 'मोबाइल नंबर',
+      saveChanges: 'परिवर्तन सहेजें',
+      cancel: 'रद्द करें',
+      validationError: 'सत्यापन त्रुटि',
+      mandatoryFields: 'अनिवार्य फ़ील्ड खाली नहीं हो सकते',
+      invalidEmail: 'अमान्य ईमेल प्रारूप',
+      success: 'सफलता',
+      profileUpdated: 'प्रोफ़ाइल सफलतापूर्वक अपडेट की गई',
+      changePicture: 'चित्र बदलें',
+      permissionRequired: 'अनुमति आवश्यक है',
+      galleryPermission: 'गैलरी तक पहुंचने की अनुमति आवश्यक है!'
+    },
+    orderTrackingScreen: {
+      title: 'ऑर्डर ट्रैकिंग',
+      subtitle: 'अपने ऑर्डर को यहाँ ट्रैक करें।'
     }
   },
 
@@ -605,6 +723,9 @@ export const translations = {
       retryButton: 'Dobara Try Karein',
       currentAddress: 'Current Address',
       searchNewLocation: 'Naya Location Search Karein',
+      turnOnGpsTitle: 'GPS On Karein',
+      turnOnGpsMessage: 'Apni location fetch karne ke liye kripya GPS on karein',
+      unknownLocation: 'Unknown Location',
     },
     homeScreen: {
       welcomeTitle: 'QuickBasket Mein Swagat Hai!',
@@ -787,7 +908,9 @@ export const translations = {
         outForDelivery: 'Out for Delivery',
         delivered: 'Delivered',
         cancelled: 'Cancelled'
-      }
+      },
+      noOrders: 'Koi Orders Nahi',
+      noOrdersSub: 'Lagta hai aapne abhi tak koi order place nahi kiya hai.'
     },
     orderStatusScreen: {
       title: 'Order Tracking',
@@ -823,6 +946,60 @@ export const translations = {
       error: 'Error',
       companyName: 'QuickBasket Ltd.',
       computerGenerated: 'Yeh ek computer generated invoice hai aur physical signature ki zaroorat nahi hai.'
+    },
+    manualLocationScreen: {
+      title: 'Address Enter Karein',
+      placeholder: 'Area, street, city search karein...',
+      noResults: 'Koi results nahi mila',
+      useCurrent: 'Mera current location use karein',
+      deliverySearch: 'Apne delivery address ko search karein'
+    },
+    profileScreen: {
+      comingSoon: 'Profile jald aa rahi hai',
+      myOrders: 'Mere Orders',
+      myOrdersDesc: 'Current aur past orders track karein',
+      savedAddresses: 'Saved Addresses',
+      savedAddressesDesc: 'Delivery locations manage karein',
+      notifications: 'Notifications',
+      notificationsDesc: 'Alerts aur promos manage karein',
+      helpSupport: 'Help & Support',
+      helpSupportDesc: 'Contact us, FAQs',
+      logout: 'Logout',
+      orders: 'Orders',
+      status: 'Status',
+      elite: 'Elite',
+      guestUser: 'Guest User',
+      guestEmail: 'guest@example.com',
+      myAccount: 'My Account',
+      accountSection: 'ACCOUNT',
+      supportSection: 'SUPPORT',
+      settings: 'Settings',
+      helpCenter: 'Help Center',
+      contactSupport: 'Contact Support',
+      editProfileTitle: 'Edit Profile'
+,
+      logoutConfirmDesc: 'Kya aap waqai QuickBasket se logout karna chahte hain?',
+      cancel: 'Cancel'
+    },
+    editProfileScreen: {
+      title: 'Profile Edit Karein',
+      fullName: 'Pura Naam',
+      email: 'Email Address',
+      mobile: 'Mobile Number',
+      saveChanges: 'Changes Save Karein',
+      cancel: 'Cancel',
+      validationError: 'Validation Error',
+      mandatoryFields: 'Mandatory fields blank nahi ho sakte',
+      invalidEmail: 'Invalid email format',
+      success: 'Success',
+      profileUpdated: 'Profile successfully update ho gayi',
+      changePicture: 'Picture Change Karein',
+      permissionRequired: 'Permission Required',
+      galleryPermission: 'Gallery access karne ke liye permission required hai!'
+    },
+    orderTrackingScreen: {
+      title: 'Order Tracking',
+      subtitle: 'Apna order yahan track karein.'
     }
   },
 
@@ -879,6 +1056,9 @@ export const translations = {
       retryButton: 'വീണ്ടും ശ്രമിക്കുക',
       currentAddress: 'നിലവിലെ വിലാസം',
       searchNewLocation: 'പുതിയ സ്ഥലം തിരയുക',
+      turnOnGpsTitle: 'GPS ഓണാക്കുക',
+      turnOnGpsMessage: 'നിങ്ങളുടെ ലൊക്കേഷൻ കണ്ടെത്താൻ GPS ഓണാക്കുക',
+      unknownLocation: 'അജ്ഞാത ലൊക്കേഷൻ',
     },
     homeScreen: {
       welcomeTitle: 'ക്വിക് ബാസ്കറ്റിലേക്ക് സ്വാഗതം!',
@@ -1061,7 +1241,9 @@ export const translations = {
         outForDelivery: 'ഡെലിവറിക്ക് തയ്യാറായി',
         delivered: 'ഡെലിവർ ചെയ്തു',
         cancelled: 'റദ്ദാക്കി'
-      }
+      },
+      noOrders: 'ഇതുവരെ ഓർഡറുകളൊന്നുമില്ല',
+      noOrdersSub: 'നിങ്ങൾ ഇതുവരെ ഓർഡറുകളൊന്നും നൽകിയിട്ടില്ലെന്ന് തോന്നുന്നു.'
     },
     orderStatusScreen: {
       title: 'ഓർഡർ ട്രാക്കിംഗ്',
@@ -1097,6 +1279,60 @@ export const translations = {
       error: 'പിശക്',
       companyName: 'ക്വിക് ബാസ്കറ്റ് ലിമിറ്റഡ്',
       computerGenerated: 'ഇതൊരു കമ്പ്യൂട്ടർ നിർമ്മിത ഇൻവോയ്സാണ്, ഇതിന് നേരിട്ടുള്ള ഒപ്പ് ആവശ്യമില്ല.'
+    },
+    manualLocationScreen: {
+      title: 'വിലാസം നൽകുക',
+      placeholder: 'പ്രദേശം, തെരുവ്, നഗരം എന്നിവ തിരയുക...',
+      noResults: 'ഫലങ്ങളൊന്നും കണ്ടെത്തിയില്ല',
+      useCurrent: 'എൻ്റെ നിലവിലെ ലൊക്കേഷൻ ഉപയോഗിക്കുക',
+      deliverySearch: 'നിങ്ങളുടെ ഡെലിവറി വിലാസത്തിനായി തിരയുക'
+    },
+    profileScreen: {
+      comingSoon: 'പ്രൊഫൈൽ ഉടൻ വരുന്നു',
+      myOrders: 'എന്റെ ഓർഡറുകൾ',
+      myOrdersDesc: 'ട്രാക്ക് ചെയ്യുക, മടക്കിനൽകുക, അല്ലെങ്കിൽ വീണ്ടും വാങ്ങുക',
+      savedAddresses: 'സംരക്ഷിച്ച വിലാസങ്ങൾ',
+      savedAddressesDesc: 'ഡെലിവറി ലൊക്കേഷനുകൾ നിയന്ത്രിക്കുക',
+      notifications: 'അറിയിപ്പുകൾ',
+      notificationsDesc: 'അലേർട്ടുകളും പ്രൊമോകളും നിയന്ത്രിക്കുക',
+      helpSupport: 'സഹായവും പിന്തുണയും',
+      helpSupportDesc: 'ഞങ്ങളെ ബന്ധപ്പെടുക, പതിവുചോദ്യങ്ങൾ',
+      logout: 'ലോഗ്ഔട്ട്',
+      orders: 'ഓർഡറുകൾ',
+      status: 'പദവി',
+      elite: 'എലൈറ്റ്',
+      guestUser: 'അതിഥി ഉപയോക്താവ്',
+      guestEmail: 'guest@example.com',
+      myAccount: 'എന്റെ അക്കൗണ്ട്',
+      accountSection: 'അക്കൗണ്ട്',
+      supportSection: 'പിന്തുണ',
+      settings: 'ക്രമീകരണങ്ങൾ',
+      helpCenter: 'സഹായ കേന്ദ്രം',
+      contactSupport: 'പിന്തുണയുമായി ബന്ധപ്പെടുക',
+      editProfileTitle: 'പ്രൊഫൈൽ എഡിറ്റ് ചെയ്യുക'
+,
+      logoutConfirmDesc: 'QuickBasket-ൽ നിന്ന് ലോഗ്ഔട്ട് ചെയ്യണമെന്ന് നിങ്ങൾക്ക് ഉറപ്പാണോ?',
+      cancel: 'റദ്ദാക്കുക'
+    },
+    editProfileScreen: {
+      title: 'പ്രൊഫൈൽ എഡിറ്റ് ചെയ്യുക',
+      fullName: 'പൂർണ്ണ നാമം',
+      email: 'ഇമെയിൽ വിലാസം',
+      mobile: 'മൊബൈൽ നമ്പർ',
+      saveChanges: 'മാറ്റങ്ങൾ സംരക്ഷിക്കുക',
+      cancel: 'റദ്ദാക്കുക',
+      validationError: 'സാധുത പിശക്',
+      mandatoryFields: 'നിർബന്ധിത ഫീൽഡുകൾ ശൂന്യമായിരിക്കരുത്',
+      invalidEmail: 'അസാധുവായ ഇമെയിൽ ഫോർമാറ്റ്',
+      success: 'വിജയം',
+      profileUpdated: 'പ്രൊഫൈൽ വിജയകരമായി അപ്‌ഡേറ്റ് ചെയ്‌തു',
+      changePicture: 'ചിത്രം മാറ്റുക',
+      permissionRequired: 'അനുമതി ആവശ്യമാണ്',
+      galleryPermission: 'ഗാലറി ആക്സസ് ചെയ്യാൻ അനുമതി ആവശ്യമാണ്!'
+    },
+    orderTrackingScreen: {
+      title: 'ഓർഡർ ട്രാക്കിംഗ്',
+      subtitle: 'നിങ്ങളുടെ ഓർഡർ ഇവിടെ ട്രാക്ക് ചെയ്യുക.'
     }
   }
 };

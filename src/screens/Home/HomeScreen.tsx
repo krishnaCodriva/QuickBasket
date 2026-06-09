@@ -1,103 +1,35 @@
-import React, { useState, useEffect, useContext, useCallback, useMemo } from "react";
-import {
-  StyleSheet,
-  View,
-  TouchableOpacity,
-  FlatList,
-  useColorScheme,
-  Platform,
-  StatusBar,
-  ScrollView,
-  Modal,
-  TouchableWithoutFeedback,
-} from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useThemeColor } from "../../hooks";
-import { ThemedView, ThemedText, ProductCard } from "../../components";
-import {
-  BannerCarousel,
-  CategoryCard,
-  QuickFilters,
-} from "../../components/Home";
-import { ThemeDimension, Colors, STRINGS } from "../../constants";
-import { MOCK_PRODUCTS } from "../../data/mockData";
-import { Ionicons } from "@expo/vector-icons";
-import { useTranslation } from "react-i18next";
-import { setLanguage } from "../../context/localizationContext/localeAction";
-import LocalizationContext from "../../context/localizationContext/LocaleContext";
-import { useCart } from "../../context/CartContext";
-import i18n from "../../localization/i18";
+
+import React, { useState, useEffect, useContext } from 'react';
+import { StyleSheet, View, TouchableOpacity, FlatList, useColorScheme, Platform, StatusBar, ScrollView, Modal, TouchableWithoutFeedback } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useThemeColor } from '../../hooks';
+import { ThemedView, ThemedText, ProductCard } from '../../components';
+import { BannerCarousel, CategoryCard, QuickFilters } from '../../components/Home';
+import { ThemeDimension, Colors, STRINGS } from '../../constants';
+import { MOCK_PRODUCTS } from '../../data/mockData';
+import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import { setLanguage } from '../../context/localizationContext/localeAction';
+import LocalizationContext from '../../context/localizationContext/LocaleContext';
+import { useCart } from '../../context/CartContext';
+import i18n from "../../localization/i18"
 // Mock Data
 const CATEGORIES = [
-  {
-    id: "1",
-    name: STRINGS.common.categories.fruits,
-    emoji: "🍎",
-    colorName: "red100" as const,
-  },
-  {
-    id: "2",
-    name: STRINGS.common.categories.veg,
-    emoji: "🥕",
-    colorName: "green100" as const,
-  },
-  {
-    id: "3",
-    name: STRINGS.common.categories.dairy,
-    emoji: "🥛",
-    colorName: "blue100" as const,
-  },
-  {
-    id: "4",
-    name: STRINGS.common.categories.bakery,
-    emoji: "🍞",
-    colorName: "orange100" as const,
-  },
-  {
-    id: "5",
-    name: STRINGS.common.categories.meat,
-    emoji: "🥩",
-    colorName: "pink100" as const,
-  },
-  {
-    id: "6",
-    name: STRINGS.common.categories.snacks,
-    emoji: "🍿",
-    colorName: "yellow100" as const,
-  },
-  {
-    id: "7",
-    name: STRINGS.common.categories.drinks,
-    emoji: "🥤",
-    colorName: "indigo100" as const,
-  },
-  {
-    id: "8",
-    name: STRINGS.common.categories.frozen,
-    emoji: "🧊",
-    colorName: "cyan100" as const,
-  },
+  { id: '1', name: STRINGS.common.categories.fruits, emoji: '🍎', colorName: 'red100' as const },
+  { id: '2', name: STRINGS.common.categories.veg, emoji: '🥕', colorName: 'green100' as const },
+  { id: '3', name: STRINGS.common.categories.dairy, emoji: '🥛', colorName: 'blue100' as const },
+  { id: '4', name: STRINGS.common.categories.bakery, emoji: '🍞', colorName: 'orange100' as const },
+  { id: '5', name: STRINGS.common.categories.meat, emoji: '🥩', colorName: 'pink100' as const },
+  { id: '6', name: STRINGS.common.categories.snacks, emoji: '🍿', colorName: 'yellow100' as const },
+  { id: '7', name: STRINGS.common.categories.drinks, emoji: '🥤', colorName: 'indigo100' as const },
+  { id: '8', name: STRINGS.common.categories.frozen, emoji: '🧊', colorName: 'cyan100' as const },
 ];
 
+
 const HOME_BANNERS = [
-  {
-    id: "1",
-    source: require("../../../assets/Section - Hero Carousel (Bento Style).png"),
-    linkType: "category",
-    linkTarget: STRINGS.common.categories.fruits,
-  },
-  {
-    id: "2",
-    source: require("../../../assets/banner1.jpg"),
-    linkType: "offer",
-    linkTarget: "Discount",
-  },
-  {
-    id: "3",
-    source: require("../../../assets/banner2.jpg"),
-    linkType: "product",
-    linkTarget: "1",
-  },
+  { id: '1', source: require('../../../assets/Section - Hero Carousel (Bento Style).png'), linkType: 'category', linkTarget: STRINGS.common.categories.fruits },
+  { id: '2', source: require('../../../assets/Section - Hero Carousel (Bento Style).png'), linkType: 'offer', linkTarget: 'Avocado' },
+  { id: '3', source: require('../../../assets/Section - Hero Carousel (Bento Style).png'), linkType: 'product', linkTarget: '1' },
 ];
 
 type Props = {
@@ -107,42 +39,28 @@ type Props = {
 export default function HomeScreen({ navigation }: Props) {
   const [initLang, initDispatch] = useContext(LocalizationContext);
   const { t } = useTranslation();
-  const colorScheme = useColorScheme() ?? "light";
-  const isDark = colorScheme === "dark";
-  const iconColor = useThemeColor(
-    { light: Colors.light.black, dark: Colors.light.white },
-    "primaryText" as any,
-  );
-  const searchBg = useThemeColor(
-    { light: Colors.light.white, dark: Colors.dark.secondaryBackground },
-    "secondaryBackground" as any,
-  );
-  const searchBorder = useThemeColor(
-    { light: Colors.light.gray200, dark: Colors.dark.gray300 },
-    "gray200" as any,
-  );
-  const seeAllColor = useThemeColor(
-    { light: Colors.light.gray900, dark: Colors.light.blue100 },
-    "primaryText" as any,
-  );
-  const sheetBg = useThemeColor(
-    { light: Colors.light.white, dark: Colors.dark.secondaryBackground },
-    "secondaryBackground" as any,
-  );
-  const sheetDivider = useThemeColor(
-    { light: Colors.light.gray200, dark: Colors.dark.gray300 },
-    "gray200" as any,
-  );
-  const primaryColor = useThemeColor({}, "primary");
-  const statusBarBg = useThemeColor(
-    { light: Colors.light.white, dark: Colors.dark.black },
-    "primaryBackground" as any,
-  );
+  console.log("initLang 1234", initLang?.lange)
+  const colorScheme = useColorScheme() ?? 'light';
+  const isDark = colorScheme === 'dark';
+  const iconColor = useThemeColor({ light: Colors.light.black, dark: Colors.light.white }, 'primaryText' as any);
+  const searchBg = useThemeColor({ light: Colors.light.white, dark: Colors.dark.secondaryBackground }, 'secondaryBackground' as any);
+  const searchBorder = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray300 }, 'gray200' as any);
+  const seeAllColor = useThemeColor({ light: Colors.light.gray900, dark: Colors.light.blue100 }, 'primaryText' as any);
+  const sheetBg = useThemeColor({ light: Colors.light.white, dark: Colors.dark.secondaryBackground }, 'secondaryBackground' as any);
+  const sheetDivider = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray300 }, 'gray200' as any);
+  const primaryColor = useThemeColor({}, 'primary');
+  const statusBarBg = useThemeColor({ light: Colors.light.white, dark: Colors.dark.black }, 'primaryBackground' as any);
 
   const { cartItems, addToCart, updateQuantity, totalItems } = useCart();
-  const [selectedTagIndex, setSelectedTagIndex] = useState(0);
+  const [selectedTag, setSelectedTag] = useState(t(STRINGS.homeScreen.tags.all));
 
-  const tagsList = useMemo(() => [
+  useEffect(() => {
+    if (selectedTag === t(STRINGS.homeScreen.tags.all)) {
+      setSelectedTag(t(STRINGS.homeScreen.tags.all));
+    }
+  }, [t]);
+
+  const tagsList = [
     t(STRINGS.homeScreen.tags.all),
     t(STRINGS.homeScreen.tags.fresh),
     t(STRINGS.homeScreen.tags.trending),
@@ -151,66 +69,51 @@ export default function HomeScreen({ navigation }: Props) {
     t(STRINGS.homeScreen.tags.recommended),
     t(STRINGS.homeScreen.tags.bestSelling),
     t(STRINGS.homeScreen.tags.newArrivals),
-  ], [t]);
+  ];
 
-  const selectedTag = tagsList[selectedTagIndex];
+  const filteredProducts = MOCK_PRODUCTS.filter(p => {
+    if (selectedTag === t(STRINGS.homeScreen.tags.all)) return true;
 
-  const filteredProducts = useMemo(() => {
-    return MOCK_PRODUCTS.filter((p) => {
-      if (selectedTagIndex === 0) return true; // "All"
-
-      if (selectedTagIndex === 1) { // "Fresh"
-        return (
-          p.category === STRINGS.common.categories.fruits ||
-          p.category === STRINGS.common.categories.veg
-        );
-      }
-      if (selectedTagIndex === 3) { // "Daily Essentials"
-        return (
-          p.category === STRINGS.common.categories.dairy ||
-          p.category === STRINGS.common.categories.bakery
-        );
-      }
-      if (
-        selectedTagIndex === 2 || // "Trending"
-        selectedTagIndex === 6 // "Best Selling"
-      ) {
-        return p.price > 5;
-      }
-
-      // Fallback for other tags
-      return p.tags?.includes(selectedTag) || parseInt(p.id, 10) % 2 === 0;
-    });
-  }, [selectedTagIndex, selectedTag]);
-
-  const getProductQuantity = useCallback((id: string) => {
-    const item = cartItems.find((i) => i.id === id);
-    return item ? item.quantity : 0;
-  }, [cartItems]);
-
-  const handleBannerPress = useCallback((banner: any) => {
-    if (banner.linkType === "category" || banner.linkType === "offer") {
-      navigation.navigate("ProductListing", {
-        category:
-          banner.linkType === "category" ? banner.linkTarget : "Special Offers",
-        query: banner.linkType === "offer" ? banner.linkTarget : undefined,
-      });
-    } else if (banner.linkType === "product") {
-      const product =
-        MOCK_PRODUCTS.find((p) => p.id === banner.linkTarget) ||
-        MOCK_PRODUCTS[0];
-      navigation.navigate("ProductDetail", { product });
+    // Mock tag filtering since mock products don't have tags array
+    if (selectedTag === t(STRINGS.homeScreen.tags.fresh)) {
+      return p.category === STRINGS.common.categories.fruits || p.category === STRINGS.common.categories.veg;
     }
-  }, [navigation]);
+    if (selectedTag === t(STRINGS.homeScreen.tags.dailyEssentials)) {
+      return p.category === STRINGS.common.categories.dairy || p.category === STRINGS.common.categories.bakery;
+    }
+    if (selectedTag === t(STRINGS.homeScreen.tags.trending) || selectedTag === t(STRINGS.homeScreen.tags.bestSelling)) {
+      return p.price > 5;
+    }
 
-  const [currentAddress, setCurrentAddress] = useState("Select Location");
+    // Fallback for other tags
+    return p.tags?.includes(selectedTag) || parseInt(p.id, 10) % 2 === 0;
+  });
+
+  const getProductQuantity = (id: string) => {
+    const item = cartItems.find(i => i.id === id);
+    return item ? item.quantity : 0;
+  };
+
+  const handleBannerPress = (banner: any) => {
+    if (banner.linkType === 'category' || banner.linkType === 'offer') {
+      navigation.navigate('ProductListing', {
+        category: banner.linkType === 'category' ? banner.linkTarget : 'Special Offers',
+        query: banner.linkType === 'offer' ? banner.linkTarget : undefined
+      });
+    } else if (banner.linkType === 'product') {
+      const product = MOCK_PRODUCTS.find(p => p.id === banner.linkTarget) || MOCK_PRODUCTS[0];
+      navigation.navigate('ProductDetail', { product });
+    }
+  };
+
+  const [currentAddress, setCurrentAddress] = useState('Select Location');
   const [locationModalVisible, setLocationModalVisible] = useState(false);
   const [langModalVisible, setLangModalVisible] = useState(false);
 
   useEffect(() => {
     const fetchLocation = async () => {
       try {
-        const stored = await AsyncStorage.getItem("@user_location");
+        const stored = await AsyncStorage.getItem('@user_location');
         if (stored) {
           const parsed = JSON.parse(stored);
           if (parsed.address) {
@@ -224,7 +127,7 @@ export default function HomeScreen({ navigation }: Props) {
 
     fetchLocation();
 
-    const unsubscribe = navigation.addListener("focus", () => {
+    const unsubscribe = navigation.addListener('focus', () => {
       fetchLocation();
     });
     return unsubscribe;
@@ -232,37 +135,21 @@ export default function HomeScreen({ navigation }: Props) {
 
   const renderHeader = () => (
     <View style={styles.header}>
-      <TouchableOpacity
-        style={styles.locationSelector}
-        onPress={() => setLocationModalVisible(true)}
-      >
-        <ThemedText style={styles.deliveringTo} useSecondaryText>
-          {t(STRINGS.homeScreen.deliveringTo)}
-        </ThemedText>
+      <TouchableOpacity style={styles.locationSelector} onPress={() => setLocationModalVisible(true)}>
+        <ThemedText style={styles.deliveringTo} useSecondaryText>{t(STRINGS.homeScreen.deliveringTo)}</ThemedText>
         <View style={styles.locationRow}>
           <ThemedText style={styles.locationBoldText} numberOfLines={1}>
             📍 {currentAddress}
           </ThemedText>
-          <Ionicons
-            name="chevron-down"
-            size={16}
-            color={iconColor}
-            style={{ marginLeft: 4 }}
-          />
+          <Ionicons name="chevron-down" size={16} color={iconColor} style={{ marginLeft: 4 }} />
         </View>
       </TouchableOpacity>
 
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
-        <TouchableOpacity
-          style={styles.iconButton}
-          onPress={() => setLangModalVisible(true)}
-        >
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+        <TouchableOpacity style={styles.iconButton} onPress={() => setLangModalVisible(true)}>
           <Ionicons name="language-outline" size={24} color={iconColor} />
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.cartButton}
-          onPress={() => navigation.navigate("Cart")}
-        >
+        <TouchableOpacity style={styles.cartButton} onPress={() => navigation.navigate('Cart')}>
           <Ionicons name="cart-outline" size={28} color={iconColor} />
           {totalItems > 0 && (
             <View style={[styles.badge, { borderColor: statusBarBg }]}>
@@ -276,59 +163,34 @@ export default function HomeScreen({ navigation }: Props) {
 
   const renderSearch = () => (
     <TouchableOpacity
-      style={[
-        styles.searchBar,
-        {
-          backgroundColor: searchBg,
-          borderColor: searchBorder,
-          borderWidth: 1,
-        },
-      ]}
-      onPress={() => navigation.navigate("ProductListing")}
+      style={[styles.searchBar, { backgroundColor: searchBg, borderColor: searchBorder, borderWidth: 1 }]}
+      onPress={() => navigation.navigate('ProductListing')}
     >
-      <Ionicons
-        name="search-outline"
-        size={22}
-        color={Colors.light.gray400}
-        style={styles.searchIcon}
-      />
-      <ThemedText style={styles.searchPlaceholder}>
-        {t(STRINGS.homeScreen.searchPlaceholder)}
-      </ThemedText>
-      <Ionicons
-        name="mic-outline"
-        size={22}
-        color={iconColor}
-        style={styles.micIcon}
-      />
+      <Ionicons name="search-outline" size={22} color={Colors.light.gray400} style={styles.searchIcon} />
+      <ThemedText style={styles.searchPlaceholder}>{t(STRINGS.homeScreen.searchPlaceholder)}</ThemedText>
+      <Ionicons name="mic-outline" size={22} color={iconColor} style={styles.micIcon} />
     </TouchableOpacity>
   );
 
   const renderCategories = () => (
     <View style={styles.section}>
       <View style={styles.sectionHeaderRow}>
-        <ThemedText type="subtitle">
-          {t(STRINGS.common.categories.browseCategories)}
-        </ThemedText>
-        <TouchableOpacity onPress={() => navigation.navigate("CategoriesTab")}>
-          <ThemedText style={[styles.seeAllText, { color: seeAllColor }]}>
-            {t(STRINGS.common.seeAll)}
-          </ThemedText>
+        <ThemedText type="subtitle">{t(STRINGS.common.categories.browseCategories)}</ThemedText>
+        <TouchableOpacity onPress={() => navigation.navigate('CategoriesTab')}>
+          <ThemedText style={[styles.seeAllText, { color: seeAllColor }]}>{t(STRINGS.common.seeAll)}</ThemedText>
         </TouchableOpacity>
       </View>
       <FlatList
         data={CATEGORIES}
         horizontal
         showsHorizontalScrollIndicator={false}
-        keyExtractor={(item) => item.id}
+        keyExtractor={item => item.id}
         renderItem={({ item }) => (
           <CategoryCard
             name={t(item.name)}
             emoji={item.emoji}
             colorName={item.colorName}
-            onPress={() =>
-              navigation.navigate("ProductListing", { category: item.name })
-            }
+            onPress={() => navigation.navigate('ProductListing', { category: item.name })}
           />
         )}
       />
@@ -338,16 +200,13 @@ export default function HomeScreen({ navigation }: Props) {
   const renderListHeader = () => (
     <View>
       {renderSearch()}
-      <BannerCarousel
-        banners={HOME_BANNERS as any}
-        onBannerPress={handleBannerPress}
-      />
+      <BannerCarousel banners={HOME_BANNERS as any} onBannerPress={handleBannerPress} />
       {renderCategories()}
       <View style={{ marginBottom: 16 }}>
         <QuickFilters
           tags={tagsList}
           selectedTag={selectedTag}
-          onSelectTag={(tag) => setSelectedTagIndex(tagsList.indexOf(tag))}
+          onSelectTag={setSelectedTag}
         />
       </View>
     </View>
@@ -356,13 +215,11 @@ export default function HomeScreen({ navigation }: Props) {
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <Ionicons name="search" size={40} color={Colors.light.gray300} />
-      <ThemedText style={styles.emptyTitle}>
-        {t(STRINGS.homeScreen.noProductsFound)}
-      </ThemedText>
+      <ThemedText style={styles.emptyTitle}>{t(STRINGS.homeScreen.noProductsFound)}</ThemedText>
     </View>
   );
 
-  const renderProductItem = useCallback(({ item }: { item: any }) => (
+  const renderProductItem = ({ item }: { item: any }) => (
     <ProductCard
       id={item.id}
       name={item.name}
@@ -381,11 +238,11 @@ export default function HomeScreen({ navigation }: Props) {
         }
       }}
       onRemove={() => updateQuantity(item.id, -1)}
-      onPress={() => navigation.navigate("ProductDetail", { product: item })}
+      onPress={() => navigation.navigate('ProductDetail', { product: item })}
       isGrid={true}
-      containerStyle={{ width: "48%", marginBottom: 16 }}
+      containerStyle={{ width: '48%', marginBottom: 16 }}
     />
-  ), [getProductQuantity, updateQuantity, addToCart, navigation]);
+  );
 
   const renderLocationModal = () => (
     <Modal
@@ -399,61 +256,28 @@ export default function HomeScreen({ navigation }: Props) {
           <TouchableWithoutFeedback>
             <View style={[styles.bottomSheet, { backgroundColor: sheetBg }]}>
               <View style={styles.sheetHeader}>
-                <ThemedText style={styles.sheetTitle}>
-                  Select Location
-                </ThemedText>
-                <TouchableOpacity
-                  onPress={() => setLocationModalVisible(false)}
-                >
-                  <Ionicons
-                    name="close"
-                    size={24}
-                    color={Colors.light.gray400}
-                  />
+                <ThemedText style={styles.sheetTitle}>Select Location</ThemedText>
+                <TouchableOpacity onPress={() => setLocationModalVisible(false)}>
+                  <Ionicons name="close" size={24} color={Colors.light.gray400} />
                 </TouchableOpacity>
               </View>
 
-              <TouchableOpacity
-                style={styles.sheetOption}
-                onPress={() => setLocationModalVisible(false)}
-              >
+              <TouchableOpacity style={styles.sheetOption} onPress={() => setLocationModalVisible(false)}>
                 <Ionicons name="location" size={24} color={primaryColor} />
                 <View style={styles.sheetOptionText}>
-                  <ThemedText style={styles.sheetOptionTitle}>
-                    {t(STRINGS.locationScreen.currentAddress)}
-                  </ThemedText>
-                  <ThemedText style={styles.sheetOptionSub} useSecondaryText>
-                    {currentAddress}
-                  </ThemedText>
+                  <ThemedText style={styles.sheetOptionTitle}>{t(STRINGS.locationScreen.currentAddress)}</ThemedText>
+                  <ThemedText style={styles.sheetOptionSub} useSecondaryText>{currentAddress}</ThemedText>
                 </View>
               </TouchableOpacity>
 
-              <View
-                style={[styles.sheetDivider, { backgroundColor: sheetDivider }]}
-              />
+              <View style={[styles.sheetDivider, { backgroundColor: sheetDivider }]} />
 
-              <TouchableOpacity
-                style={styles.sheetOption}
-                onPress={() => {
-                  setLocationModalVisible(false);
-                  navigation.navigate("Location");
-                }}
-              >
-                <Ionicons
-                  name="add-circle-outline"
-                  size={24}
-                  color={Colors.light.gray400}
-                />
+              <TouchableOpacity style={styles.sheetOption} onPress={() => { setLocationModalVisible(false); navigation.navigate('Location'); }}>
+                <Ionicons name="add-circle-outline" size={24} color={Colors.light.gray400} />
                 <View style={styles.sheetOptionText}>
-                  <ThemedText style={styles.sheetOptionTitle}>
-                    {t(STRINGS.locationScreen.searchNewLocation)}
-                  </ThemedText>
+                  <ThemedText style={styles.sheetOptionTitle}>{t(STRINGS.locationScreen.searchNewLocation)}</ThemedText>
                 </View>
-                <Ionicons
-                  name="chevron-forward"
-                  size={20}
-                  color={Colors.light.gray400}
-                />
+                <Ionicons name="chevron-forward" size={20} color={Colors.light.gray400} />
               </TouchableOpacity>
             </View>
           </TouchableWithoutFeedback>
@@ -474,95 +298,38 @@ export default function HomeScreen({ navigation }: Props) {
           <TouchableWithoutFeedback>
             <View style={[styles.bottomSheet, { backgroundColor: sheetBg }]}>
               <View style={styles.sheetHeader}>
-                <ThemedText style={styles.sheetTitle}>
-                  Select Language
-                </ThemedText>
+                <ThemedText style={styles.sheetTitle}>Select Language</ThemedText>
                 <TouchableOpacity onPress={() => setLangModalVisible(false)}>
-                  <Ionicons
-                    name="close"
-                    size={24}
-                    color={Colors.light.gray400}
-                  />
+                  <Ionicons name="close" size={24} color={Colors.light.gray400} />
                 </TouchableOpacity>
               </View>
 
               {[
-                { code: "en", label: "English", icon: "A" },
-                { code: "hi", label: "हिंदी", icon: "अ" },
-                { code: "hinglish", label: "Hinglish", icon: "H" },
-                { code: "ml", label: "മലയാളം", icon: "മ" },
+                { code: 'en', label: 'English', icon: 'A' },
+                { code: 'hi', label: 'हिंदी', icon: 'अ' },
+                { code: 'hinglish', label: 'Hinglish', icon: 'H' },
+                { code: 'ml', label: 'മലയാളം', icon: 'മ' }
               ].map((lang, index) => (
                 <View key={lang.code}>
                   <TouchableOpacity
                     style={styles.sheetOption}
                     onPress={() => {
+                      i18n.changeLanguage(lang.code);
+                      initDispatch(setLanguage(lang.code));
                       setLangModalVisible(false);
-                      setTimeout(() => {
-                        console.log("--- MEASURING TRANSLATION ---");
-                        const start = performance.now();
-                        
-                        // Single source of truth: dispatch context update only.
-                        // LocaleContext's useEffect will call i18n.changeLanguage() automatically.
-                        // This prevents the double-render wave.
-                        initDispatch(setLanguage(lang.code));
-                        
-                        const end = performance.now();
-                        console.log('Context dispatch took:', end - start, 'ms');
-                        console.log("-----------------------------");
-                      }, 150);
                     }}
                   >
-                    <View
-                      style={[
-                        styles.iconButton,
-                        {
-                          width: 32,
-                          height: 32,
-                          borderRadius: 16,
-                          backgroundColor: Colors.light.gray100,
-                          justifyContent: "center",
-                          alignItems: "center",
-                        },
-                      ]}
-                    >
-                      <ThemedText
-                        style={{
-                          color: Colors.light.gray800,
-                          fontWeight: "bold",
-                        }}
-                      >
-                        {lang.icon}
-                      </ThemedText>
+                    <View style={[styles.iconButton, { width: 32, height: 32, borderRadius: 16, backgroundColor: Colors.light.gray100, justifyContent: 'center', alignItems: 'center' }]}>
+                      <ThemedText style={{ color: Colors.light.gray800, fontWeight: 'bold' }}>{lang.icon}</ThemedText>
                     </View>
                     <View style={styles.sheetOptionText}>
-                      <ThemedText
-                        style={[
-                          styles.sheetOptionTitle,
-                          initLang?.lange === lang.code && {
-                            color: primaryColor,
-                            fontWeight: "bold",
-                          },
-                        ]}
-                      >
+                      <ThemedText style={[styles.sheetOptionTitle, initLang?.lange === lang.code && { color: primaryColor, fontWeight: 'bold' }]}>
                         {lang.label}
                       </ThemedText>
                     </View>
-                    {initLang?.lange === lang.code && (
-                      <Ionicons
-                        name="checkmark"
-                        size={24}
-                        color={primaryColor}
-                      />
-                    )}
+                    {initLang?.lange === lang.code && <Ionicons name="checkmark" size={24} color={primaryColor} />}
                   </TouchableOpacity>
-                  {index < 3 && (
-                    <View
-                      style={[
-                        styles.sheetDivider,
-                        { backgroundColor: sheetDivider },
-                      ]}
-                    />
-                  )}
+                  {index < 3 && <View style={[styles.sheetDivider, { backgroundColor: sheetDivider }]} />}
                 </View>
               ))}
             </View>
@@ -572,24 +339,18 @@ export default function HomeScreen({ navigation }: Props) {
     </Modal>
   );
 
-  const keyExtractor = useCallback((item: any) => item.id, []);
-
   return (
     <ThemedView style={styles.container}>
-      <StatusBar
-        barStyle={isDark ? "light-content" : "dark-content"}
-        backgroundColor={statusBarBg}
-      />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={statusBarBg} />
       {renderHeader()}
       <FlatList
-        key="2-columns" // Forces a fresh render when switching back to 2 columns
         data={filteredProducts}
-        keyExtractor={keyExtractor}
+        keyExtractor={item => item.id}
         numColumns={2}
-        columnWrapperStyle={styles.columnWrapper}
+        columnWrapperStyle={{ justifyContent: 'space-between' }}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
-        ListHeaderComponent={renderListHeader()}
+        ListHeaderComponent={renderListHeader}
         ListEmptyComponent={renderEmptyState}
         renderItem={renderProductItem}
       />
@@ -605,18 +366,14 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 40,
-    paddingHorizontal: ThemeDimension.spacing.m,
-  },
-  columnWrapper: {
-    justifyContent: "space-between",
+    paddingHorizontal: ThemeDimension.spacing.xl,
   },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop:
-      Platform.OS === "android" ? (StatusBar.currentHeight ?? 0) + 10 : 50,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight ?? 0) + 10 : 50,
     paddingBottom: 16,
   },
   iconButton: {
@@ -628,31 +385,31 @@ const styles = StyleSheet.create({
   deliveringTo: {
     fontSize: 12,
     marginBottom: 2,
-    fontWeight: "500",
+    fontWeight: '500',
   },
   locationRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   locationBoldText: {
     fontSize: 15,
-    fontWeight: "bold",
-    maxWidth: "85%",
+    fontWeight: 'bold',
+    maxWidth: '85%',
   },
   cartButton: {
     padding: 8,
-    position: "relative",
+    position: 'relative',
   },
   badge: {
-    position: "absolute",
+    position: 'absolute',
     top: 0,
     right: 0,
     backgroundColor: Colors.light.red600, // Red
     width: 20,
     height: 20,
     borderRadius: 10,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     borderWidth: 1.5,
     borderColor: Colors.light.white,
     zIndex: 1, // Ensure it stays on top of the icon
@@ -661,13 +418,13 @@ const styles = StyleSheet.create({
     color: Colors.light.white,
     fontSize: 10,
     lineHeight: 12,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     includeFontPadding: false, // Prevents text from being pushed down on Android
-    textAlignVertical: "center",
+    textAlignVertical: 'center',
   },
   searchBar: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     height: 50,
     borderRadius: 25, // Pill shaped search bar
     paddingHorizontal: 16,
@@ -688,19 +445,19 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   sectionHeaderRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 16,
   },
   seeAllText: {
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   modalOverlay: {
     flex: 1,
     backgroundColor: Colors.light.transparentBlack05,
-    justifyContent: "flex-end",
+    justifyContent: 'flex-end',
   },
   bottomSheet: {
     borderTopLeftRadius: 24,
@@ -709,18 +466,18 @@ const styles = StyleSheet.create({
     minHeight: 300,
   },
   sheetHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 24,
   },
   sheetTitle: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   sheetOption: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 16,
   },
   sheetOptionText: {
@@ -729,7 +486,7 @@ const styles = StyleSheet.create({
   },
   sheetOptionTitle: {
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: '600',
     marginBottom: 4,
   },
   sheetOptionSub: {
@@ -737,28 +494,28 @@ const styles = StyleSheet.create({
   },
   sheetDivider: {
     height: StyleSheet.hairlineWidth,
-    width: "100%",
+    width: '100%',
     marginVertical: 4,
   },
   emptyContainer: {
     paddingVertical: 40,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: Colors.light.gray200,
     borderRadius: 16,
-    borderStyle: "dashed",
+    borderStyle: 'dashed',
   },
   emptyTitle: {
     marginTop: 12,
     fontSize: 14,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     color: Colors.light.gray400,
   },
   productGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
     paddingTop: 8,
-  },
+  }
 });

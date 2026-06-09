@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { StyleSheet, View, TouchableOpacity, ActivityIndicator, Linking } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, TouchableOpacity, ActivityIndicator, Linking, Alert } from 'react-native';
 import { ThemedView, ThemedText, CustomButton } from '../../components';
 import { STRINGS, ThemeDimension, Colors } from '../../constants';
 import * as Location from 'expo-location';
@@ -22,6 +22,10 @@ export default function LocationScreen({ navigation }: Props) {
   
   const iconColor = useThemeColor({ light: Colors.light.black, dark: Colors.light.white }, 'primaryText' as any);
   const circleIconBg = useThemeColor({ light: Colors.light.gray100, dark: Colors.dark.secondaryBackground }, 'secondaryBackground' as any);
+  const mapPlaceholderBg = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray700 }, 'secondaryBackground' as any);
+  const strikeIconColor = useThemeColor({ light: Colors.light.gray900, dark: Colors.dark.gray100 }, 'primaryText' as any);
+  const errorCircleBg = useThemeColor({ light: Colors.light.red100, dark: Colors.dark.transparentWhite01 }, 'error' as any);
+  const errorIconColor = useThemeColor({ light: Colors.light.red600, dark: Colors.dark.error }, 'error' as any);
 
   const enableLocation = async () => {
     setLoading(true);
@@ -29,7 +33,10 @@ export default function LocationScreen({ navigation }: Props) {
       const gpsEnabled = await Location.hasServicesEnabledAsync();
       if (!gpsEnabled) {
         setLoading(false);
-        alert('Please turn on GPS');
+        Alert.alert(
+          t(STRINGS.locationScreen.turnOnGpsTitle),
+          t(STRINGS.locationScreen.turnOnGpsMessage)
+        );
         return;
       }
 
@@ -41,23 +48,34 @@ export default function LocationScreen({ navigation }: Props) {
         return;
       }
 
-      // Permission granted, now fetch location. Add timeout to prevent infinite hang if GPS is off.
-      let locationPromise = Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
+      // Tier 1: Attempt high-accuracy fresh fetch with a fast 4-second timeout
+      let location;
+      try {
+        let locationPromise = Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
 
-      let timeoutPromise = new Promise<any>((_, reject) => 
-        setTimeout(() => reject(new Error('timeout')), 8000)
-      );
+        let timeoutPromise = new Promise<any>((_, reject) => 
+          setTimeout(() => reject(new Error('timeout')), 4000)
+        );
 
-      let location = await Promise.race([locationPromise, timeoutPromise]);
+        location = await Promise.race([locationPromise, timeoutPromise]);
+      } catch (err) {
+        console.log('Balanced fetch failed or timed out. Trying Live Network fallback.');
+        
+        // Tier 2: Instant live network fallback (Wifi/Cell Tower triangulation)
+        // This avoids stale 'Last Known Location' data while bypassing GPS hardware freezes.
+        location = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Lowest,
+        });
+      }
       
       if (location) {
         // Log the raw coordinates so the user can inspect them in the terminal!
         console.log('\n📍 Raw GPS Coordinates Fetched:', JSON.stringify(location.coords, null, 2));
 
         // Reverse geocode to get a human-readable address
-        let addressStr = 'Unknown Location';
+        let addressStr = t(STRINGS.locationScreen.unknownLocation);
         try {
           let addressObj = await Location.reverseGeocodeAsync({
             latitude: location.coords.latitude,
@@ -147,7 +165,7 @@ export default function LocationScreen({ navigation }: Props) {
       <View style={styles.topSpacer} />
 
       <View style={styles.illustrationContainer}>
-        <View style={styles.mapPlaceholder}>
+        <View style={[styles.mapPlaceholder, { backgroundColor: mapPlaceholderBg }]}>
           <Feather name="map-pin" size={40} color={Colors.light.gray400} />
         </View>
       </View>
@@ -163,6 +181,8 @@ export default function LocationScreen({ navigation }: Props) {
 
       <View style={styles.bottomContainer}>
         <PrimaryButton title={t(STRINGS.locationScreen.enableButton)} onPress={enableLocation} />
+        <View style={{ height: 12 }} />
+        <SecondaryButton title={t(STRINGS.locationScreen.enterAddressButton)} onPress={handleManualAddress} />
         <TouchableOpacity style={styles.textLinkButton} onPress={handleSkip}>
           <ThemedText style={styles.textLink}>{t(STRINGS.locationScreen.chooseManuallyButton)}</ThemedText>
         </TouchableOpacity>
@@ -182,8 +202,8 @@ export default function LocationScreen({ navigation }: Props) {
 
       <View style={styles.illustrationContainer}>
         <View style={[styles.circleIcon, { backgroundColor: circleIconBg }]}>
-          <Feather name="map-pin" size={40} color={Colors.light.gray900} style={styles.strikeIcon} />
-          <View style={styles.strikeLine} />
+          <Feather name="map-pin" size={40} color={strikeIconColor} style={styles.strikeIcon} />
+          <View style={[styles.strikeLine, { backgroundColor: strikeIconColor }]} />
         </View>
       </View>
 
@@ -214,9 +234,9 @@ export default function LocationScreen({ navigation }: Props) {
       <View style={styles.topSpacer} />
 
       <View style={styles.illustrationContainer}>
-        <View style={[styles.circleIcon, { backgroundColor: Colors.light.red100 }]}>
-          <Feather name="map-pin" size={40} color={Colors.light.red600} style={styles.strikeIconRed} />
-          <View style={styles.strikeLineRed} />
+        <View style={[styles.circleIcon, { backgroundColor: errorCircleBg }]}>
+          <Feather name="map-pin" size={40} color={errorIconColor} style={styles.strikeIconRed} />
+          <View style={[styles.strikeLineRed, { backgroundColor: errorIconColor }]} />
         </View>
       </View>
 
@@ -278,7 +298,6 @@ const styles = StyleSheet.create({
   mapPlaceholder: {
     width: 200,
     height: 250,
-    backgroundColor: Colors.light.gray200,
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
@@ -298,7 +317,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 60,
     height: 3,
-    backgroundColor: Colors.light.gray900,
     transform: [{ rotate: '-45deg' }],
   },
   strikeIconRed: {
@@ -308,7 +326,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 60,
     height: 3,
-    backgroundColor: Colors.light.red600,
     transform: [{ rotate: '-45deg' }],
   },
   textContainer: {
@@ -329,42 +346,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     marginBottom: 40,
   },
-  primaryButton: {
-    backgroundColor: Colors.light.black, 
-    width: '100%',
-    paddingVertical: 18,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  buttonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  btnIcon: {
-    marginRight: 8,
-  },
-  primaryButtonText: {
-    color: Colors.light.white,
-    fontSize: ThemeDimension.fontSize.m,
-    fontWeight: 'bold',
-  },
-  secondaryButton: {
-    backgroundColor: Colors.light.white,
-    width: '100%',
-    paddingVertical: 18,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.light.gray300,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  secondaryButtonText: {
-    fontSize: ThemeDimension.fontSize.m,
-    color: Colors.light.black,
-    fontWeight: 'bold',
-  },
+
   textLinkButton: {
     width: '100%',
     paddingVertical: 16,
