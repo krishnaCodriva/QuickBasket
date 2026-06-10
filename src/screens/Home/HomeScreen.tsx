@@ -51,6 +51,8 @@ import { setLanguage } from "../../context/localizationContext/localeAction";
 import LocalizationContext from "../../context/localizationContext/LocaleContext";
 import { useCart } from "../../context/CartContext";
 import i18n from "../../localization/i18";
+import { homeApi } from "../../services/homeApi";
+// Removed mock data as per backend-driven requirement
 
 import { SUPPORTED_LANGUAGES } from "../../core/constants/languages";
 import { spacing } from "../../core/constants/theme/spacing";
@@ -108,36 +110,41 @@ export default function HomeScreen({ navigation }: Props) {
     "primaryBackground" as never,
   );
 
-  // ─── Cart ──────────────────────────────────────────────────────────────────
-  const { cartItems, addToCart, updateQuantity } = useCart();
-  
-  const { categories, isLoading: categoriesLoading } = useCategories();
+  const { cartItems, addToCart, updateQuantity, totalItems } = useCart();
 
-  // ─── Search & Tag Filter ──────────────────────────────────────────────────────────
-  const [selectedTagId, setSelectedTagId] = useState(STRINGS.homeScreen.tags.all);
+  // API States
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [tagsData, setTagsData] = useState<any[]>([]);
+  const [bannersData, setBannersData] = useState<any[]>([]);
+  const [categoriesData, setCategoriesData] = useState<any[]>([]);
+  const [productsData, setProductsData] = useState<any[]>([]);
 
-  const tagsList = [
-    { id: STRINGS.homeScreen.tags.all, label: t(STRINGS.homeScreen.tags.all) },
-    { id: STRINGS.homeScreen.tags.fresh, label: t(STRINGS.homeScreen.tags.fresh) },
-    { id: STRINGS.homeScreen.tags.trending, label: t(STRINGS.homeScreen.tags.trending) },
-    { id: STRINGS.homeScreen.tags.dailyEssentials, label: t(STRINGS.homeScreen.tags.dailyEssentials) },
-    { id: STRINGS.homeScreen.tags.fastDelivery, label: t(STRINGS.homeScreen.tags.fastDelivery) },
-    { id: STRINGS.homeScreen.tags.recommended, label: t(STRINGS.homeScreen.tags.recommended) },
-    { id: STRINGS.homeScreen.tags.bestSelling, label: t(STRINGS.homeScreen.tags.bestSelling) },
-    { id: STRINGS.homeScreen.tags.newArrivals, label: t(STRINGS.homeScreen.tags.newArrivals) },
-  ];
+  // Filter products strictly based on selectedTag
+  const filteredProducts = productsData.filter((p) => {
+    if (!selectedTag) return true; // If no tag is selected, show all
+    // Backend tag array structure: p.tags = [{ id, name, slug }, ...]
+    return p.tags?.some((t: any) => t.id === selectedTag);
+  });
 
-  // ─── Products ──────────────────────────────────────────────────────────────
-  const filteredProducts = ProductService.getProductsByTag(selectedTagId, 20);
+  const getProductQuantity = (id: string) => {
+    const item = cartItems.find((i) => i.id === id);
+    return item ? item.quantity : 0;
+  };
 
-  // ─── Helpers ───────────────────────────────────────────────────────────────
-  const getProductQuantity = useCallback(
-    (id: string) => {
-      const item = cartItems.find((i) => i.id === id);
-      return item ? item.quantity : 0;
-    },
-    [cartItems],
-  );
+  const handleBannerPress = useCallback((banner: any) => {
+    if (banner.redirectType === "category" || banner.redirectType === "offer") {
+      navigation.navigate("ProductListing", {
+        categoryId: banner.redirectType === "category" ? banner.redirectId : undefined,
+        category: banner.redirectType === "category" ? "Category" : "Special Offers",
+        query: banner.redirectType === "offer" ? banner.redirectId : undefined,
+      });
+    } else if (banner.redirectType === "product") {
+      const product = productsData.find((p) => p.id === banner.redirectId);
+      if (product) {
+        navigation.navigate("ProductDetail", { product });
+      }
+    }
+  }, [navigation, productsData]);
 
   const handleBannerPress = useCallback(
     (banner: Banner) => {
@@ -186,6 +193,21 @@ export default function HomeScreen({ navigation }: Props) {
     return unsubscribe;
   }, [navigation]);
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await homeApi();
+        if (res?.data) {
+          setTagsData(res.data.tags || []);
+          setBannersData(res.data.banners || []);
+          setCategoriesData(res.data.categories || []);
+          setProductsData(res.data.products || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch home API data:", error);
+      }
+    })();
+  }, []);
   // ─── Language switch ───────────────────────────────────────────────────────
   const handleLanguageSelect = useCallback(
     (code: LanguageCode) => {
@@ -263,20 +285,17 @@ export default function HomeScreen({ navigation }: Props) {
         </TouchableOpacity>
       </View>
       <FlatList
-        data={categories}
+        data={categoriesData}
         horizontal
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <CategoryCard
-            name={t(item.nameKey)}
-            emoji={item.emoji}
-            colorName={item.colorName}
+            name={item.name}
+            emoji={item.emoji || "📦"} // Fallback if backend doesn't provide emoji
+            colorName={item.colorName || "blue100"}
             onPress={() =>
-              navigation.navigate("HomeTab", {
-                screen: "CategoriesTab",
-                params: { categoryId: item.id },
-              })
+              navigation.navigate("ProductListing", { categoryId: item.id, category: item.name })
             }
           />
         )}
@@ -288,21 +307,56 @@ export default function HomeScreen({ navigation }: Props) {
     <View>
       {renderSearch()}
       <BannerCarousel
-        banners={HOME_BANNERS as never}
+        banners={bannersData.map(b => ({
+          ...b,
+          // Map backend URL to a format the component expects if necessary
+          source: { uri: `http://192.168.1.58:5000${b.imageUrl}` } // Ensure full URL is passed
+        }))}
         onBannerPress={handleBannerPress}
       />
       {renderCategories()}
       <View style={{ marginBottom: spacing.md }}>
         <QuickFilters
-          tags={tagsList}
-          selectedTagId={selectedTagId}
-          onSelectTag={setSelectedTagId}
+          tags={tagsData}
+          selectedTag={selectedTag}
+          onSelectTag={setSelectedTag}
         />
       </View>
     </View>
   );
 
   const renderEmptyState = () => (
+    <View style={styles.emptyContainer}>
+      <Ionicons name="search" size={40} color={Colors.light.gray300} />
+      <ThemedText style={styles.emptyTitle}>
+        {t(STRINGS.homeScreen.noProductsFound)}
+      </ThemedText>
+    </View>
+  );
+
+  const renderProductItem = ({ item }: { item: any }) => (
+    <ProductCard
+      id={item.id}
+      name={item.name}
+      price={`₹${Number(item.price || 0).toFixed(2)}`}
+      mrp={item.compareAtPrice ? `₹${Number(item.compareAtPrice).toFixed(2)}` : undefined}
+      category={item.Category?.name || "Other"}
+      weight={item.weight || "1 unit"}
+      emoji={item.emoji || "🛍️"} // Assuming backend doesn't send emoji for products, provide a fallback
+      inStock={item.stockQuantity > 0}
+      quantity={getProductQuantity(item.id)}
+      onAdd={() => {
+        if (getProductQuantity(item.id) > 0) {
+          updateQuantity(item.id, 1);
+        } else {
+          addToCart(item, 1);
+        }
+      }}
+      onRemove={() => updateQuantity(item.id, -1)}
+      onPress={() => navigation.navigate("ProductDetail", { product: item })}
+      isGrid={true}
+      containerStyle={{ width: "48%", marginBottom: 16 }}
+    // imageUrl={item.imageUrl ? `http://192.168.1.58:5000${item.imageUrl}` : undefined}
     <EmptyState
       icon={<Ionicons name="search" size={40} color={Colors.light.gray300} />}
       title={t(STRINGS.homeScreen.noProductsFound)}
@@ -338,7 +392,113 @@ export default function HomeScreen({ navigation }: Props) {
     [getProductQuantity, updateQuantity, addToCart, navigation],
   );
 
-  // ─── Render ────────────────────────────────────────────────────────────────
+  const renderLanguageModal = () => (
+    <Modal
+      visible={langModalVisible}
+      animationType="slide"
+      transparent={true}
+      onRequestClose={() => setLangModalVisible(false)}
+    >
+      <TouchableWithoutFeedback onPress={() => setLangModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <TouchableWithoutFeedback>
+            <View style={[styles.bottomSheet, { backgroundColor: sheetBg }]}>
+              <View style={styles.sheetHeader}>
+                <ThemedText style={styles.sheetTitle}>
+                  Select Language
+                </ThemedText>
+                <TouchableOpacity onPress={() => setLangModalVisible(false)}>
+                  <Ionicons
+                    name="close"
+                    size={24}
+                    color={Colors.light.gray400}
+                  />
+                </TouchableOpacity>
+              </View>
+
+              {[
+                { code: "en", label: "English", icon: "A" },
+                { code: "hi", label: "हिंदी", icon: "अ" },
+                { code: "hinglish", label: "Hinglish", icon: "H" },
+                { code: "ml", label: "മലയാളം", icon: "മ" },
+              ].map((lang, index) => (
+                <View key={lang.code}>
+                  <TouchableOpacity
+                    style={styles.sheetOption}
+                    onPress={() => {
+                      setLangModalVisible(false);
+                      setTimeout(async () => {
+                        const startTime = Date.now();
+                        console.log(`[Performance] Starting language switch to ${lang.code}...`);
+
+                        React.startTransition(() => {
+                          i18n.changeLanguage(lang.code).then(() => {
+                            initDispatch(setLanguage(lang.code));
+                            console.log(`[Performance] Language switch completed in ${Date.now() - startTime}ms`);
+                          });
+                        });
+                      }, 300);
+                    }}
+                  >
+                    <View
+                      style={[
+                        styles.iconButton,
+                        {
+                          width: 32,
+                          height: 32,
+                          borderRadius: 16,
+                          backgroundColor: Colors.light.gray100,
+                          justifyContent: "center",
+                          alignItems: "center",
+                        },
+                      ]}
+                    >
+                      <ThemedText
+                        style={{
+                          color: Colors.light.gray800,
+                          fontWeight: "bold",
+                        }}
+                      >
+                        {lang.icon}
+                      </ThemedText>
+                    </View>
+                    <View style={styles.sheetOptionText}>
+                      <ThemedText
+                        style={[
+                          styles.sheetOptionTitle,
+                          initLang?.lange === lang.code && {
+                            color: primaryColor,
+                            fontWeight: "bold",
+                          },
+                        ]}
+                      >
+                        {lang.label}
+                      </ThemedText>
+                    </View>
+                    {initLang?.lange === lang.code && (
+                      <Ionicons
+                        name="checkmark"
+                        size={24}
+                        color={primaryColor}
+                      />
+                    )}
+                  </TouchableOpacity>
+                  {index < 3 && (
+                    <View
+                      style={[
+                        styles.sheetDivider,
+                        { backgroundColor: sheetDivider },
+                      ]}
+                    />
+                  )}
+                </View>
+              ))}
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
+    </Modal>
+  );
 
   return (
     <ThemedView style={styles.container}>

@@ -7,20 +7,23 @@ import { spacing, radius, typography } from '../../core/constants/theme';
 
 export type TagItem = { id: string; label: string };
 
+type TagItem = { id: string; name: string; slug: string };
+
 type Props = {
   tags: TagItem[];
-  selectedTagId: string;
-  onSelectTag: (id: string) => void;
+  onSelectTag: (tagId: string | null) => void;
+  selectedTag: string | null;
 };
 
 const QuickFilters = ({ tags, selectedTagId, onSelectTag }: Props) => {
+console.log("tsgs is : ", tags)
   const primaryColor = useThemeColor({}, 'primary');
   const bgColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.primaryBackground }, 'primaryBackground' as any);
   return (
     <View style={styles.container}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         {tags.map((tag) => {
-          const isSelected = tag.id === selectedTagId;
+          const isSelected = tag.id === selectedTag;
           return (
             <TouchableOpacity
               key={tag.id}
@@ -31,7 +34,7 @@ const QuickFilters = ({ tags, selectedTagId, onSelectTag }: Props) => {
                   borderColor: primaryColor,
                 },
               ]}
-              onPress={() => onSelectTag(tag.id)}
+              onPress={() => onSelectTag(isSelected ? null : tag.id)}
             >
               <ThemedText
                 style={[
@@ -39,7 +42,7 @@ const QuickFilters = ({ tags, selectedTagId, onSelectTag }: Props) => {
                   { color: isSelected ? Colors.light.white : primaryColor },
                 ]}
               >
-                {tag.label}
+                {tag.name}
               </ThemedText>
             </TouchableOpacity>
           );
