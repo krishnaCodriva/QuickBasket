@@ -3,24 +3,28 @@ import { View, StyleSheet, Animated, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedView, ThemedText, CustomButton } from '../../components';
 import { Feather } from '@expo/vector-icons';
-import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
+import { CommonActions } from '@react-navigation/native';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Colors, STRINGS } from '../../constants';
 import { useThemeColor } from '../../hooks';
-import { Order } from '../../context';
 import { useTranslation } from 'react-i18next';
+import type { RootStackParamList } from '../../core/types/navigation';
+import { spacing, radius, typography, elevation } from '../../core/constants/theme';
 
-export default function OrderSuccessScreen() {
-  const navigation = useNavigation<any>();
-  const route = useRoute<any>();
+type Props = NativeStackScreenProps<RootStackParamList, 'OrderSuccess'>;
+
+export default function OrderSuccessScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
-  
-  const order: Order = route.params?.order;
-  const txId = order?.id || route.params?.txId || 'TXN' + Math.floor(Math.random() * 1000000000);
+
+  const order = route.params?.order;
+  const txId = order?.id ?? 'TXN' + Math.floor(Math.random() * 1000000000);
   
   const scaleValue = useRef(new Animated.Value(0)).current;
   const primaryColor = useThemeColor({}, 'primary');
   const cardColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.secondaryBackground }, 'secondaryBackground');
-  const borderColor = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray300 }, 'gray200' as any);
+  const borderColor = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray300 }, 'gray200' as never);
+  const successColor = useThemeColor({ light: Colors.light.success, dark: Colors.dark.success }, 'success' as never);
+
 
   useEffect(() => {
     Animated.spring(scaleValue, {
@@ -81,9 +85,9 @@ export default function OrderSuccessScreen() {
 
               <View style={[styles.card, { backgroundColor: cardColor, borderColor }]}>
                 <ThemedText type="subtitle" style={styles.cardTitle}>{t(STRINGS.orderStatusScreen.deliveryAddress)}</ThemedText>
-                <ThemedText style={{ fontWeight: 'bold', marginBottom: 4 }}>{order.address?.fullName}</ThemedText>
+                <ThemedText style={{ fontWeight: typography.weight.bold, marginBottom: spacing.xs }}>{order.address?.fullName}</ThemedText>
                 <ThemedText>{order.address?.address}</ThemedText>
-                <ThemedText style={{ marginTop: 4 }}>Mobile: {order.address?.mobile}</ThemedText>
+                <ThemedText style={{ marginTop: spacing.xs }}>Mobile: {order.address?.mobile}</ThemedText>
               </View>
 
               <View style={[styles.card, { backgroundColor: cardColor, borderColor }]}>
@@ -99,8 +103,8 @@ export default function OrderSuccessScreen() {
                 <ThemedText type="subtitle" style={styles.cardTitle}>{t(STRINGS.checkoutScreen.orderItems)} ({order.items?.length})</ThemedText>
                 {order.items?.map(item => (
                   <View key={item.id} style={styles.itemRow}>
-                    <ThemedText style={{ fontSize: 18 }}>{item.emoji}</ThemedText>
-                    <ThemedText style={{ flex: 1, marginLeft: 12 }}>{item.name} <ThemedText useSecondaryText>x{item.quantity}</ThemedText></ThemedText>
+                    <ThemedText style={{ fontSize: typography.size.xl }}>{item.emoji}</ThemedText>
+                    <ThemedText style={{ flex: 1, marginLeft: spacing.smd }}>{item.name} <ThemedText useSecondaryText>x{item.quantity}</ThemedText></ThemedText>
                     <ThemedText>₹{(item.price * item.quantity).toFixed(2)}</ThemedText>
                   </View>
                 ))}
@@ -109,10 +113,10 @@ export default function OrderSuccessScreen() {
               <View style={[styles.card, { backgroundColor: cardColor, borderColor }]}>
                 <ThemedText type="subtitle" style={styles.cardTitle}>{t(STRINGS.checkoutScreen.total)}</ThemedText>
                 <View style={styles.amountRow}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.itemSubtotal)}</ThemedText><ThemedText>₹{order.subtotal?.toFixed(2)}</ThemedText></View>
-                {order.discount > 0 && <View style={styles.amountRow}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.discounts)}</ThemedText><ThemedText style={{ color: '#22c55e' }}>-₹{order.discount?.toFixed(2)}</ThemedText></View>}
+                {order.discount > 0 && <View style={styles.amountRow}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.discounts)}</ThemedText><ThemedText style={{ color: successColor }}>-₹{order.discount?.toFixed(2)}</ThemedText></View>}
                 <View style={styles.amountRow}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.deliveryCharges)}</ThemedText><ThemedText>₹{order.deliveryCharge?.toFixed(2)}</ThemedText></View>
                 <View style={styles.amountRow}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.taxes)}</ThemedText><ThemedText>₹{order.taxes?.toFixed(2)}</ThemedText></View>
-                <View style={[styles.amountRow, { borderTopWidth: 1, borderTopColor: borderColor, paddingTop: 12, marginTop: 12 }]}><ThemedText style={{ fontWeight: 'bold', fontSize: 16 }}>{t(STRINGS.cartScreen.totalPayable)}</ThemedText><ThemedText style={{ fontWeight: 'bold', fontSize: 16 }}>₹{order.totalPayable?.toFixed(2)}</ThemedText></View>
+                <View style={[styles.amountRow, { borderTopWidth: 1, borderTopColor: borderColor, paddingTop: spacing.smd, marginTop: spacing.smd }]}><ThemedText style={{ fontWeight: typography.weight.bold, fontSize: typography.size.lg }}>{t(STRINGS.cartScreen.totalPayable)}</ThemedText><ThemedText style={{ fontWeight: typography.weight.bold, fontSize: typography.size.lg }}>₹{order.totalPayable?.toFixed(2)}</ThemedText></View>
               </View>
             </View>
           )}
@@ -122,7 +126,7 @@ export default function OrderSuccessScreen() {
               title={t(STRINGS.orderSuccessScreen.viewOrder)} 
               type="secondary"
               onPress={handleViewOrder} 
-              style={[styles.homeBtn, { marginBottom: 16 }]}
+              style={[styles.homeBtn, { marginBottom: spacing.md }]}
             />
             <CustomButton 
               title={t(STRINGS.orderSuccessScreen.continueShopping)} 
@@ -144,14 +148,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 40,
+    paddingBottom: spacing.xxxl,
   },
   successHeader: {
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 40,
-    paddingBottom: 24,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xxxl,
+    paddingBottom: spacing.xl,
   },
   iconContainer: {
     width: 90,
@@ -159,64 +163,60 @@ const styles = StyleSheet.create({
     borderRadius: 45,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
+    marginBottom: spacing.xl,
+    ...elevation.md,
   },
   title: {
-    fontSize: 24,
+    fontSize: typography.size.xxl,
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.smd,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: typography.size.lg,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.xl,
     lineHeight: 24,
   },
   txBox: {
-    padding: 16,
-    borderRadius: 12,
+    padding: spacing.md,
+    borderRadius: radius.md,
     alignItems: 'center',
     width: '100%',
   },
   txLabel: {
-    fontSize: 14,
-    marginBottom: 4,
+    fontSize: typography.size.md,
+    marginBottom: spacing.xs,
   },
   txId: {
-    fontSize: 18,
+    fontSize: typography.size.xl,
     letterSpacing: 1,
   },
   detailsContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.md,
   },
   card: {
-    padding: 16,
-    borderRadius: 12,
+    padding: spacing.md,
+    borderRadius: radius.md,
     borderWidth: 1,
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   cardTitle: {
-    marginBottom: 12,
-    fontSize: 16,
+    marginBottom: spacing.smd,
+    fontSize: typography.size.lg,
   },
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.smd,
   },
   amountRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   footer: {
-    paddingHorizontal: 24,
-    paddingTop: 8,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.sm,
   },
   homeBtn: {
     width: '100%',

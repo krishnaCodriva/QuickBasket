@@ -1,37 +1,43 @@
-import React from 'react';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { SplashScreen, LocationScreen, ManualLocationScreen, ProductListingScreen, ProductDetailScreen, CartScreen, LoginScreen, CheckoutScreen, OtpScreen, DummyGoogleScreen, OrderSuccessScreen, OrderStatusScreen, InvoiceScreen } from '../screens';
-import TabNavigator from './TabNavigator';
-import { useThemeColor } from "../hooks";
+/**
+ * AppNavigator.tsx
+ * Refactored under the QuickBasket Enterprise Architecture Plan.
+ *
+ * Changes:
+ * - RootStackParamList imported from core/types (single source of truth)
+ * - ProductDetail param typed with Product (no more `any`)
+ * - Import is re-exported so other files can use it from the same location
+ */
 
-export type RootStackParamList = {
-  Splash: undefined;
-  Location: undefined;
-  ManualLocation: undefined;
-  HomeTab: undefined;
-  ProductListing: { category?: string; query?: string } | undefined;
-  ProductDetail: { product: any } | undefined;
-  Cart: undefined;
-  Login: undefined;
-  OtpScreen: { phoneNumber: string };
-  DummyGoogleScreen: { returnTo?: string };
-  Checkout: undefined;
-  OrderSuccess: { txId: string };
-  OrderStatus: { orderId: string };
-  Invoice: { orderId: string };
-};
+import React from 'react';
+import { useColorScheme } from 'react-native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import {
+  SplashScreen,
+  LocationScreen,
+  ManualLocationScreen,
+  ProductListingScreen,
+  ProductDetailScreen,
+  CartScreen,
+  LoginScreen,
+  CheckoutScreen,
+  OtpScreen,
+  DummyGoogleScreen,
+  OrderSuccessScreen,
+  OrderStatusScreen,
+  InvoiceScreen,
+  EditProfileScreen,
+} from '../screens';
+import TabNavigator from './TabNavigator';
+import { Colors } from '../constants/colors';
+import type { RootStackParamList } from '../core/types/navigation';
+
+// Re-export so screens can import from here or from core/types
+export type { RootStackParamList };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-// import { useColorScheme } from "react-native";
-import { Colors } from "../constants/colors";
-
 export default function AppNavigator() {
-  // const isDark = useColorScheme() === 'dark';
-  const isDark = useThemeColor(
-    { light: "primaryBackground" },
-    "primaryBackground",
-  );
+  const isDark = useColorScheme() === 'dark';
 
   return (
     <Stack.Navigator
@@ -60,6 +66,7 @@ export default function AppNavigator() {
       <Stack.Screen name="OrderSuccess" component={OrderSuccessScreen} />
       <Stack.Screen name="OrderStatus" component={OrderStatusScreen} />
       <Stack.Screen name="Invoice" component={InvoiceScreen} />
+      <Stack.Screen name="EditProfile" component={EditProfileScreen} />
     </Stack.Navigator>
   );
 }

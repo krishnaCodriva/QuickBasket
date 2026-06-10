@@ -4,6 +4,7 @@ import { ThemedText } from './ThemedText';
 import { Colors, ThemeDimension } from '../constants';
 import { useThemeColor } from '../hooks';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { spacing, radius, typography } from '../core/constants/theme';
 
 type ButtonProps = TouchableOpacityProps & {
   title: string;
@@ -58,26 +59,26 @@ export function CustomButton({
 const styles = StyleSheet.create({
   primaryButton: {
     backgroundColor: Colors.light.primary,
-    paddingVertical: ThemeDimension.spacing.m,
-    borderRadius: ThemeDimension.borderRadius.l,
+    paddingVertical: spacing.md,
+    borderRadius: radius.lg,
     alignItems: 'center',
-    marginBottom: ThemeDimension.spacing.m,
+    marginBottom: spacing.md,
   },
   primaryButtonText: {
     color: Colors.light.white,
-    fontSize: ThemeDimension.fontSize.m,
-    fontWeight: 'bold',
+    fontSize: typography.size.lg,
+    fontWeight: typography.weight.bold,
   },
   secondaryButton: {
     backgroundColor: 'transparent',
-    paddingVertical: ThemeDimension.spacing.m,
-    borderRadius: ThemeDimension.borderRadius.l,
+    paddingVertical: spacing.md,
+    borderRadius: radius.lg,
     alignItems: 'center',
     borderWidth: 1,
   },
   secondaryButtonText: {
-    fontSize: ThemeDimension.fontSize.m,
-    fontWeight: 'bold',
+    fontSize: typography.size.lg,
+    fontWeight: typography.weight.bold,
   },
   buttonContent: {
     flexDirection: 'row',
@@ -85,6 +86,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   btnIcon: {
-    marginRight: 8,
+    marginRight: spacing.sm,
   },
 });

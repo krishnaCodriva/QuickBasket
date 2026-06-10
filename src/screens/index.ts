@@ -6,6 +6,7 @@ export { default as CategoriesScreen } from './Categories/CategoriesScreen';
 export { default as OrdersScreen } from './Orders/OrdersScreen';
 export { default as CartScreen } from './Cart/CartScreen';
 export { default as ProfileScreen } from './Profile/ProfileScreen';
+export { default as EditProfileScreen } from './Profile/EditProfileScreen';
 export { default as ProductListingScreen } from './ProductListing/ProductListingScreen';
 export { default as ProductDetailScreen } from './ProductDetail/ProductDetailScreen';
 export { default as LoginScreen } from './Login/LoginScreen';

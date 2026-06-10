@@ -1,16 +1,19 @@
 import React from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ThemedView, ThemedText, CustomButton } from '../../components';
-import { Feather } from '@expo/vector-icons';
+import { ThemedView, ThemedText, ScreenHeader, EmptyState } from '../../components';
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useOrder, Order, ORDER_STATUS_FLOW } from '../../context';
 import { Colors, STRINGS } from '../../constants';
 import { useThemeColor } from '../../hooks';
 import { useTranslation } from 'react-i18next';
+import { Feather } from '@expo/vector-icons';
+import type { RootStackParamList } from '../../core/types/navigation';
+import { spacing, radius, typography, elevation } from '../../core/constants/theme';
 
 export default function OrdersScreen() {
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { orders } = useOrder();
   const { t } = useTranslation();
   
@@ -18,11 +21,13 @@ export default function OrdersScreen() {
   const borderColor = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray300 }, 'gray200' as any);
   const primaryColor = useThemeColor({}, 'primary');
   const iconColor = useThemeColor({ light: Colors.light.black, dark: Colors.light.white }, 'primaryText' as any);
+  const errorColor = useThemeColor({ light: Colors.light.error, dark: Colors.dark.error }, 'error' as any);
+  const successColor = useThemeColor({ light: Colors.light.success, dark: Colors.dark.success }, 'success' as any);
 
   const getStatusColor = (status: string) => {
-    if (status === 'Delivered') return '#22c55e'; // Green
-    if (status === 'Cancelled') return '#ef4444'; // Red
-    return primaryColor; // Active color for processing, packed, out for delivery
+    if (status === 'Delivered') return successColor;
+    if (status === 'Cancelled') return errorColor;
+    return primaryColor; // use existing primaryColor
   };
 
   const getTranslatedStatus = (status: string) => {
@@ -52,8 +57,8 @@ export default function OrdersScreen() {
       >
         <View style={styles.cardHeader}>
           <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-              <Feather name="box" size={16} color={iconColor} style={{ marginRight: 8 }} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.xs }}>
+              <Feather name="box" size={16} color={iconColor} style={{ marginRight: spacing.sm }} />
               <ThemedText style={styles.orderId}>{t(STRINGS.ordersScreen.orderId)}#{item.id.slice(-8)}</ThemedText>
             </View>
             <ThemedText useSecondaryText style={styles.orderDate}>{formattedDate}</ThemedText>
@@ -84,27 +89,17 @@ export default function OrdersScreen() {
     return (
       <ThemedView style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
-          <View style={[styles.header, { borderBottomColor: borderColor }]}>
-            {navigation.canGoBack() && (
-              <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                <Feather name="arrow-left" size={24} color={iconColor} />
-              </TouchableOpacity>
-            )}
-            <ThemedText type="subtitle" style={[styles.headerTitle, navigation.canGoBack() && { marginLeft: 16 }]}>{t(STRINGS.ordersScreen.title)}</ThemedText>
-            {navigation.canGoBack() && <View style={{ width: 24 }} />}
-          </View>
-          <View style={styles.emptyContainer}>
-            <Feather name="shopping-bag" size={64} color={borderColor} style={{ marginBottom: 16 }} />
-            <ThemedText style={{ fontSize: 18, marginBottom: 8 }}>No Orders Yet</ThemedText>
-            <ThemedText useSecondaryText style={{ textAlign: 'center', marginBottom: 24 }}>
-              Looks like you haven't placed any orders yet.
-            </ThemedText>
-            <CustomButton 
-              title={t(STRINGS.cartScreen.startShopping)} 
-              onPress={() => navigation.navigate('HomeTab', { screen: 'Home' })} 
-              style={{ width: 200 }}
-            />
-          </View>
+          <ScreenHeader
+            title={t(STRINGS.ordersScreen.title)}
+            onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
+          />
+          <EmptyState
+            emoji="🛍️"
+            title={t(STRINGS.ordersScreen.noOrders)}
+            subtitle={t(STRINGS.ordersScreen.noOrdersSub)}
+            buttonText={t(STRINGS.cartScreen.startShopping)}
+            onButtonPress={() => navigation.navigate('HomeTab', { screen: 'Home' })}
+          />
         </SafeAreaView>
       </ThemedView>
     );
@@ -113,15 +108,10 @@ export default function OrdersScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <View style={[styles.header, { borderBottomColor: borderColor }]}>
-          {navigation.canGoBack() && (
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-              <Feather name="arrow-left" size={24} color={iconColor} />
-            </TouchableOpacity>
-          )}
-          <ThemedText type="subtitle" style={[styles.headerTitle, navigation.canGoBack() && { marginLeft: 16 }]}>{t(STRINGS.ordersScreen.title)}</ThemedText>
-          {navigation.canGoBack() && <View style={{ width: 24 }} />}
-        </View>
+        <ScreenHeader
+          title={t(STRINGS.ordersScreen.title)}
+          onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
+        />
         <FlatList
           data={orders}
           keyExtractor={item => item.id}
@@ -144,89 +134,85 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.smd,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   backBtn: {
-    padding: 4,
+    padding: spacing.xs,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: typography.size.xxl,
     marginBottom: 0,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 32,
+    padding: spacing.xxl,
   },
   listContent: {
-    padding: 16,
+    padding: spacing.md,
     paddingBottom: 100,
   },
   orderCard: {
-    borderRadius: 16,
-    marginBottom: 20,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
+    borderRadius: radius.lg,
+    marginBottom: spacing.mlg,
+    ...elevation.sm,
     borderWidth: 1,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    padding: 16,
-    paddingBottom: 12,
+    padding: spacing.md,
+    paddingBottom: spacing.smd,
   },
   orderId: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 4,
+    fontSize: typography.size.lg,
+    fontWeight: typography.weight.bold,
+    marginBottom: spacing.xs,
   },
   orderDate: {
-    fontSize: 14,
+    fontSize: typography.size.md,
   },
   orderAmount: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: typography.size.lg,
+    fontWeight: typography.weight.bold,
   },
   cardBody: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
   },
   itemsSummary: {
-    fontSize: 14,
+    fontSize: typography.size.md,
     lineHeight: 22,
   },
   cardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 12,
-    paddingHorizontal: 16,
+    padding: spacing.smd,
+    paddingHorizontal: spacing.md,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
+    borderBottomLeftRadius: radius.lg,
+    borderBottomRightRadius: radius.lg,
   },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    paddingHorizontal: spacing.smd,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.xl,
   },
   statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 8,
+    width: spacing.sm,
+    height: spacing.sm,
+    borderRadius: radius.xs,
+    marginRight: spacing.sm,
   },
   statusText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: typography.size.md,
+    fontWeight: typography.weight.semiBold,
   },
 });

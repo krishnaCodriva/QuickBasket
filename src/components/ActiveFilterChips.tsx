@@ -5,10 +5,13 @@ import { ThemedText } from "./ThemedText";
 import { STRINGS, Colors } from "../constants";
 import { useThemeColor } from "../hooks";
 import { useTranslation } from "react-i18next";
+import { spacing, radius, typography } from "../core/constants/theme";
 
 interface ActiveFilterChipsProps {
   filterCategory: string | null;
   setFilterCategory: (val: string | null) => void;
+  filterSubCategoryId?: string | null;
+  setFilterSubCategoryId?: (val: string | null) => void;
   filterPrice: string | null;
   setFilterPrice: (val: string | null) => void;
   filterTag: string | null;
@@ -23,6 +26,8 @@ interface ActiveFilterChipsProps {
 const ActiveFilterChips: React.FC<ActiveFilterChipsProps> = ({
   filterCategory,
   setFilterCategory,
+  filterSubCategoryId,
+  setFilterSubCategoryId,
   filterPrice,
   setFilterPrice,
   filterTag,
@@ -35,7 +40,7 @@ const ActiveFilterChips: React.FC<ActiveFilterChipsProps> = ({
 }) => {
   const { t } = useTranslation();
   const hasActiveFilters =
-    filterPrice || filterCategory || filterTag || inStockOnly || outOfStockOnly;
+    filterPrice || filterCategory || filterSubCategoryId || filterTag || inStockOnly || outOfStockOnly;
 
   const chipBgColor = useThemeColor(
     { light: Colors.light.gray200, dark: Colors.dark.gray800 },
@@ -54,6 +59,7 @@ const ActiveFilterChips: React.FC<ActiveFilterChipsProps> = ({
 
   const handleClearAll = () => {
     setFilterCategory(null);
+    if (setFilterSubCategoryId) setFilterSubCategoryId(null);
     setFilterPrice(null);
     setFilterTag(null);
     setInStockOnly(false);
@@ -73,6 +79,8 @@ const ActiveFilterChips: React.FC<ActiveFilterChipsProps> = ({
             style={[styles.filterChip, { backgroundColor: chipBgColor }]}
             onPress={() => {
               setFilterCategory(null);
+              // Subcategories depend on categories, so clearing category should clear subcategory too
+              if (setFilterSubCategoryId) setFilterSubCategoryId(null);
               onFilterRemove();
             }}
           >
@@ -80,6 +88,22 @@ const ActiveFilterChips: React.FC<ActiveFilterChipsProps> = ({
               style={[styles.filterChipText, { color: chipTextColor }]}
             >
               {t(filterCategory)}
+            </ThemedText>
+            <Ionicons name="close-circle" size={16} color={closeIconColor} />
+          </TouchableOpacity>
+        )}
+        {filterSubCategoryId && (
+          <TouchableOpacity
+            style={[styles.filterChip, { backgroundColor: chipBgColor }]}
+            onPress={() => {
+              if (setFilterSubCategoryId) setFilterSubCategoryId(null);
+              onFilterRemove();
+            }}
+          >
+            <ThemedText
+              style={[styles.filterChipText, { color: chipTextColor }]}
+            >
+              {t(filterSubCategoryId)}
             </ThemedText>
             <Ionicons name="close-circle" size={16} color={closeIconColor} />
           </TouchableOpacity>
@@ -160,32 +184,32 @@ const ActiveFilterChips: React.FC<ActiveFilterChipsProps> = ({
 
 const styles = StyleSheet.create({
   activeFiltersWrapper: {
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   activeFiltersContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.md,
     flexDirection: "row",
     alignItems: "center",
   },
   filterChip: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginRight: 8,
+    paddingHorizontal: spacing.smd,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.lg,
+    marginRight: spacing.sm,
   },
   filterChipText: {
-    fontSize: 12,
-    marginRight: 4,
+    fontSize: typography.size.sm,
+    marginRight: spacing.xs,
   },
   clearAllChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: spacing.smd,
+    paddingVertical: spacing.xs,
   },
   clearAllText: {
-    fontSize: 12,
-    fontWeight: "bold",
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.bold,
     color: Colors.light.red600,
   },
 });

@@ -1,27 +1,52 @@
-import React, { createContext, useContext, useState } from 'react';
+/**
+ * AuthContext.tsx
+ * Refactored under the QuickBasket Enterprise Architecture Plan.
+ *
+ * Changes:
+ * - User type imported from core/types (single source of truth, removed local duplicate)
+ * - Context initialized with null + guard in useAuth (fixes `{} as AuthContextType` anti-pattern)
+ * - Context value memoized with useMemo to prevent unnecessary re-renders
+ * - All async functions retain existing behavior (no logic changes, only type safety)
+ * - Re-exports User type for backward compatibility
+ */
 
-export type User = {
-  id: string;
-  name: string;
-  email: string;
-};
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useMemo,
+  useCallback,
+} from 'react';
+import type { User } from '../core/types/domain';
+
+// Re-export for backward compatibility with existing imports
+export type { User };
+
+// ─── Context type ─────────────────────────────────────────────────────────────
 
 type AuthContextType = {
   user: User | null;
   verifyOtp: (phone: string, otp: string) => Promise<void>;
   logout: () => void;
-  signup: (name: string, email: string, pass: string) => Promise<void>; // keeping for google mock if needed
+  /** Kept for Google mock sign-in flow */
+  signup: (name: string, email: string, pass: string) => Promise<void>;
+  updateProfile: (updates: Partial<User>) => Promise<void>;
 };
 
-const AuthContext = createContext<AuthContextType>({} as AuthContextType);
+// ─── Context (null-initialized — safe guard enforced in useAuth) ───────────────
+
+const AuthContext = createContext<AuthContextType | null>(null);
+
+// ─── Provider ─────────────────────────────────────────────────────────────────
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
-  const verifyOtp = async (phone: string, otp: string) => {
+  const verifyOtp = useCallback(async (phone: string, otp: string) => {
     return new Promise<void>((resolve, reject) => {
       setTimeout(() => {
-        if (otp === '123456') { // mock valid otp
+        if (otp === '123456') {
+          // mock valid OTP
           setUser({ id: `u_${Date.now()}`, name: 'Verified User', email: phone });
           resolve();
         } else {
@@ -29,30 +54,65 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       }, 1000);
     });
-  };
+  }, []);
 
-  const signup = async (name: string, email: string, pass: string) => {
-    return new Promise<void>((resolve, reject) => {
+  const signup = useCallback(
+    async (name: string, email: string, pass: string) => {
+      return new Promise<void>((resolve, reject) => {
+        setTimeout(() => {
+          if (!name || !email || !pass) {
+            reject(new Error('Missing mandatory fields'));
+            return;
+          }
+          setUser({ id: `u_${Date.now()}`, name, email });
+          resolve();
+        }, 1000);
+      });
+    },
+    [],
+  );
+
+  const updateProfile = useCallback(async (updates: Partial<User>) => {
+    return new Promise<void>((resolve) => {
       setTimeout(() => {
-        if (!name || !email || !pass) {
-          reject(new Error('Missing mandatory fields'));
-          return;
-        }
-        setUser({ id: `u_${Date.now()}`, name, email });
+        setUser((prev) => {
+          if (prev) {
+            return { ...prev, ...updates };
+          }
+          // Allow profile editing even for guest users (creates mock user)
+          return {
+            id: `u_${Date.now()}`,
+            name: updates.name ?? '',
+            email: updates.email ?? '',
+            mobile: updates.mobile,
+            avatar: updates.avatar,
+          };
+        });
         resolve();
-      }, 1000);
+      }, 500);
     });
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setUser(null);
-  };
+  }, []);
+
+  const contextValue = useMemo(
+    () => ({ user, verifyOtp, signup, updateProfile, logout }),
+    [user, verifyOtp, signup, updateProfile, logout],
+  );
 
   return (
-    <AuthContext.Provider value={{ user, verifyOtp, signup, logout }}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+// ─── Hook ─────────────────────────────────────────────────────────────────────
+
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (context === null) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

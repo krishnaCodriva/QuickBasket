@@ -1,39 +1,65 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Share } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Share, ActivityIndicator, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ThemedView, ThemedText, CustomButton } from '../../components';
+import { ThemedView, ThemedText, CustomButton, ScreenHeader } from '../../components';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Colors, STRINGS } from '../../constants';
 import { useThemeColor } from '../../hooks';
 import { useOrder } from '../../context';
 import { useTranslation } from 'react-i18next';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as IntentLauncher from 'expo-intent-launcher';
+import { StorageService, STORAGE_KEYS } from '../../services';
+import { spacing, radius, typography, elevation } from '../../core/constants/theme';
+
+
 
 export default function InvoiceScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { getOrderById } = useOrder();
   const { t } = useTranslation();
+  const [isGenerating, setIsGenerating] = useState(false);
   
   const orderId = route.params?.orderId;
   const order = getOrderById(orderId);
+  const [isSharing, setIsSharing] = useState(false);
+
+  const openPdf = async (fileUri: string) => {
+    try {
+      let contentUri = fileUri;
+      if (fileUri.startsWith('file://')) {
+        contentUri = await FileSystem.getContentUriAsync(fileUri);
+      }
+      
+      await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
+        data: contentUri,
+        flags: 1,
+        type: 'application/pdf'
+      });
+    } catch (err) {
+      console.log('Error opening PDF: ', err);
+      Alert.alert(t(STRINGS.invoiceScreen.error), t(STRINGS.invoiceScreen.errorOpenPdf));
+    }
+  };
 
   const cardColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.secondaryBackground }, 'secondaryBackground');
   const borderColor = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray300 }, 'gray200' as any);
   const primaryColor = useThemeColor({}, 'primary');
   const iconColor = useThemeColor({ light: Colors.light.black, dark: Colors.light.white }, 'primaryText' as any);
+  const successColor = useThemeColor({ light: Colors.light.success, dark: Colors.dark.success }, 'success' as any);
 
   if (!order) {
     return (
       <ThemedView style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
-          <View style={[styles.header, { borderBottomColor: borderColor }]}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-              <Feather name="arrow-left" size={24} color={iconColor} />
-            </TouchableOpacity>
-            <ThemedText type="subtitle">Invoice Not Found</ThemedText>
-            <View style={{ width: 24 }} />
-          </View>
+          <ScreenHeader
+            title={t(STRINGS.invoiceScreen.notFound)}
+            onBack={() => navigation.goBack()}
+          />
         </SafeAreaView>
       </ThemedView>
     );
@@ -43,37 +69,209 @@ export default function InvoiceScreen() {
   
   const handleShare = async () => {
     try {
-      const message = `
-${t(STRINGS.invoiceScreen.title)}: ${invoiceNumber}
-${t(STRINGS.invoiceScreen.orderId)} ${order.id}
-${t(STRINGS.invoiceScreen.orderDate)} ${new Date(order.date).toLocaleDateString()}
-${t(STRINGS.invoiceScreen.grandTotal)}: ₹${order.totalPayable.toFixed(2)}
-${t(STRINGS.checkoutScreen.paymentMethod)}: ${order.paymentMethodId ? t(`checkoutScreen.paymentMethods.${order.paymentMethodId}_label` as any, { defaultValue: order.paymentMethod }) : order.paymentMethod}
-
-Thank you for shopping with QuickBasket!
-      `.trim();
+      setIsSharing(true);
+      const html = generateInvoiceHtml();
       
-      await Share.share({
-        message,
-        title: `Invoice ${invoiceNumber}`,
-      });
+      const { uri } = await Print.printToFileAsync({ html });
+      
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri, { 
+          UTI: '.pdf', 
+          mimeType: 'application/pdf',
+          dialogTitle: t(STRINGS.invoiceScreen.share)
+        });
+      } else {
+        Alert.alert(t(STRINGS.invoiceScreen.error), t(STRINGS.invoiceScreen.sharingUnavailable));
+      }
     } catch (error) {
       console.log('Error sharing invoice:', error);
+      Alert.alert(t(STRINGS.invoiceScreen.error), t(STRINGS.invoiceScreen.errorSharing));
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  const generateInvoiceHtml = () => {
+    const itemsHtml = order.items.map((item: any) => `
+      <tr>
+        <td>${item.name}</td>
+        <td class="text-center">${item.quantity}</td>
+        <td class="text-right">₹${(item.price * item.quantity).toFixed(2)}</td>
+      </tr>
+    `).join('');
+
+    return `
+      <html>
+        <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+          <style>
+            body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #333; }
+            .header { text-align: center; border-bottom: 2px solid #0f9b58; padding-bottom: 20px; margin-bottom: 20px; }
+            .company-name { font-size: 28px; font-weight: bold; color: #0f9b58; }
+            .invoice-title { font-size: 20px; color: #555; margin-top: 5px; }
+            .row { display: flex; justify-content: space-between; margin-bottom: 10px; }
+            .section-title { font-size: 18px; font-weight: bold; margin-top: 30px; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+            th { background-color: #f8f9fa; color: #333; }
+            .text-right { text-align: right; }
+            .text-center { text-align: center; }
+            .totals-container { margin-top: 30px; width: 50%; float: right; }
+            .total-row { display: flex; justify-content: space-between; padding: 8px 0; }
+            .grand-total { font-size: 20px; font-weight: bold; border-top: 2px solid #333; padding-top: 10px; margin-top: 10px; }
+            .footer { margin-top: 100px; text-align: center; color: #888; font-size: 12px; clear: both; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="company-name">QuickBasket</div>
+            <div class="invoice-title">Tax Invoice / Bill of Supply</div>
+          </div>
+
+          <div class="row">
+            <div>
+              <div class="section-title" style="margin-top:0;">${t(STRINGS.invoiceScreen.pdfBilledTo)}</div>
+              <strong>${order.address?.fullName}</strong><br />
+              ${order.address?.address}<br />
+              Mobile: ${order.address?.mobile}
+            </div>
+            <div class="text-right">
+              <div class="section-title" style="margin-top:0;">${t(STRINGS.invoiceScreen.pdfInvoiceDetails)}</div>
+              <strong>${t(STRINGS.invoiceScreen.pdfInvoiceNo)}</strong> ${invoiceNumber}<br />
+              <strong>${t(STRINGS.invoiceScreen.pdfOrderId)}</strong> ${order.id}<br />
+              <strong>${t(STRINGS.invoiceScreen.pdfOrderDate)}</strong> ${new Date(order.date).toLocaleDateString()}<br />
+              <strong>${t(STRINGS.invoiceScreen.pdfPaymentMethod)}</strong> ${order.paymentMethodId ? t(`checkoutScreen.paymentMethods.${order.paymentMethodId}_label` as any, { defaultValue: order.paymentMethod }) : order.paymentMethod}
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>${t(STRINGS.invoiceScreen.pdfItemDescription)}</th>
+                <th class="text-center">${t(STRINGS.invoiceScreen.qty)}</th>
+                <th class="text-right">${t(STRINGS.invoiceScreen.price)}</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+            </tbody>
+          </table>
+
+          <div class="totals-container">
+            <div class="total-row">
+              <span>${t(STRINGS.invoiceScreen.pdfSubtotal)}</span>
+              <span>₹${order.subtotal?.toFixed(2)}</span>
+            </div>
+            ${order.discount > 0 ? `
+            <div class="total-row" style="color: #22c55e;">
+              <span>${t(STRINGS.invoiceScreen.pdfDiscount)}</span>
+              <span>-₹${order.discount?.toFixed(2)}</span>
+            </div>` : ''}
+            <div class="total-row">
+              <span>${t(STRINGS.invoiceScreen.pdfDelivery)}</span>
+              <span>₹${order.deliveryCharge?.toFixed(2)}</span>
+            </div>
+            <div class="total-row">
+              <span>${t(STRINGS.invoiceScreen.pdfTaxes)}</span>
+              <span>₹${order.taxes?.toFixed(2)}</span>
+            </div>
+            <div class="total-row grand-total">
+              <span>${t(STRINGS.invoiceScreen.pdfGrandTotal)}</span>
+              <span>₹${order.totalPayable?.toFixed(2)}</span>
+            </div>
+          </div>
+
+          <div class="footer">
+            ${t(STRINGS.invoiceScreen.pdfFooter)}
+          </div>
+        </body>
+      </html>
+    `;
+  };
+
+  const savePdfToAndroidDir = async (pdfUri: string, directoryUri: string, invoiceNum: string) => {
+    const base64 = await FileSystem.readAsStringAsync(pdfUri, { encoding: FileSystem.EncodingType.Base64 });
+    const savedUri = await FileSystem.StorageAccessFramework.createFileAsync(directoryUri, invoiceNum, 'application/pdf');
+    await FileSystem.writeAsStringAsync(savedUri, base64, { encoding: FileSystem.EncodingType.Base64 });
+    
+    Alert.alert(
+      t(STRINGS.invoiceScreen.downloadComplete),
+      `${invoiceNum}.pdf ${t(STRINGS.invoiceScreen.downloadCompleteMsg)}`,
+      [
+        { text: t(STRINGS.invoiceScreen.later), style: 'cancel' },
+        { text: t(STRINGS.invoiceScreen.openFile), onPress: () => openPdf(savedUri) }
+      ]
+    );
+  };
+
+  const handleDownloadInvoice = async () => {
+    try {
+      setIsGenerating(true);
+      const html = generateInvoiceHtml();
+      
+      const { uri } = await Print.printToFileAsync({ html });
+      
+      if (Platform.OS === 'android') {
+        const savedDirUri = await StorageService.getItem(STORAGE_KEYS.DOWNLOAD_DIRECTORY_URI);
+
+        if (savedDirUri) {
+          try {
+            await savePdfToAndroidDir(uri, savedDirUri, invoiceNumber);
+            return;
+          } catch (e) {
+            // Permission might have been revoked or folder deleted, fall through to ask again
+            console.log("Failed to use saved directory URI, asking again.");
+          }
+        }
+
+        // If no saved dir or it failed, ask once
+        Alert.alert(
+          t(STRINGS.invoiceScreen.setupTitle),
+          t(STRINGS.invoiceScreen.setupMessage),
+          [
+            { text: t(STRINGS.checkoutScreen.deleteAddressCancel), style: 'cancel' },
+            { 
+              text: t(STRINGS.invoiceScreen.selectFolder), 
+              onPress: async () => {
+                const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+                if (permissions.granted) {
+                  await StorageService.setItem(STORAGE_KEYS.DOWNLOAD_DIRECTORY_URI, permissions.directoryUri);
+                  await savePdfToAndroidDir(uri, permissions.directoryUri, invoiceNumber);
+                }
+              }
+            }
+          ]
+        );
+      } else {
+        // iOS: The standard way to download a file is through the share sheet (Save to Files)
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(uri, { 
+            UTI: '.pdf', 
+            mimeType: 'application/pdf',
+            dialogTitle: 'Download Invoice'
+          });
+        }
+      }
+    } catch (error) {
+      console.log('Error generating PDF:', error);
+      Alert.alert(t(STRINGS.invoiceScreen.error), t(STRINGS.invoiceScreen.errorDownload));
+    } finally {
+      setIsGenerating(false);
     }
   };
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-        <View style={[styles.header, { borderBottomColor: borderColor }]}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Feather name="arrow-left" size={24} color={iconColor} />
-          </TouchableOpacity>
-          <ThemedText type="subtitle" style={styles.headerTitle}>{t(STRINGS.invoiceScreen.title)}</ThemedText>
-          <TouchableOpacity onPress={handleShare} style={styles.backBtn}>
-            <Feather name="share-2" size={24} color={primaryColor} />
-          </TouchableOpacity>
-        </View>
+        <ScreenHeader
+          title={t(STRINGS.invoiceScreen.title)}
+          onBack={() => navigation.goBack()}
+          rightElement={
+            <TouchableOpacity onPress={handleShare}>
+              <Feather name="share-2" size={24} color={primaryColor} />
+            </TouchableOpacity>
+          }
+        />
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <View style={[styles.invoiceCard, { backgroundColor: cardColor, borderColor }]}>
@@ -107,20 +305,20 @@ Thank you for shopping with QuickBasket!
 
             {/* Customer Info */}
             <View style={[styles.section, { borderBottomColor: borderColor, borderBottomWidth: 1 }]}>
-              <ThemedText type="subtitle" style={{ marginBottom: 8, fontSize: 16 }}>{t(STRINGS.invoiceScreen.customerDetails)}</ThemedText>
-              <ThemedText style={{ fontWeight: 'bold' }}>{order.address?.fullName}</ThemedText>
+              <ThemedText type="subtitle" style={{ marginBottom: spacing.sm, fontSize: typography.size.lg }}>{t(STRINGS.invoiceScreen.customerDetails)}</ThemedText>
+              <ThemedText style={{ fontWeight: typography.weight.bold }}>{order.address?.fullName}</ThemedText>
               <ThemedText>{order.address?.address}</ThemedText>
               <ThemedText>Mobile: {order.address?.mobile}</ThemedText>
             </View>
 
             {/* Product Table */}
             <View style={styles.section}>
-              <ThemedText type="subtitle" style={{ marginBottom: 12, fontSize: 16 }}>{t(STRINGS.checkoutScreen.orderItems)}</ThemedText>
+              <ThemedText type="subtitle" style={{ marginBottom: spacing.smd, fontSize: typography.size.lg }}>{t(STRINGS.checkoutScreen.orderItems)}</ThemedText>
               
               <View style={[styles.tableHeader, { backgroundColor: borderColor, opacity: 0.8 }]}>
-                <ThemedText style={[styles.tableCol, { flex: 3, fontWeight: 'bold' }]}>{t(STRINGS.invoiceScreen.item)}</ThemedText>
-                <ThemedText style={[styles.tableCol, { flex: 1, fontWeight: 'bold', textAlign: 'center' }]}>{t(STRINGS.invoiceScreen.qty)}</ThemedText>
-                <ThemedText style={[styles.tableCol, { flex: 1, fontWeight: 'bold', textAlign: 'right' }]}>{t(STRINGS.invoiceScreen.price)}</ThemedText>
+                <ThemedText style={[styles.tableCol, { flex: 3, fontWeight: typography.weight.bold }]}>{t(STRINGS.invoiceScreen.item)}</ThemedText>
+                <ThemedText style={[styles.tableCol, { flex: 1, fontWeight: typography.weight.bold, textAlign: 'center' }]}>{t(STRINGS.invoiceScreen.qty)}</ThemedText>
+                <ThemedText style={[styles.tableCol, { flex: 1, fontWeight: typography.weight.bold, textAlign: 'right' }]}>{t(STRINGS.invoiceScreen.price)}</ThemedText>
               </View>
 
               {order.items.map(item => (
@@ -135,12 +333,12 @@ Thank you for shopping with QuickBasket!
             {/* Totals */}
             <View style={[styles.section, { backgroundColor: borderColor, opacity: 0.9, borderRadius: 8, padding: 16, marginTop: 8 }]}>
               <View style={styles.rowBetween}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.itemSubtotal)}</ThemedText><ThemedText>₹{order.subtotal?.toFixed(2)}</ThemedText></View>
-              {order.discount > 0 && <View style={styles.rowBetween}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.discounts)}</ThemedText><ThemedText style={{ color: '#22c55e' }}>-₹{order.discount?.toFixed(2)}</ThemedText></View>}
+              {order.discount > 0 && <View style={styles.rowBetween}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.discounts)}</ThemedText><ThemedText style={{ color: successColor }}>-₹{order.discount?.toFixed(2)}</ThemedText></View>}
               <View style={styles.rowBetween}><ThemedText useSecondaryText>{t(STRINGS.invoiceScreen.deliveryFee)}</ThemedText><ThemedText>₹{order.deliveryCharge?.toFixed(2)}</ThemedText></View>
               <View style={styles.rowBetween}><ThemedText useSecondaryText>{t(STRINGS.invoiceScreen.taxes)}</ThemedText><ThemedText>₹{order.taxes?.toFixed(2)}</ThemedText></View>
-              <View style={[styles.rowBetween, { borderTopWidth: 1, borderTopColor: cardColor, paddingTop: 12, marginTop: 12 }]}>
-                <ThemedText style={{ fontWeight: 'bold', fontSize: 16 }}>{t(STRINGS.invoiceScreen.grandTotal)}</ThemedText>
-                <ThemedText style={{ fontWeight: 'bold', fontSize: 16, color: primaryColor }}>₹{order.totalPayable?.toFixed(2)}</ThemedText>
+              <View style={[styles.rowBetween, { borderTopWidth: 1, borderTopColor: cardColor, paddingTop: spacing.smd, marginTop: spacing.smd }]}>
+                <ThemedText style={{ fontWeight: typography.weight.bold, fontSize: typography.size.lg }}>{t(STRINGS.invoiceScreen.grandTotal)}</ThemedText>
+                <ThemedText style={{ fontWeight: typography.weight.bold, fontSize: typography.size.lg, color: primaryColor }}>₹{order.totalPayable?.toFixed(2)}</ThemedText>
               </View>
             </View>
 
@@ -157,10 +355,18 @@ Thank you for shopping with QuickBasket!
 
           <View style={styles.footer}>
             <CustomButton 
-              title={t(STRINGS.invoiceScreen.share)} 
-              icon="share-2"
+              title={isGenerating ? "Generating PDF..." : "Download PDF Invoice"} 
+              icon="download"
+              onPress={handleDownloadInvoice} 
+              style={[styles.actionBtn, { marginBottom: 12 }]}
+              loading={isGenerating}
+            />
+            <CustomButton 
+              title={isSharing ? "Preparing PDF..." : t(STRINGS.invoiceScreen.share)} 
+              icon="share-variant"
               onPress={handleShare} 
-              style={styles.actionBtn}
+              style={[styles.actionBtn, { backgroundColor: cardColor, borderColor: primaryColor, borderWidth: 1 }]}
+              loading={isSharing}
             />
           </View>
         </ScrollView>
@@ -176,49 +382,45 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.smd,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  backBtn: { padding: 4 },
-  headerTitle: { fontSize: 18, marginBottom: 0 },
-  scrollContent: { padding: 16, paddingBottom: 40 },
+  backBtn: { padding: spacing.xs },
+  headerTitle: { fontSize: typography.size.xl, marginBottom: 0 },
+  scrollContent: { padding: spacing.md, paddingBottom: spacing.xxxl },
   invoiceCard: {
-    borderRadius: 12,
+    borderRadius: radius.md,
     borderWidth: 1,
-    padding: 16,
+    padding: spacing.md,
     paddingBottom: 0,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
+    ...elevation.sm,
   },
   section: {
-    paddingVertical: 16,
+    paddingVertical: spacing.md,
   },
   rowBetween: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: spacing.xs,
   },
   tableHeader: {
     flexDirection: 'row',
-    padding: 8,
-    borderRadius: 4,
-    marginBottom: 8,
+    padding: spacing.sm,
+    borderRadius: radius.xs,
+    marginBottom: spacing.sm,
   },
   tableRow: {
     flexDirection: 'row',
-    paddingVertical: 8,
-    paddingHorizontal: 8,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
   },
   tableCol: {
-    fontSize: 14,
+    fontSize: typography.size.md,
   },
   footer: {
-    marginTop: 24,
+    marginTop: spacing.xl,
   },
   actionBtn: {
     width: '100%',

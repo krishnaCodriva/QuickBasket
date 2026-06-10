@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { StyleSheet, View, Animated, Easing, Image } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { StorageService, STORAGE_KEYS } from '../services';
+import * as Location from 'expo-location';
 import { ThemedText } from '../components';
 import { STRINGS, Colors } from '../constants';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -30,17 +31,27 @@ export default function SplashScreen({ navigation }: Props) {
     animation.start();
 
     const checkLocationAndNavigate = async () => {
-      let hasLocation = false;
+      let navigateTo: keyof RootStackParamList = 'Location';
       try {
-        const savedLocation = await AsyncStorage.getItem('@user_location');
-        if (savedLocation) hasLocation = true;
+        const savedLocation = await StorageService.getItem(STORAGE_KEYS.USER_LOCATION);
+        if (savedLocation) {
+          // Check if GPS permission is granted to fulfill "app should still verify location"
+          let { status } = await Location.getForegroundPermissionsAsync();
+          if (status === 'granted') {
+            // Route to LocationScreen to fetch the latest location and update AsyncStorage
+            navigateTo = 'Location';
+          } else {
+            // Using a manually selected location without GPS permission
+            navigateTo = 'HomeTab';
+          }
+        }
       } catch (e) {
-        console.warn('Error reading async storage', e);
+        console.warn('Error reading async storage or location permissions', e);
       }
 
       // Navigate after splash simulation
       timer = setTimeout(() => {
-        navigation.replace(hasLocation ? 'HomeTab' : 'Location');
+        navigation.replace(navigateTo as any);
       }, 2500);
     };
 

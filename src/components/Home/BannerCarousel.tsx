@@ -1,5 +1,5 @@
 import { Colors } from "../../constants/colors";
-import React, { useState } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   View,
   StyleSheet,
@@ -11,6 +11,7 @@ import { Image } from "expo-image";
 import { ThemedText } from "../ThemedText";
 import { ThemeDimension } from "../../constants/ThemeDimension";
 import { useThemeColor } from "../../hooks";
+import { spacing, radius, typography } from "../../core/constants/theme";
 
 const { width } = Dimensions.get("window");
 const BANNER_PADDING = ThemeDimension.spacing.m;
@@ -35,11 +36,11 @@ const DEFAULT_BANNERS: BannerType[] = [
   },
   {
     id: "2",
-    source: require("../../../assets/Section - Hero Carousel (Bento Style).png"),
+    source: require("../../../assets/banner1.jpg"),
   },
   {
     id: "3",
-    source: require("../../../assets/Section - Hero Carousel (Bento Style).png"),
+    source: require("../../../assets/banner2.jpg"),
   },
 ];
 
@@ -52,7 +53,7 @@ function BannerCarousel({ banners = DEFAULT_BANNERS, onBannerPress }: Props) {
     "gray900" as any,
   );
 
-  const infiniteBanners = Array(3).fill(banners).flat();
+  const infiniteBanners = useMemo(() => Array(3).fill(banners).flat(), [banners]);
   const slideSize = BANNER_WIDTH + BANNER_PADDING;
 
   const handleScroll = (event: any) => {
@@ -67,7 +68,7 @@ function BannerCarousel({ banners = DEFAULT_BANNERS, onBannerPress }: Props) {
     index,
   });
 
-  const renderItem = ({ item, index }: { item: BannerType; index: number }) => (
+  const renderItem = useCallback(({ item, index }: { item: BannerType; index: number }) => (
     <TouchableOpacity
       activeOpacity={1}
       onPress={() => onBannerPress && onBannerPress(item)}
@@ -80,7 +81,7 @@ function BannerCarousel({ banners = DEFAULT_BANNERS, onBannerPress }: Props) {
         cachePolicy="memory-disk"
       />
     </TouchableOpacity>
-  );
+  ), [onBannerPress, bannerBgColor]);
 
   return (
     <View style={[styles.container, { marginHorizontal: -BANNER_PADDING }]}>
@@ -121,24 +122,24 @@ export default React.memo(BannerCarousel);
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   paginationContainer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 16,
+    marginTop: spacing.md,
   },
   dot: {
-    height: 8,
-    borderRadius: 4,
-    marginHorizontal: 4,
+    height: spacing.sm,
+    borderRadius: radius.xs,
+    marginHorizontal: spacing.xs,
   },
   banner: {
     width: BANNER_WIDTH,
     // Calculate the exact height based on the image's original 362x244 dimensions to prevent cropping
     height: BANNER_WIDTH * (244 / 362),
-    borderRadius: 16,
+    borderRadius: radius.lg,
     overflow: "hidden",
     position: "relative",
     backgroundColor: Colors.light.gray900, // Dark fallback
@@ -148,34 +149,34 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.transparentBlack04, // Dark overlay for text readability
   },
   content: {
-    padding: 20,
+    padding: spacing.mlg,
     justifyContent: "center",
     flex: 1,
   },
   pill: {
     backgroundColor: Colors.light.blue100, // Light blue
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: spacing.smd,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.md,
     alignSelf: "flex-start",
-    marginBottom: 12,
+    marginBottom: spacing.smd,
   },
   pillText: {
     color: Colors.light.blue900, // Dark blue text
-    fontSize: 10,
-    fontWeight: "bold",
+    fontSize: typography.size.xxs,
+    fontWeight: typography.weight.bold,
   },
   title: {
     color: Colors.light.white,
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 8,
+    fontSize: typography.size.xxl,
+    fontWeight: typography.weight.bold,
+    marginBottom: spacing.sm,
     width: "70%",
     lineHeight: 28,
   },
   subtitle: {
     color: Colors.light.gray300, // Light gray
-    fontSize: 12,
+    fontSize: typography.size.sm,
     width: "65%",
     lineHeight: 18,
   },

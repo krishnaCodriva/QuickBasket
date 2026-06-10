@@ -1,8 +1,15 @@
-export const setLanguage = (lange: string) => {
+/**
+ * localeAction.ts
+ * Refactored under the QuickBasket Enterprise Architecture Plan.
+ *
+ * Changes:
+ * - setLanguage now accepts LanguageCode (typed) instead of string
+ * - Return type explicitly typed as LangAction shape
+ */
 
+import type { LanguageCode } from '../../core/types/domain';
 
-    return ({
-        type: "SET_LANG",
-        payload: lange
-    })
-}
+export const setLanguage = (lange: LanguageCode) => ({
+  type: 'SET_LANG' as const,
+  payload: lange,
+});

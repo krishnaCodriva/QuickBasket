@@ -43,8 +43,6 @@ import { translations } from "../constants/translations";
 
 const en = translations.en;
 const hi = translations.hi;
-const ml = translations.ml;
-const hinglish = translations.hinglish;
 
 
 let activeLang = "en"
@@ -62,8 +60,6 @@ i18n.use(initReactI18next).init({
     resources: {
         en: { translation: en },
         hi: { translation: hi },
-        ml: { translation: ml },
-        hinglish: { translation: hinglish },
     },
     interpolation: {
         escapeValue: false,

@@ -1,25 +1,45 @@
-
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
-import { ThemedView, ThemedText, ThemedInput } from '../../components';
-import { ThemeDimension, Colors } from '../../constants';
-import { Feather, Ionicons } from '@expo/vector-icons';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { RootStackParamList } from '../../navigation/AppNavigator';
-import { useThemeColor } from '../../hooks';
+import React, { useState, useEffect } from "react";
+import {
+  StyleSheet,
+  View,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+} from "react-native";
+import { ThemedView, ThemedText, ThemedInput, ScreenHeader, EmptyState } from "../../components";
+import { ThemeDimension, Colors, STRINGS } from "../../constants";
+import { Feather, Ionicons } from "@expo/vector-icons";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { StorageService, STORAGE_KEYS } from '../../services';
+import { RootStackParamList } from "../../navigation/AppNavigator";
+import { useThemeColor } from "../../hooks";
+import { useTranslation } from "react-i18next";
+import { spacing, radius, typography } from '../../core/constants/theme';
 
 type Props = {
-  navigation: NativeStackNavigationProp<RootStackParamList, 'ManualLocation'>;
+  navigation: NativeStackNavigationProp<RootStackParamList, "ManualLocation">;
 };
 
 export default function ManualLocationScreen({ navigation }: Props) {
-  const iconColor = useThemeColor({ light: Colors.light.black, dark: Colors.light.white }, 'primaryText' as any);
-  const locationIconBg = useThemeColor({ light: Colors.light.gray100, dark: Colors.dark.gray300 }, 'gray100' as any);
-  const locationIconColor = useThemeColor({ light: Colors.light.gray500, dark: Colors.light.gray400 }, 'gray500' as any);
-  const primaryColor = useThemeColor({}, 'primary');
-  
-  const [query, setQuery] = useState('');
+  const { t } = useTranslation();
+  const iconColor = useThemeColor(
+    { light: Colors.light.black, dark: Colors.light.white },
+    "primaryText" as any,
+  );
+  const locationIconBg = useThemeColor(
+    { light: Colors.light.gray100, dark: Colors.dark.gray300 },
+    "gray100" as any,
+  );
+  const locationIconColor = useThemeColor(
+    { light: Colors.light.gray500, dark: Colors.light.gray400 },
+    "gray500" as any,
+  );
+  const primaryColor = useThemeColor({}, "primary");
+
+  const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -33,16 +53,19 @@ export default function ManualLocationScreen({ navigation }: Props) {
     const timerId = setTimeout(async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`, {
-          headers: {
-            'User-Agent': 'QuickBasketApp/1.0',
-            'Accept-Language': 'en-US,en;q=0.9'
-          }
-        });
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`,
+          {
+            headers: {
+              "User-Agent": "QuickBasketApp/1.0",
+              "Accept-Language": "en-US,en;q=0.9",
+            },
+          },
+        );
         const data = await response.json();
         setResults(data);
       } catch (error) {
-        console.warn('Search error', error);
+        console.warn("Search error", error);
       } finally {
         setIsLoading(false);
       }
@@ -52,45 +75,45 @@ export default function ManualLocationScreen({ navigation }: Props) {
   }, [query]);
 
   const handleSelectAddress = async (item: any) => {
-    await AsyncStorage.setItem('@user_location', JSON.stringify({
-      type: 'manual',
-      address: item.display_name.split(',').slice(0, 3).join(','), // Take first 3 parts for cleaner UI
+    await StorageService.setItem(STORAGE_KEYS.USER_LOCATION, {
+      type: "manual",
+      address: item.display_name.split(",").slice(0, 3).join(","), // Take first 3 parts for cleaner UI
       latitude: parseFloat(item.lat),
-      longitude: parseFloat(item.lon)
-    }));
-    navigation.navigate('HomeTab');
+      longitude: parseFloat(item.lon),
+    });
+    navigation.navigate("HomeTab");
   };
 
   const handleUseCurrentLocation = async () => {
     // Ideally this requests permission, but for mock we just navigate or save a dummy GPS
-    await AsyncStorage.setItem('@user_location', JSON.stringify({
-      type: 'gps',
-      address: 'Current Location',
+    await StorageService.setItem(STORAGE_KEYS.USER_LOCATION, {
+      type: "gps",
+      address: "Current Location",
       latitude: 28.6139,
-      longitude: 77.2090
-    }));
-    navigation.navigate('HomeTab');
+      longitude: 77.209,
+    });
+    navigation.navigate("HomeTab");
   };
 
-
-
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+    >
       <ThemedView style={styles.container}>
-        <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Feather name="arrow-left" size={24} color={iconColor} />
-          </TouchableOpacity>
-          <ThemedText style={styles.headerTitle}>Enter Address</ThemedText>
-          <View style={{ width: 24 }} />
-        </View>
+        <ScreenHeader 
+          title={t(STRINGS.manualLocationScreen.title)} 
+          onBack={() => navigation.goBack()} 
+          showBorder={false}
+          style={{ paddingHorizontal: 0, paddingTop: 0 }}
+        />
 
         <ThemedInput
-          placeholder="Search for area, street, city..."
+          placeholder={t(STRINGS.manualLocationScreen.placeholder)}
           autoFocus
           value={query}
           onChangeText={setQuery}
-          onClear={() => setQuery('')}
+          onClear={() => setQuery("")}
           isLoading={isLoading}
           styleWrapper={{ marginBottom: 20 }}
         />
@@ -98,28 +121,51 @@ export default function ManualLocationScreen({ navigation }: Props) {
         {query.length > 0 ? (
           <FlatList
             data={results}
-            keyExtractor={(item, index) => item.place_id ? item.place_id.toString() : index.toString()}
+            keyExtractor={(item, index) =>
+              item.place_id ? item.place_id.toString() : index.toString()
+            }
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={styles.listContent}
             ListEmptyComponent={
               !isLoading ? (
-                <View style={styles.content}>
-                  <ThemedText style={styles.placeholderText}>No results found</ThemedText>
-                </View>
+                <EmptyState 
+                  icon={<Feather name="search" size={48} color={Colors.light.gray300} />}
+                  title={t(STRINGS.manualLocationScreen.noResults)}
+                />
               ) : null
             }
             renderItem={({ item }) => {
-              const parts = item.display_name.split(', ');
+              const parts = item.display_name.split(", ");
               const main = parts[0];
-              const sub = parts.slice(1).join(', ');
+              const sub = parts.slice(1).join(", ");
               return (
-                <TouchableOpacity style={styles.addressItem} onPress={() => handleSelectAddress(item)}>
-                  <View style={[styles.locationIconBg, { backgroundColor: locationIconBg }]}>
-                    <Ionicons name="location-outline" size={20} color={locationIconColor} />
+                <TouchableOpacity
+                  style={styles.addressItem}
+                  onPress={() => handleSelectAddress(item)}
+                >
+                  <View
+                    style={[
+                      styles.locationIconBg,
+                      { backgroundColor: locationIconBg },
+                    ]}
+                  >
+                    <Ionicons
+                      name="location-outline"
+                      size={20}
+                      color={locationIconColor}
+                    />
                   </View>
                   <View style={styles.addressTextContainer}>
-                    <ThemedText style={styles.addressMain} numberOfLines={1}>{main}</ThemedText>
-                    <ThemedText style={styles.addressSub} useSecondaryText numberOfLines={2}>{sub}</ThemedText>
+                    <ThemedText style={styles.addressMain} numberOfLines={1}>
+                      {main}
+                    </ThemedText>
+                    <ThemedText
+                      style={styles.addressSub}
+                      useSecondaryText
+                      numberOfLines={2}
+                    >
+                      {sub}
+                    </ThemedText>
                   </View>
                 </TouchableOpacity>
               );
@@ -127,17 +173,25 @@ export default function ManualLocationScreen({ navigation }: Props) {
           />
         ) : (
           <View style={styles.content}>
-            <TouchableOpacity style={styles.currentLocationBtn} onPress={handleUseCurrentLocation}>
+            <TouchableOpacity
+              style={styles.currentLocationBtn}
+              onPress={handleUseCurrentLocation}
+            >
               <Ionicons name="locate" size={20} color={primaryColor} />
-              <ThemedText style={[styles.currentLocationText, { color: primaryColor }]}>
-                Use my current location
+              <ThemedText
+                style={[styles.currentLocationText, { color: primaryColor }]}
+              >
+                {t(STRINGS.manualLocationScreen.useCurrent)}
               </ThemedText>
             </TouchableOpacity>
-            
+
             <View style={styles.divider} />
-            
-            <Feather name="map" size={48} color={Colors.light.gray300} style={styles.placeholderIcon} />
-            <ThemedText style={styles.placeholderText}>Search for your delivery address</ThemedText>
+
+            <EmptyState 
+              icon={<Feather name="map" size={48} color={Colors.light.gray300} />}
+              title={t(STRINGS.manualLocationScreen.deliverySearch)}
+              containerStyle={{ marginTop: spacing.xl }}
+            />
           </View>
         )}
       </ThemedView>
@@ -148,81 +202,62 @@ export default function ManualLocationScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 50,
-    paddingHorizontal: ThemeDimension.spacing.xl,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  backButton: {
-    padding: 8,
-    marginLeft: -8,
+    paddingTop: spacing.xxxl,
+    paddingHorizontal: spacing.xl,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: typography.size.xl,
+    fontWeight: typography.weight.bold,
   },
-
   content: {
     flex: 1,
-    alignItems: 'center',
-  },
-  placeholderIcon: {
-    marginBottom: 16,
-  },
-  placeholderText: {
-    color: Colors.light.gray400,
-    fontSize: 16,
   },
   listContent: {
-    paddingTop: 8,
+    paddingTop: spacing.sm,
   },
   addressItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: spacing.smd,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.light.gray300,
   },
   locationIconBg: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
+    borderRadius: radius.circle,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: spacing.smd,
   },
   addressTextContainer: {
     flex: 1,
-    paddingRight: 8,
+    paddingRight: spacing.sm,
   },
   addressMain: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
+    fontSize: typography.size.lg,
+    fontWeight: typography.weight.semiBold,
+    marginBottom: spacing.xs,
   },
   addressSub: {
-    fontSize: 13,
+    fontSize: typography.size.sm,
   },
   currentLocationBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingVertical: 12,
-    width: '100%',
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    paddingVertical: spacing.smd,
+    width: "100%",
   },
   currentLocationText: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 12,
+    fontSize: typography.size.lg,
+    fontWeight: typography.weight.semiBold,
+    marginLeft: spacing.smd,
   },
   divider: {
     height: StyleSheet.hairlineWidth,
     backgroundColor: Colors.light.gray300,
-    width: '100%',
-    marginVertical: 24,
-  }
+    width: "100%",
+    marginVertical: spacing.xl,
+  },
 });

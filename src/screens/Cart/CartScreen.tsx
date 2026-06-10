@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Feather } from '@expo/vector-icons';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -10,15 +11,20 @@ import {
   CartItemCard,
   CartPriceSummary,
   CartWarningBanner,
-  EmptyState
+  EmptyState,
+  ScreenHeader
 } from '../../components';
 import { Colors, STRINGS } from '../../constants';
 import { useThemeColor } from '../../hooks';
 import { useCart, useAuth } from '../../context';
 import { useTranslation } from 'react-i18next';
+import type { RootStackParamList } from '../../core/types/navigation';
+import { spacing, typography, elevation } from '../../core/constants/theme';
+
+type CartNavProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function CartScreen() {
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<CartNavProp>();
   const { user } = useAuth();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -32,8 +38,8 @@ export default function CartScreen() {
   // Theme Colors
   const cardColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.secondaryBackground }, 'secondaryBackground');
   const primaryColor = useThemeColor({}, 'primary');
-  const iconColor = useThemeColor({ light: Colors.light.black, dark: Colors.light.white }, 'primaryText' as any);
-  const separatorColor = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray300 }, 'gray200' as any);
+  const iconColor = useThemeColor({ light: Colors.light.black, dark: Colors.light.white }, 'primaryText' as never);
+  const separatorColor = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray300 }, 'gray200' as never);
 
   // Handlers
   const handleCheckout = () => {
@@ -46,18 +52,16 @@ export default function CartScreen() {
   };
 
   const renderHeader = () => (
-    <View style={styles.header}>
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBtn}>
-        <Feather name="arrow-left" size={24} color={iconColor} />
-      </TouchableOpacity>
-      <View style={styles.headerTitleContainer}>
-        <ThemedText type="subtitle" style={styles.headerTitle}>{t(STRINGS.cartScreen.title)}</ThemedText>
-        <ThemedText style={styles.headerSubtitle} useSecondaryText>({totalItems} {t(STRINGS.cartScreen.itemsCount)})</ThemedText>
-      </View>
-      <TouchableOpacity onPress={() => navigation.navigate('HomeTab', { screen: 'Home' })}>
-        <ThemedText style={[styles.continueShopping, { color: primaryColor }]}>{t(STRINGS.cartScreen.continueShopping)}</ThemedText>
-      </TouchableOpacity>
-    </View>
+    <ScreenHeader
+      title={t(STRINGS.cartScreen.title)}
+      subtitle={`(${totalItems} ${t(STRINGS.cartScreen.itemsCount)})`}
+      onBack={() => navigation.goBack()}
+      rightElement={
+        <TouchableOpacity onPress={() => navigation.navigate('HomeTab', { screen: 'Home' })}>
+          <ThemedText style={[styles.continueShopping, { color: primaryColor }]}>{t(STRINGS.cartScreen.continueShopping)}</ThemedText>
+        </TouchableOpacity>
+      }
+    />
   );
 
   return (
@@ -101,7 +105,7 @@ export default function CartScreen() {
           <View style={[styles.bottomBar, { borderTopColor: separatorColor, backgroundColor: cardColor, paddingBottom: Math.max(insets.bottom, 16) }]}>
             <CustomButton
               title={t(STRINGS.cartScreen.proceedToCheckout)}
-              type={hasOutOfStock ? "outline" : "primary"}
+              type={hasOutOfStock ? "secondary" : "primary"}
               onPress={handleCheckout}
               disabled={hasOutOfStock}
               style={{ width: '100%', marginBottom: Platform.OS === 'ios' ? 10 : 0 }}
@@ -121,25 +125,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.smd,
   },
   headerBtn: {
-    padding: 4,
+    padding: spacing.xs,
   },
   headerTitleContainer: {
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: typography.size.xl,
   },
   headerSubtitle: {
-    fontSize: 12,
-    marginTop: 2,
+    fontSize: typography.size.sm,
+    marginTop: spacing.xxs,
   },
   continueShopping: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: typography.size.md,
+    fontWeight: typography.weight.semiBold,
   },
   listContent: {
     paddingBottom: 100, // Space for bottom bar
@@ -149,12 +153,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 16,
+    padding: spacing.md,
     borderTopWidth: StyleSheet.hairlineWidth,
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    ...elevation.lg,
   }
 });

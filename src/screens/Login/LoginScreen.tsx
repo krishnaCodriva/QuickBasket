@@ -3,9 +3,10 @@ import { View, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Pl
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedView, ThemedText, CustomButton } from '../../components';
-import { Colors, ThemeDimension, STRINGS } from '../../constants';
+import { Colors, STRINGS } from '../../constants';
 import { useThemeColor } from '../../hooks';
 import { useTranslation } from 'react-i18next';
+import { spacing, radius, typography, elevation } from '../../core/constants/theme';
 import { useAuth } from '../../context';
 
 export default function LoginScreen() {
@@ -114,7 +115,7 @@ export default function LoginScreen() {
           </View>
 
           {showError && (
-            <ThemedText style={styles.errorText}>Please enter a valid 10-digit mobile number</ThemedText>
+            <ThemedText style={styles.errorText}>{t(STRINGS.auth.invalidMobile)}</ThemedText>
           )}
 
           <CustomButton
@@ -145,39 +146,38 @@ const styles = StyleSheet.create({
   },
   banner: {
     flexDirection: 'row',
-    padding: 12,
-    paddingTop: Platform.OS === 'ios' ? 50 : 40,
     alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.smd,
   },
   bannerIcon: {
-    marginRight: 8,
+    marginRight: spacing.sm,
   },
   bannerText: {
-    fontSize: 13,
+    fontSize: typography.size.smmd,
     flex: 1,
-    fontWeight: '500',
+    fontWeight: typography.weight.medium,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.md,
     paddingTop: Platform.OS === 'ios' ? 50 : 30,
-    paddingBottom: 16,
+    paddingBottom: spacing.md,
   },
   backBtn: {
-    padding: 4,
+    padding: spacing.xs,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: typography.size.xl,
   },
   placeholder: {
     width: 32,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: spacing.mlg,
     paddingTop: 30,
   },
   googleButton: {
@@ -185,13 +185,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     height: 50,
-    borderRadius: ThemeDimension.borderRadius.l,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    shadowColor: Colors.light.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    ...elevation.md,
     marginBottom: 30,
   },
   googleBtnContent: {
@@ -201,12 +197,12 @@ const styles = StyleSheet.create({
   googleIconImage: {
     width: 24,
     height: 24,
-    marginRight: 12,
+    marginRight: spacing.smd,
   },
   googleText: {
     color: Colors.light.gray900,
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: typography.size.lg,
+    fontWeight: typography.weight.bold,
   },
   dividerContainer: {
     flexDirection: 'row',
@@ -218,56 +214,56 @@ const styles = StyleSheet.create({
     height: 1,
   },
   dividerText: {
-    marginHorizontal: 10,
+    marginHorizontal: spacing.sm,
     color: Colors.light.gray500,
-    fontWeight: '600',
+    fontWeight: typography.weight.semiBold,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 16,
+    fontSize: typography.size.lg,
+    fontWeight: typography.weight.semiBold,
+    marginBottom: spacing.md,
   },
   phoneInputContainer: {
     flexDirection: 'row',
     height: 54,
-    borderRadius: ThemeDimension.borderRadius.m,
+    borderRadius: radius.md,
     borderWidth: 1,
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   countryCode: {
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.md,
     borderRightWidth: 1,
     height: '100%',
     justifyContent: 'center',
   },
   countryCodeText: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: typography.size.lg,
+    fontWeight: typography.weight.bold,
   },
   phoneInput: {
     flex: 1,
     height: '100%',
-    paddingHorizontal: 16,
-    fontSize: 16,
+    paddingHorizontal: spacing.md,
+    fontSize: typography.size.lg,
     letterSpacing: 1,
   },
   errorText: {
     color: Colors.light.red600,
-    fontSize: 12,
-    marginBottom: 12,
-    marginLeft: 4,
+    fontSize: typography.size.sm,
+    marginBottom: spacing.smd,
+    marginLeft: spacing.xs,
   },
   sendOtpBtn: {
-    marginTop: 16,
+    marginTop: spacing.md,
   },
   footer: {
-    padding: 20,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+    padding: spacing.mlg,
+    paddingBottom: Platform.OS === 'ios' ? 40 : spacing.mlg,
     alignItems: 'center',
   },
   footerText: {
-    fontSize: 12,
+    fontSize: typography.size.sm,
     textAlign: 'center',
     lineHeight: 18,
   },

@@ -1,35 +1,72 @@
-import { createContext, useEffect, useReducer, useState } from "react";
-import i18n, { getActive } from "../../localization/i18";
+/**
+ * LocaleContext.tsx
+ * Refactored under the QuickBasket Enterprise Architecture Plan.
+ *
+ * Changes:
+ * - Removed console.log debug statement
+ * - Added proper TypeScript types for the context tuple [state, dispatch]
+ * - Context value type now correctly reflects [LangState, Dispatch] tuple
+ * - Eliminated all `any` types (reducer state/action now typed)
+ * - Preserves all existing behavior
+ */
 
-const initalValue = {
-    lange: "en"
+import React, { createContext, useEffect, useReducer, Dispatch } from 'react';
+import i18n, { getActive } from '../../localization/i18';
+import type { LanguageCode } from '../../core/types/domain';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface LangState {
+  lange: LanguageCode;
 }
 
-const reducer = (state: any, action: any) => {
-    console.log("action : ", action)
-    switch (action.type) {
-        case "SET_LANG":
-            return { ...state, lange: action?.payload }
-        default:
-            return state
-    }
-}
+type LangAction = {
+  type: 'SET_LANG';
+  payload: LanguageCode;
+};
 
-export const LocalizationContext = createContext(initalValue)
+type LocalizationContextValue = [LangState, Dispatch<LangAction>];
 
-export const LocalizationContextProvider = ({ children }: { children: React.ReactNode }) => {
-    const [initLang, initialDispatch] = useReducer(reducer, initalValue)
+// ─── Reducer ──────────────────────────────────────────────────────────────────
 
-    useEffect(() => {
-        getActive(initLang.lange)
-    }, [initLang])
+const initialValue: LangState = {
+  lange: 'en',
+};
 
-    return (
-        <LocalizationContext.Provider value={[initLang, initialDispatch]}>
-            {children}
-        </LocalizationContext.Provider>
-    )
-}
+const reducer = (state: LangState, action: LangAction): LangState => {
+  switch (action.type) {
+    case 'SET_LANG':
+      return { ...state, lange: action.payload };
+    default:
+      return state;
+  }
+};
+
+// ─── Context ──────────────────────────────────────────────────────────────────
+
+export const LocalizationContext = createContext<LocalizationContextValue>([
+  initialValue,
+  () => undefined,
+]);
+
+// ─── Provider ─────────────────────────────────────────────────────────────────
+
+export const LocalizationContextProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
+  const [initLang, initialDispatch] = useReducer(reducer, initialValue);
+
+  useEffect(() => {
+    getActive(initLang.lange);
+  }, [initLang]);
+
+  return (
+    <LocalizationContext.Provider value={[initLang, initialDispatch]}>
+      {children}
+    </LocalizationContext.Provider>
+  );
+};
 
 export default LocalizationContext;
-
