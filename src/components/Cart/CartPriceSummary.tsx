@@ -4,6 +4,7 @@ import { ThemedText } from '../ThemedText';
 import { Colors, STRINGS } from '../../constants';
 import { useThemeColor } from '../../hooks';
 import { useTranslation } from 'react-i18next';
+import { spacing, radius } from '../../core/constants/theme';
 
 interface CartPriceSummaryProps {
   subtotal: number;
@@ -59,22 +60,22 @@ export default function CartPriceSummary({ subtotal, discount = 0, deliveryCharg
 
 const styles = StyleSheet.create({
   summaryContainer: {
-    padding: 16,
-    margin: 16,
-    borderRadius: 16,
+    padding: spacing.md,
+    margin: spacing.md,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.05)',
   },
   summaryTitle: {
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: spacing.smd,
   },
   divider: {
     height: StyleSheet.hairlineWidth,
-    marginVertical: 12,
+    marginVertical: spacing.smd,
   },
 });

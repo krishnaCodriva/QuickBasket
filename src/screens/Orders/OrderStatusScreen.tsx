@@ -1,29 +1,32 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, ScrollView, Animated, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ThemedView, ThemedText, CustomButton } from '../../components';
+import { ThemedView, ThemedText, CustomButton, ScreenHeader } from '../../components';
 import { Feather } from '@expo/vector-icons';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Colors, STRINGS } from '../../constants';
 import { useThemeColor } from '../../hooks';
 import { useOrder, ORDER_STATUS_FLOW } from '../../context';
 import { useTranslation } from 'react-i18next';
+import type { RootStackParamList } from '../../core/types/navigation';
+import { spacing, radius, typography, zIndex } from '../../core/constants/theme';
 
-export default function OrderStatusScreen() {
-  const navigation = useNavigation<any>();
-  const route = useRoute<any>();
+type Props = NativeStackScreenProps<RootStackParamList, 'OrderStatus'>;
+
+export default function OrderStatusScreen({ navigation, route }: Props) {
   const { getOrderById } = useOrder();
   const { t } = useTranslation();
-  
+
   const orderId = route.params?.orderId;
+
   const order = getOrderById(orderId);
 
   const cardColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.secondaryBackground }, 'secondaryBackground');
-  const borderColor = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray300 }, 'gray200' as any);
+  const borderColor = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray300 }, 'gray200' as never);
   const primaryColor = useThemeColor({}, 'primary');
-  const iconColor = useThemeColor({ light: Colors.light.black, dark: Colors.light.white }, 'primaryText' as any);
-  const errorColor = useThemeColor({ light: Colors.light.error, dark: Colors.dark.error }, 'error' as any);
-  const successColor = useThemeColor({ light: Colors.light.success, dark: Colors.dark.success }, 'success' as any);
+  const iconColor = useThemeColor({ light: Colors.light.black, dark: Colors.light.white }, 'primaryText' as never);
+  const errorColor = useThemeColor({ light: Colors.light.error, dark: Colors.dark.error }, 'error' as never);
+  const successColor = useThemeColor({ light: Colors.light.success, dark: Colors.dark.success }, 'success' as never);
 
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -40,13 +43,7 @@ export default function OrderStatusScreen() {
     return (
       <ThemedView style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
-          <View style={[styles.header, { borderBottomColor: borderColor }]}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-              <Feather name="arrow-left" size={24} color={iconColor} />
-            </TouchableOpacity>
-            <ThemedText type="subtitle">Order Not Found</ThemedText>
-            <View style={{ width: 24 }} />
-          </View>
+          <ScreenHeader title="Order Not Found" onBack={() => navigation.goBack()} />
         </SafeAreaView>
       </ThemedView>
     );
@@ -128,13 +125,10 @@ export default function OrderStatusScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-        <View style={[styles.header, { borderBottomColor: borderColor }]}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Feather name="arrow-left" size={24} color={iconColor} />
-          </TouchableOpacity>
-          <ThemedText type="subtitle" style={styles.headerTitle}>{t(STRINGS.orderStatusScreen.title)}</ThemedText>
-          <View style={{ width: 24 }} />
-        </View>
+        <ScreenHeader
+          title={t(STRINGS.orderStatusScreen.title)}
+          onBack={() => navigation.goBack()}
+        />
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <View style={styles.summaryHeader}>
@@ -161,9 +155,9 @@ export default function OrderStatusScreen() {
 
             <View style={[styles.card, { backgroundColor: cardColor, borderColor }]}>
               <ThemedText type="subtitle" style={styles.cardTitle}>{t(STRINGS.orderStatusScreen.deliveryAddress)}</ThemedText>
-              <ThemedText style={{ fontWeight: 'bold', marginBottom: 4 }}>{order.address?.fullName}</ThemedText>
+              <ThemedText style={{ fontWeight: typography.weight.bold, marginBottom: spacing.xs }}>{order.address?.fullName}</ThemedText>
               <ThemedText>{order.address?.address}</ThemedText>
-              <ThemedText style={{ marginTop: 4 }}>Mobile: {order.address?.mobile}</ThemedText>
+              <ThemedText style={{ marginTop: spacing.xs }}>Mobile: {order.address?.mobile}</ThemedText>
             </View>
 
             <View style={[styles.card, { backgroundColor: cardColor, borderColor }]}>
@@ -179,8 +173,8 @@ export default function OrderStatusScreen() {
               <ThemedText type="subtitle" style={styles.cardTitle}>{t(STRINGS.checkoutScreen.orderItems)} ({order.items?.length})</ThemedText>
               {order.items?.map(item => (
                 <View key={item.id} style={styles.itemRow}>
-                  <ThemedText style={{ fontSize: 18 }}>{item.emoji}</ThemedText>
-                  <ThemedText style={{ flex: 1, marginLeft: 12 }}>{item.name} <ThemedText useSecondaryText>x{item.quantity}</ThemedText></ThemedText>
+                  <ThemedText style={{ fontSize: typography.size.xl }}>{item.emoji}</ThemedText>
+                  <ThemedText style={{ flex: 1, marginLeft: spacing.smd }}>{item.name} <ThemedText useSecondaryText>x{item.quantity}</ThemedText></ThemedText>
                   <ThemedText>₹{(item.price * item.quantity).toFixed(2)}</ThemedText>
                 </View>
               ))}
@@ -192,7 +186,7 @@ export default function OrderStatusScreen() {
               {order.discount > 0 && <View style={styles.amountRow}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.discounts)}</ThemedText><ThemedText style={{ color: successColor }}>-₹{order.discount?.toFixed(2)}</ThemedText></View>}
               <View style={styles.amountRow}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.deliveryCharges)}</ThemedText><ThemedText>₹{order.deliveryCharge?.toFixed(2)}</ThemedText></View>
               <View style={styles.amountRow}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.taxes)}</ThemedText><ThemedText>₹{order.taxes?.toFixed(2)}</ThemedText></View>
-              <View style={[styles.amountRow, { borderTopWidth: 1, borderTopColor: borderColor, paddingTop: 12, marginTop: 12 }]}><ThemedText style={{ fontWeight: 'bold', fontSize: 16 }}>{t(STRINGS.cartScreen.totalPayable)}</ThemedText><ThemedText style={{ fontWeight: 'bold', fontSize: 16 }}>₹{order.totalPayable?.toFixed(2)}</ThemedText></View>
+              <View style={[styles.amountRow, { borderTopWidth: 1, borderTopColor: borderColor, paddingTop: spacing.smd, marginTop: spacing.smd }]}><ThemedText style={{ fontWeight: typography.weight.bold, fontSize: typography.size.lg }}>{t(STRINGS.cartScreen.totalPayable)}</ThemedText><ThemedText style={{ fontWeight: typography.weight.bold, fontSize: typography.size.lg }}>₹{order.totalPayable?.toFixed(2)}</ThemedText></View>
             </View>
           </View>
 
@@ -224,56 +218,56 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.smd,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   backBtn: {
-    padding: 4,
+    padding: spacing.xs,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: typography.size.xl,
     marginBottom: 0,
   },
   scrollContent: {
-    paddingBottom: 40,
+    paddingBottom: spacing.xxxl,
   },
   summaryHeader: {
-    padding: 24,
+    padding: spacing.xl,
     alignItems: 'center',
   },
   txId: {
-    fontSize: 28,
-    marginBottom: 4,
+    fontSize: typography.size.xxxl,
+    marginBottom: spacing.xs,
   },
   detailsContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.md,
   },
   card: {
-    padding: 16,
-    borderRadius: 12,
+    padding: spacing.md,
+    borderRadius: radius.md,
     borderWidth: 1,
-    marginBottom: 16,
-    marginHorizontal: 16,
+    marginBottom: spacing.md,
+    marginHorizontal: spacing.md,
   },
   cardTitle: {
-    marginBottom: 16,
-    fontSize: 18,
+    marginBottom: spacing.md,
+    fontSize: typography.size.xl,
   },
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.smd,
   },
   amountRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   
   // Timeline Styles
   timelineContainer: {
-    paddingLeft: 8,
+    paddingLeft: spacing.sm,
   },
   timelineStep: {
     flexDirection: 'row',
@@ -281,16 +275,16 @@ const styles = StyleSheet.create({
   },
   timelineLineContainer: {
     alignItems: 'center',
-    width: 24,
+    width: spacing.xl,
   },
   timelineDot: {
     width: 20,
     height: 20,
-    borderRadius: 10,
+    borderRadius: radius.circle,
     borderWidth: 2,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 1,
+    zIndex: zIndex.base,
   },
   timelineLine: {
     width: 2,
@@ -300,21 +294,21 @@ const styles = StyleSheet.create({
   },
   timelineTextContainer: {
     flex: 1,
-    marginLeft: 16,
-    paddingBottom: 24,
+    marginLeft: spacing.md,
+    paddingBottom: spacing.xl,
   },
   timelineTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 4,
+    fontSize: typography.size.lg,
+    fontWeight: typography.weight.bold,
+    marginBottom: spacing.xs,
   },
   timelineSubText: {
-    fontSize: 14,
+    fontSize: typography.size.md,
   },
   invoiceActions: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 24,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xl,
   },
   invoiceBtn: {
     width: '100%',

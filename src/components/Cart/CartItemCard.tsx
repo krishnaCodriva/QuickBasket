@@ -4,14 +4,17 @@ import { Feather } from '@expo/vector-icons';
 import { ThemedText } from '../ThemedText';
 import QuantitySelector from '../QuantitySelector';
 import { Colors, STRINGS } from '../../constants';
+import { spacing, radius, typography, elevation } from '../../core/constants/theme';
 import { useTranslation } from 'react-i18next';
 import { useThemeColor } from '../../hooks';
+import type { CartItem } from '../../core/types/domain';
+
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const DELETE_BTN_WIDTH = 80;
 
 interface CartItemCardProps {
-  item: any;
+  item: CartItem;
   onUpdateQuantity?: (id: string, delta: number) => void;
   onRemove?: (id: string) => void;
   readOnly?: boolean;
@@ -36,8 +39,8 @@ export default function CartItemCard({ item, onUpdateQuantity, onRemove, readOnl
         bounces={false}
         scrollEnabled={!readOnly}
       >
-        <View style={[styles.cartItemCard, { width: SCREEN_WIDTH, backgroundColor: cardColor, borderBottomColor: separatorColor }]}>
-          <View style={[styles.itemImageContainer, { backgroundColor: imageBgColor }]}>
+        <View style={[styles.card, { width: SCREEN_WIDTH, backgroundColor: cardColor, borderBottomColor: separatorColor }]}>
+          <View style={[styles.imageContainer, { backgroundColor: imageBgColor }]}>
             <ThemedText style={styles.itemEmoji}>{item.emoji}</ThemedText>
           </View>
 
@@ -45,7 +48,7 @@ export default function CartItemCard({ item, onUpdateQuantity, onRemove, readOnl
             <ThemedText style={styles.itemName} numberOfLines={2}>{item.name}</ThemedText>
             <ThemedText style={[styles.itemPrice, { color: primaryColor }]}>₹{item.price.toFixed(2)}</ThemedText>
             {item.inStock ? (
-              <ThemedText style={styles.itemSubtotal} useSecondaryText>Subtotal: ₹{(item.price * item.quantity).toFixed(2)}</ThemedText>
+              <ThemedText style={styles.itemSubtotal} useSecondaryText>{t(STRINGS.cartScreen.itemSubtotal)}: ₹{(item.price * item.quantity).toFixed(2)}</ThemedText>
             ) : (
               <View style={[styles.outOfStockBadge, { backgroundColor: dangerColor }]}>
                 <ThemedText style={styles.outOfStockText}>{t(STRINGS.cartScreen.outOfStockBadge)}</ThemedText>
@@ -55,7 +58,7 @@ export default function CartItemCard({ item, onUpdateQuantity, onRemove, readOnl
 
           <View style={styles.quantityContainer}>
             {readOnly ? (
-              <ThemedText style={{ fontWeight: 'bold', fontSize: 16 }}>x{item.quantity}</ThemedText>
+              <ThemedText style={{ fontWeight: typography.weight.bold, fontSize: typography.size.md }}>x{item.quantity}</ThemedText>
             ) : (
               <QuantitySelector
                 quantity={item.quantity}
@@ -72,7 +75,7 @@ export default function CartItemCard({ item, onUpdateQuantity, onRemove, readOnl
           style={[styles.deleteAction, { width: DELETE_BTN_WIDTH, backgroundColor: dangerColor }]}
           onPress={() => onRemove && onRemove(item.id)}
         >
-          <Feather name="trash-2" size={24} color="#FFF" />
+          <Feather name="trash-2" size={24} color={Colors.light.white} />
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -82,56 +85,57 @@ export default function CartItemCard({ item, onUpdateQuantity, onRemove, readOnl
 const styles = StyleSheet.create({
   cartItemWrapper: {
     overflow: 'hidden',
+    marginBottom: spacing.md,
   },
-  cartItemCard: {
+  card: {
     flexDirection: 'row',
-    padding: 16,
+    padding: spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
   },
-  itemImageContainer: {
+  imageContainer: {
     width: 70,
     height: 70,
-    borderRadius: 12,
+    borderRadius: radius.md,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: spacing.md,
   },
   itemEmoji: {
-    fontSize: 32,
+    fontSize: typography.size.xxxl,
   },
   itemDetails: {
     flex: 1,
     justifyContent: 'center',
   },
   itemName: {
-    fontSize: 15,
-    fontWeight: '500',
-    marginBottom: 4,
+    fontSize: typography.size.md,
+    fontWeight: typography.weight.medium,
+    marginBottom: spacing.xs,
   },
   itemPrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 4,
+    fontSize: typography.size.lg,
+    fontWeight: typography.weight.bold,
+    marginBottom: spacing.xs,
   },
   itemSubtotal: {
-    fontSize: 13,
+    fontSize: typography.size.sm,
   },
   outOfStockBadge: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.sm,
   },
   outOfStockText: {
-    color: '#FFF',
-    fontSize: 11,
-    fontWeight: 'bold',
+    color: Colors.light.white,
+    fontSize: typography.size.xs,
+    fontWeight: typography.weight.bold,
   },
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: 16,
+    marginLeft: spacing.md,
   },
   deleteAction: {
     justifyContent: 'center',
