@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { StyleSheet, View, Animated, Easing, Image } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { StorageService, STORAGE_KEYS } from '../services';
 import * as Location from 'expo-location';
 import { ThemedText } from '../components';
 import { STRINGS, Colors } from '../constants';
@@ -33,7 +33,7 @@ export default function SplashScreen({ navigation }: Props) {
     const checkLocationAndNavigate = async () => {
       let navigateTo: keyof RootStackParamList = 'Location';
       try {
-        const savedLocation = await AsyncStorage.getItem('@user_location');
+        const savedLocation = await StorageService.getItem(STORAGE_KEYS.USER_LOCATION);
         if (savedLocation) {
           // Check if GPS permission is granted to fulfill "app should still verify location"
           let { status } = await Location.getForegroundPermissionsAsync();

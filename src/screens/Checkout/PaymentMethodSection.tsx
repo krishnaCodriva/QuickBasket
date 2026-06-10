@@ -5,6 +5,7 @@ import ThemedInput from '../../components/ThemedInput';
 import { Colors, STRINGS } from '../../constants';
 import { useThemeColor } from '../../hooks';
 import { useTranslation } from 'react-i18next';
+import { spacing, radius, typography } from '../../core/constants/theme';
 
 interface PaymentMethodSectionProps {
   paymentMethods: any[];
@@ -23,9 +24,9 @@ export default function PaymentMethodSection({ paymentMethods, selectedPayment, 
 
   return (
     <View style={styles.section}>
-      <ThemedText type="subtitle" style={[styles.sectionTitle, { marginBottom: 16 }]}>{t(STRINGS.checkoutScreen.paymentMethod)}</ThemedText>
+      <ThemedText type="subtitle" style={[styles.sectionTitle, { marginBottom: spacing.md }]}>{t(STRINGS.checkoutScreen.paymentMethod)}</ThemedText>
       {paymentMethods.map((pm) => (
-        <View key={pm.id} style={{ marginBottom: 12 }}>
+        <View key={pm.id} style={{ marginBottom: spacing.smd }}>
           <TouchableOpacity
             style={[
               styles.optionCard,
@@ -34,10 +35,10 @@ export default function PaymentMethodSection({ paymentMethods, selectedPayment, 
             onPress={() => onSelect(pm.id)}
           >
             <View style={{ flex: 1 }}>
-              <ThemedText type="defaultSemiBold" style={{ fontSize: 16 }}>
+              <ThemedText type="defaultSemiBold" style={{ fontSize: typography.size.lg }}>
                 {t(`checkoutScreen.paymentMethods.${pm.id}_label` as any, { defaultValue: pm.label })}
               </ThemedText>
-              <ThemedText useSecondaryText style={{ fontSize: 14 }}>
+              <ThemedText useSecondaryText style={{ fontSize: typography.size.md }}>
                 {t(`checkoutScreen.paymentMethods.${pm.id}_details` as any, { defaultValue: pm.details })}
               </ThemedText>
             </View>
@@ -105,23 +106,23 @@ export default function PaymentMethodSection({ paymentMethods, selectedPayment, 
 
 const styles = StyleSheet.create({
   section: {
-    paddingHorizontal: 16,
-    paddingTop: 24,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.lg,
   },
   sectionTitle: {
     marginBottom: 0,
   },
   optionCard: {
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    marginBottom: spacing.smd,
     flexDirection: 'row',
     alignItems: 'center',
   },
   paymentForm: {
-    padding: 16,
-    borderBottomLeftRadius: 12,
-    borderBottomRightRadius: 12,
+    padding: spacing.md,
+    borderBottomLeftRadius: radius.md,
+    borderBottomRightRadius: radius.md,
     borderWidth: 2,
     borderTopWidth: 0,
     marginTop: -4,
@@ -129,11 +130,11 @@ const styles = StyleSheet.create({
   radioButton: {
     height: 20,
     width: 20,
-    borderRadius: 10,
+    borderRadius: radius.circle,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 12,
+    marginLeft: spacing.smd,
   },
   radioButtonInner: {
     height: 10,
@@ -141,8 +142,8 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   input: {
-    marginBottom: 16,
-    borderRadius: 12,
+    marginBottom: spacing.md,
+    borderRadius: radius.md,
     borderWidth: 1,
   }
 });

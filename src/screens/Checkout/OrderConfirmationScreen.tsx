@@ -9,9 +9,11 @@ import { ThemedText } from '../../components/ThemedText';
 import { CustomButton } from '../../components/CustomButton';
 import { Colors, ThemeDimension } from '../../constants';
 import { useThemeColor } from '../../hooks';
-import { RootStackParamList } from '../../navigation/AppNavigator';
+import type { RootStackParamList } from '../../core/types/navigation';
+import { spacing, typography, elevation } from '../../core/constants/theme';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
 
 export default function OrderConfirmationScreen({ route }: any) {
   const navigation = useNavigation<NavigationProp>();
@@ -40,8 +42,9 @@ export default function OrderConfirmationScreen({ route }: any) {
   };
 
   const handleTrackOrder = () => {
-    navigation.navigate('OrderTracking', { orderId });
+    navigation.navigate('OrderStatus', { orderId });
   };
+
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor }]}>
@@ -100,47 +103,47 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: spacing.xl,
   },
   iconContainer: {
-    marginBottom: 24,
+    marginBottom: spacing.xl,
     shadowColor: Colors.light.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 10,
-    elevation: 8,
+    ...elevation.md,
   },
   title: {
-    fontSize: 28,
-    marginBottom: 8,
+    fontSize: typography.size.xxxl,
+    marginBottom: spacing.sm,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: typography.size.lg,
     textAlign: 'center',
-    marginBottom: 32,
+    marginBottom: spacing.xxl,
   },
   detailsCard: {
     width: '100%',
-    padding: 20,
+    padding: spacing.mlg,
     borderRadius: ThemeDimension.borderRadius.l,
-    marginBottom: 40,
+    marginBottom: spacing.xxxl,
   },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 8,
+    marginVertical: spacing.sm,
   },
   detailText: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginLeft: 12,
+    fontSize: typography.size.lg,
+    fontWeight: typography.weight.medium,
+    marginLeft: spacing.smd,
   },
   actionsContainer: {
     width: '100%',
   },
   primaryButton: {
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   secondaryButton: {
     borderColor: 'transparent',

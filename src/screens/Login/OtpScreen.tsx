@@ -3,9 +3,10 @@ import { View, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Pl
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedView, ThemedText, CustomButton } from '../../components';
-import { Colors, ThemeDimension, STRINGS } from '../../constants';
+import { Colors, STRINGS } from '../../constants';
 import { useThemeColor } from '../../hooks';
 import { useTranslation } from 'react-i18next';
+import { spacing, radius, typography } from '../../core/constants/theme';
 import { useAuth } from '../../context';
 
 const OTP_LENGTH = 6;
@@ -213,56 +214,56 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.md,
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    paddingBottom: 16,
+    paddingBottom: spacing.md,
   },
   backBtn: {
-    padding: 4,
+    padding: spacing.xs,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: typography.size.xl,
   },
   placeholder: {
     width: 32,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingHorizontal: spacing.mlg,
+    paddingTop: spacing.mlg,
     alignItems: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: typography.size.lg,
     textAlign: 'center',
     marginBottom: 40,
     lineHeight: 24,
   },
   boldText: {
-    fontWeight: 'bold',
+    fontWeight: typography.weight.bold,
   },
   otpContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    marginBottom: 20,
+    marginBottom: spacing.mlg,
   },
   otpBox: {
     width: 48,
     height: 56,
-    borderRadius: ThemeDimension.borderRadius.m,
+    borderRadius: radius.md,
     textAlign: 'center',
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: typography.size.xxl,
+    fontWeight: typography.weight.bold,
   },
   errorText: {
     color: Colors.light.red600,
-    fontSize: 14,
-    marginBottom: 20,
+    fontSize: typography.size.md,
+    marginBottom: spacing.mlg,
     textAlign: 'center',
   },
   errorPlaceholder: {
-    height: 34, // Matches error text height to prevent UI jumping
+    height: 34, 
   },
   timerContainer: {
     flexDirection: 'row',
@@ -272,18 +273,18 @@ const styles = StyleSheet.create({
     height: 24,
   },
   timerText: {
-    fontSize: 14,
+    fontSize: typography.size.md,
   },
   timerCountdown: {
-    fontWeight: 'bold',
+    fontWeight: typography.weight.bold,
   },
   resendBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: spacing.smd,
+    paddingVertical: spacing.xs,
   },
   resendText: {
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontSize: typography.size.md,
+    fontWeight: typography.weight.bold,
   },
   verifyBtn: {
     width: '100%',

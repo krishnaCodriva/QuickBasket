@@ -5,6 +5,7 @@ import { TranslatedText } from "./TranslatedText";
 import { Colors, STRINGS } from "../constants";
 import { Ionicons } from "@expo/vector-icons";
 import { useThemeColor } from "../hooks";
+import { spacing, radius, typography, elevation, zIndex } from "../core/constants/theme";
 
 type Props = {
   id: string;
@@ -283,10 +284,10 @@ const ProductCard = ({
 const styles = StyleSheet.create({
   card: {
     width: "95%", // Takes 95% of the available width
-    borderRadius: 24,
+    borderRadius: radius.xxl,
     borderWidth: 1,
-    marginRight: 16,
-    padding: 12,
+    marginRight: spacing.md,
+    padding: spacing.smd,
   },
   imageContainer: {
     height: 170,
@@ -294,69 +295,66 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     position: "relative",
-    borderRadius: 16,
+    borderRadius: radius.lg,
     overflow: "hidden",
   },
   heartButton: {
     position: "absolute",
-    top: 8,
-    right: 8,
-    zIndex: 1,
+    top: spacing.sm,
+    right: spacing.sm,
+    zIndex: zIndex.elevated,
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: radius.lg,
     justifyContent: "center",
     alignItems: "center",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    ...elevation.sm,
   },
   gridHeartButton: {
     width: 28,
     height: 28,
-    borderRadius: 14,
+    borderRadius: radius.circle,
   },
   pillsContainer: {
     position: "absolute",
-    bottom: 8,
-    left: 8,
-    right: 8,
+    bottom: spacing.sm,
+    left: spacing.sm,
+    right: spacing.sm,
     flexDirection: "row",
     gap: 6,
   },
   pill: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.md,
     flexShrink: 1,
   },
   pillText: {
-    fontSize: 9,
-    fontWeight: "bold",
+    fontSize: typography.size.xxs,
+    fontWeight: typography.weight.bold,
   },
   emoji: {
-    fontSize: 74,
+    fontSize: typography.size.hero || 74,
   },
   gridEmoji: {
     fontSize: 64,
   },
   infoContainer: {
-    paddingTop: 12,
+    paddingTop: spacing.smd,
     flex: 1,
   },
   gridInfoContainer: {
-    paddingTop: 12,
+    paddingTop: spacing.smd,
   },
   name: {
-    fontSize: 14,
-    fontWeight: "800",
-    marginBottom: 8,
+    fontSize: typography.size.md,
+    fontWeight: typography.weight.extraBold,
+    marginBottom: spacing.sm,
     minHeight: 40,
     lineHeight: 18,
   },
   gridName: {
-    fontSize: 13,
+    fontSize: typography.size.smmd,
     minHeight: 36,
   },
   bottomRow: {
@@ -370,7 +368,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   actionColumn: {
-    marginLeft: 8,
+    marginLeft: spacing.sm,
     justifyContent: "center",
   },
   priceRow: {
@@ -381,64 +379,61 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   price: {
-    fontSize: 16,
-    fontWeight: "900", // Extra bold price
+    fontSize: typography.size.lg,
+    fontWeight: typography.weight.black,
   },
   gridPrice: {
-    fontSize: 14,
+    fontSize: typography.size.md,
   },
   mrpRow: {
-    marginTop: 2,
+    marginTop: spacing.xxs,
   },
   mrp: {
-    fontSize: 11,
+    fontSize: typography.size.xs,
     textDecorationLine: "line-through",
   },
   addButton: {
-    width: 34, // Large circular button
+    width: 34, 
     height: 34,
-    borderRadius: 17,
+    borderRadius: radius.circle,
     justifyContent: "center",
     alignItems: "center",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    ...elevation.sm,
   },
   gridAddButton: {
     width: 30,
     height: 30,
-    borderRadius: 15,
+    borderRadius: radius.circle,
   },
   quantityControl: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    borderRadius: 17, // Match Add button height
+    borderRadius: radius.circle, 
     height: 34,
-    paddingHorizontal: 6,
+    paddingHorizontal: spacing.xs,
     minWidth: 70,
   },
   gridQuantityControl: {
     height: 30,
-    borderRadius: 15,
-    paddingHorizontal: 4,
+    borderRadius: radius.circle,
+    paddingHorizontal: spacing.xs,
     minWidth: 64,
   },
   qtyBtn: {
-    padding: 4,
+    padding: spacing.xs,
   },
   qtyText: {
-    fontWeight: "bold",
-    fontSize: 14,
+    fontWeight: typography.weight.bold,
+    fontSize: typography.size.md,
   },
   gridQtyText: {
-    fontSize: 12,
+    fontSize: typography.size.sm,
   },
   gridCard: {
     width: "100%",
     marginRight: 0,
-    marginBottom: 20,
+    marginBottom: spacing.mlg,
   },
   gridImageContainer: {
     height: 150,
@@ -449,11 +444,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   outOfStockText: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    fontSize: 10,
-    fontWeight: "bold",
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.xs,
+    fontSize: typography.size.xxs,
+    fontWeight: typography.weight.bold,
   },
 });
 

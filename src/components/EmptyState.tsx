@@ -1,33 +1,107 @@
+/**
+ * EmptyState.tsx
+ * @description Improved empty state component.
+ *
+ * Improvements over original:
+ *  - Added optional `subtitle` / `description` prop
+ *  - Removed `containerStyle: any` → typed `ViewStyle`
+ *  - Design tokens for spacing and typography
+ *  - `buttonText` and `secondaryButtonText` support
+ *  - Fully typed props
+ *
+ * Usage:
+ *  <EmptyState
+ *    emoji="🛒"
+ *    title="Your cart is empty"
+ *    subtitle="Add items to get started"
+ *    buttonText="Browse Products"
+ *    onButtonPress={() => navigation.navigate('Categories')}
+ *  />
+ */
+
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, ViewStyle } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { CustomButton } from './CustomButton';
+import { spacing } from '../core/constants/theme/spacing';
+import { typography } from '../core/constants/theme/typography';
 
-interface EmptyStateProps {
-  emoji: string;
+// ─── Props ────────────────────────────────────────────────────────────────────
+
+export interface EmptyStateProps {
+  /** Emoji character rendered as large icon */
+  emoji?: string;
+  /** Custom React node icon (takes priority over emoji) */
+  icon?: React.ReactNode;
+  /** Main title text (required) */
   title: string;
+  /** Optional subtitle / description below the title */
+  subtitle?: string;
+  /** Primary action button label */
   buttonText?: string;
+  /** Called when primary button is pressed */
   onButtonPress?: () => void;
-  containerStyle?: any;
+  /** Secondary action button label */
+  secondaryButtonText?: string;
+  /** Called when secondary button is pressed */
+  onSecondaryButtonPress?: () => void;
+  /** Additional container style */
+  containerStyle?: ViewStyle;
+  /** testID for automation */
+  testID?: string;
 }
 
-export default function EmptyState({ 
-  emoji, 
-  title, 
-  buttonText, 
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export default function EmptyState({
+  emoji,
+  icon,
+  title,
+  subtitle,
+  buttonText,
   onButtonPress,
-  containerStyle
+  secondaryButtonText,
+  onSecondaryButtonPress,
+  containerStyle,
+  testID,
 }: EmptyStateProps) {
   return (
-    <View style={[styles.container, containerStyle]}>
-      <ThemedText style={styles.emoji}>{emoji}</ThemedText>
-      <ThemedText type="subtitle" style={styles.title}>{title}</ThemedText>
-      
+    <View style={[styles.container, containerStyle]} testID={testID}>
+      {/* Icon */}
+      {icon ? (
+        <View style={styles.iconWrapper}>{icon}</View>
+      ) : emoji ? (
+        <ThemedText style={styles.emoji}>{emoji}</ThemedText>
+      ) : null}
+
+      {/* Title */}
+      <ThemedText type="subtitle" style={styles.title}>
+        {title}
+      </ThemedText>
+
+      {/* Subtitle */}
+      {subtitle && (
+        <ThemedText useSecondaryText style={styles.subtitle}>
+          {subtitle}
+        </ThemedText>
+      )}
+
+      {/* Primary action */}
       {buttonText && onButtonPress && (
-        <CustomButton 
-          title={buttonText} 
-          type="primary" 
+        <CustomButton
+          title={buttonText}
+          type="primary"
           onPress={onButtonPress}
+          style={styles.button}
+        />
+      )}
+
+      {/* Secondary action */}
+      {secondaryButtonText && onSecondaryButtonPress && (
+        <CustomButton
+          title={secondaryButtonText}
+          type="secondary"
+          onPress={onSecondaryButtonPress}
           style={styles.button}
         />
       )}
@@ -35,24 +109,36 @@ export default function EmptyState({
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: spacing.xl,
+  },
+  iconWrapper: {
+    marginBottom: spacing.md,
   },
   emoji: {
     fontSize: 80,
-    marginBottom: 16,
+    lineHeight: 100, // Prevents vertical cropping of large emojis
+    marginBottom: spacing.md,
   },
   title: {
-    fontSize: 20,
-    marginBottom: 8,
+    fontSize: typography.size.xxl,
+    marginBottom: spacing.sm,
     textAlign: 'center',
   },
+  subtitle: {
+    fontSize: typography.size.mdlg,
+    textAlign: 'center',
+    lineHeight: typography.lineHeight.relaxed,
+    marginBottom: spacing.lg,
+  },
   button: {
-    marginTop: 24,
-    width: 200,
-  }
+    marginTop: spacing.md,
+    width: 220,
+  },
 });
