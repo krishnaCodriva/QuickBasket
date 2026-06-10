@@ -22,7 +22,7 @@ export default function OrderStatusScreen() {
   const borderColor = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray300 }, 'gray200' as any);
   const primaryColor = useThemeColor({}, 'primary');
   const iconColor = useThemeColor({ light: Colors.light.black, dark: Colors.light.white }, 'primaryText' as any);
-  const errorColor = useThemeColor({ light: Colors.light.red600, dark: Colors.dark.error }, 'error' as any);
+  const errorColor = useThemeColor({ light: Colors.light.error, dark: Colors.dark.error }, 'error' as any);
   const successColor = useThemeColor({ light: Colors.light.success, dark: Colors.dark.success }, 'success' as any);
 
   // Animation values

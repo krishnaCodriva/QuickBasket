@@ -280,6 +280,10 @@ export const translations = {
       companyName: 'QuickBasket Ltd.',
       computerGenerated: 'This is a computer generated invoice and does not require a physical signature.'
     },
+      orderTrackingScreen: {
+      title: 'Order Tracking',
+      subtitle: 'Track your order here.',
+    },
     manualLocationScreen: {
       title: 'Enter Address',
       placeholder: 'Search for area, street, city...',
@@ -335,8 +339,10 @@ export const translations = {
       subtitle: 'Track your order here.'
     }
   },
+
   // You can easily add more languages here later:
   // es: { common: { ... }, navigation: { ... } }
+
   hi: {
     common: {
       appName: 'क्विकबास्केट',
@@ -615,6 +621,11 @@ export const translations = {
       companyName: 'क्विकबास्केट लिमिटेड',
       computerGenerated: 'यह कंप्यूटर द्वारा तैयार किया गया चालान है और इसके लिए भौतिक हस्ताक्षर की आवश्यकता नहीं है।'
     },
+     orderTrackingScreen: {
+      title: 'ऑर्डर ट्रैकिंग',
+      subtitle: 'अपना ऑर्डर यहां ट्रैक करें।',
+    },
+  
     manualLocationScreen: {
       title: 'पता दर्ज करें',
       placeholder: 'क्षेत्र, सड़क, शहर खोजें...',
@@ -1002,6 +1013,8 @@ export const translations = {
       subtitle: 'Apna order yahan track karein.'
     }
   },
+
+
 
   ml: {
     common: {

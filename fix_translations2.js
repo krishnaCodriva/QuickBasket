@@ -14,7 +14,8 @@ const enAdd = `
     },
     profileScreen: {
       comingSoon: 'Profile Coming Soon',
-    },`;
+    },
+`;
 
 const hiAdd = `
     orderTrackingScreen: {
@@ -28,24 +29,19 @@ const hiAdd = `
     },
     profileScreen: {
       comingSoon: 'प्रोफ़ाइल जल्द ही आ रही है',
-    },`;
-
-const mlAdd = `
-    orderTrackingScreen: {
-      title: 'ഓർഡർ ട്രാക്കിംഗ്',
-      subtitle: 'നിങ്ങളുടെ ഓർഡർ ഇവിടെ ട്രാക്ക് ചെയ്യുക.',
     },
-    manualLocationScreen: {
-      searchPlaceholder: 'പ്രദേശം, തെരുവ്, നഗരം തിരയുക...',
-      noResults: 'ഫലങ്ങളൊന്നും ലഭിച്ചില്ല',
-      useCurrentLocation: 'എൻ്റെ നിലവിലെ ലൊക്കേഷൻ ഉപയോഗിക്കുക',
-    },
-    profileScreen: {
-      comingSoon: 'പ്രൊഫൈൽ ഉടൻ വരുന്നു',
-    },`;
+`;
 
-content = content.replace(/(\s*)(hi: \{)/, enAdd + '$1$2');
-content = content.replace(/(\s*)(ml: \{)/, hiAdd + '$1$2');
-content = content.replace(/(\s*)(\}\s*)$/, mlAdd + '$1$2');
+// Insert for EN
+content = content.replace(
+  "  // You can easily add more languages here later:\n  // es: { common: { ... }, navigation: { ... } }\n\n  hi: {",
+  enAdd + "  // You can easily add more languages here later:\n  // es: { common: { ... }, navigation: { ... } }\n\n  hi: {"
+);
+
+// Insert for HI
+content = content.replace(
+  "    }\n  },\n  ml: {",
+  "    }\n  }," + hiAdd + "  ml: {"
+);
 
 fs.writeFileSync(file, content);
