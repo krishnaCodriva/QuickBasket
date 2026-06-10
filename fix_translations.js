@@ -1,65 +1,77 @@
 const fs = require('fs');
-const file = 'src/constants/translations.ts';
-let content = fs.readFileSync(file, 'utf8');
+const path = './src/constants/translations.ts';
+let content = fs.readFileSync(path, 'utf8');
 
-// Remove the badly placed keys
-content = content.replace(/    orderTrackingScreen: \{[\s\S]*?comingSoon: 'Profile Coming Soon',\n    \},/, '');
-content = content.replace(/    orderTrackingScreen: \{[\s\S]*?comingSoon: 'प्रोफ़ाइल जल्द ही आ रही है',\n    \},/, '');
-// Note: mlAdd was never inserted.
-
-// Now insert them properly INSIDE the language objects.
-// The objects end with `invoiceScreen: { ... } \n  },`
-// We will replace `    }\n  },` with `    },\n` + Add + `\n  },` but we must be careful.
-
-const enAdd = `
-    orderTrackingScreen: {
-      title: 'Order Tracking',
-      subtitle: 'Track your order here.',
+const hiReplacement = `    profileScreen: {
+      comingSoon: 'प्रोफ़ाइल जल्द आ रही है',
+      myOrders: 'मेरे आदेश',
+      myOrdersDesc: 'ट्रैक करें, वापस करें, या फिर से खरीदें',
+      savedAddresses: 'सहेजे गए पते',
+      savedAddressesDesc: 'वितरण स्थान प्रबंधित करें',
+      notifications: 'सूचनाएं',
+      notificationsDesc: 'अलर्ट और प्रोमो प्रबंधित करें',
+      helpSupport: 'सहायता और समर्थन',
+      helpSupportDesc: 'हमसे संपर्क करें, सामान्य प्रश्न',
+      logout: 'लॉग आउट',
+      orders: 'आदेश',
+      status: 'स्थिति',
+      elite: 'एलीट',
+      guestUser: 'अतिथि उपयोगकर्ता',
+      guestEmail: 'guest@example.com'
     },
-    manualLocationScreen: {
-      searchPlaceholder: 'Search for area, street, city...',
-      noResults: 'No results found',
-      useCurrentLocation: 'Use my current location',
+    editProfileScreen: {
+      title: 'प्रोफ़ाइल संपादित करें',
+      fullName: 'पूरा नाम',
+      email: 'ईमेल पता',
+      mobile: 'मोबाइल नंबर',
+      saveChanges: 'परिवर्तन सहेजें',
+      cancel: 'रद्द करें',
+      validationError: 'सत्यापन त्रुटि',
+      mandatoryFields: 'अनिवार्य फ़ील्ड खाली नहीं हो सकते',
+      invalidEmail: 'अमान्य ईमेल प्रारूप',
+      success: 'सफलता',
+      profileUpdated: 'प्रोफ़ाइल सफलतापूर्वक अपडेट की गई',
+      changePicture: 'चित्र बदलें',
+      permissionRequired: 'अनुमति आवश्यक है',
+      galleryPermission: 'गैलरी तक पहुंचने की अनुमति आवश्यक है!'
+    },`;
+
+const hinglishReplacement = `    profileScreen: {
+      comingSoon: 'Profile jald aa rahi hai',
+      myOrders: 'Mere Orders',
+      myOrdersDesc: 'Track karein, return karein, ya fir se kharidein',
+      savedAddresses: 'Saved Addresses',
+      savedAddressesDesc: 'Delivery locations manage karein',
+      notifications: 'Notifications',
+      notificationsDesc: 'Alerts aur promos manage karein',
+      helpSupport: 'Help & Support',
+      helpSupportDesc: 'Contact us, FAQs',
+      logout: 'Logout',
+      orders: 'Orders',
+      status: 'Status',
+      elite: 'Elite',
+      guestUser: 'Guest User',
+      guestEmail: 'guest@example.com'
     },
-    profileScreen: {
-      comingSoon: 'Profile Coming Soon',
-    }`;
+    editProfileScreen: {
+      title: 'Profile Edit Karein',
+      fullName: 'Pura Naam',
+      email: 'Email Address',
+      mobile: 'Mobile Number',
+      saveChanges: 'Changes Save Karein',
+      cancel: 'Cancel',
+      validationError: 'Validation Error',
+      mandatoryFields: 'Mandatory fields blank nahi ho sakte',
+      invalidEmail: 'Invalid email format',
+      success: 'Success',
+      profileUpdated: 'Profile successfully update ho gayi',
+      changePicture: 'Picture Change Karein',
+      permissionRequired: 'Permission Required',
+      galleryPermission: 'Gallery access karne ke liye permission required hai!'
+    },`;
 
-const hiAdd = `
-    orderTrackingScreen: {
-      title: 'ऑर्डर ट्रैकिंग',
-      subtitle: 'अपना ऑर्डर यहां ट्रैक करें।',
-    },
-    manualLocationScreen: {
-      searchPlaceholder: 'क्षेत्र, सड़क, शहर खोजें...',
-      noResults: 'कोई परिणाम नहीं मिला',
-      useCurrentLocation: 'मेरे वर्तमान स्थान का उपयोग करें',
-    },
-    profileScreen: {
-      comingSoon: 'प्रोफ़ाइल जल्द ही आ रही है',
-    }`;
+content = content.replace(/    profileScreen: \{\n      comingSoon: 'प्रोफ़ाइल जल्द ही आ रही है'\n    \},/g, hiReplacement);
+content = content.replace(/    profileScreen: \{\n      comingSoon: 'Profile jald hi aa rahi hai'\n    \},/g, hinglishReplacement);
 
-const mlAdd = `
-    orderTrackingScreen: {
-      title: 'ഓർഡർ ട്രാക്കിംഗ്',
-      subtitle: 'നിങ്ങളുടെ ഓർഡർ ഇവിടെ ട്രാക്ക് ചെയ്യുക.',
-    },
-    manualLocationScreen: {
-      searchPlaceholder: 'പ്രദേശം, തെരുവ്, നഗരം തിരയുക...',
-      noResults: 'ഫലങ്ങളൊന്നും ലഭിച്ചില്ല',
-      useCurrentLocation: 'എൻ്റെ നിലവിലെ ലൊക്കേഷൻ ഉപയോഗിക്കുക',
-    },
-    profileScreen: {
-      comingSoon: 'പ്രൊഫൈൽ ഉടൻ വരുന്നു',
-    }`;
-
-// Find end of 'en' block (just before hi: {)
-content = content.replace(/(\n  \},)(\n\s*\/\/.*)?(\n  hi: \{)/, ',\n' + enAdd + '$1$2$3');
-
-// Find end of 'hi' block (just before ml: {)
-content = content.replace(/(\n  \},)(\n\s*\/\/.*)?(\n  ml: \{)/, ',\n' + hiAdd + '$1$2$3');
-
-// Find end of 'ml' block (just before };)
-content = content.replace(/(\n  \})(\n\};)/, ',\n' + mlAdd + '$1$2');
-
-fs.writeFileSync(file, content);
+fs.writeFileSync(path, content, 'utf8');
+console.log('Translations updated successfully.');

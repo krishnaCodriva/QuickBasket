@@ -4,6 +4,8 @@ export type User = {
   id: string;
   name: string;
   email: string;
+  mobile?: string;
+  avatar?: string;
 };
 
 type AuthContextType = {
@@ -11,6 +13,7 @@ type AuthContextType = {
   verifyOtp: (phone: string, otp: string) => Promise<void>;
   logout: () => void;
   signup: (name: string, email: string, pass: string) => Promise<void>; // keeping for google mock if needed
+  updateProfile: (updates: Partial<User>) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -44,12 +47,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
   };
 
+  const updateProfile = async (updates: Partial<User>) => {
+    return new Promise<void>((resolve) => {
+      setTimeout(() => {
+        setUser(prev => {
+          if (prev) {
+            return { ...prev, ...updates };
+          }
+          // If editing profile while guest, create a mock user object
+          return {
+            id: `u_${Date.now()}`,
+            name: updates.name || '',
+            email: updates.email || '',
+            mobile: updates.mobile,
+            avatar: updates.avatar
+          };
+        });
+        resolve();
+      }, 500);
+    });
+  };
+
   const logout = () => {
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, verifyOtp, signup, logout }}>
+    <AuthContext.Provider value={{ user, verifyOtp, signup, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

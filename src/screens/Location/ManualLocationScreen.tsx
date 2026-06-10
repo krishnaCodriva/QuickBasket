@@ -9,6 +9,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import { useThemeColor } from '../../hooks';
+import { useTranslation } from 'react-i18next';
+import { STRINGS } from '../../constants';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'ManualLocation'>;
@@ -24,6 +26,7 @@ export default function ManualLocationScreen({ navigation }: Props) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const { t } = useTranslation();
 
   // Debounced OpenStreetMap Nominatim API Fetch
   useEffect(() => {
@@ -83,12 +86,12 @@ export default function ManualLocationScreen({ navigation }: Props) {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Feather name="arrow-left" size={24} color={iconColor} />
           </TouchableOpacity>
-          <ThemedText style={styles.headerTitle}>Enter Address</ThemedText>
+          <ThemedText style={styles.headerTitle}>{t(STRINGS.manualLocationScreen.title)}</ThemedText>
           <View style={{ width: 24 }} />
         </View>
 
         <ThemedInput
-          placeholder={t(STRINGS.manualLocationScreen.searchPlaceholder)}
+          placeholder={t(STRINGS.manualLocationScreen.placeholder)}
           autoFocus
           value={query}
           onChangeText={setQuery}
@@ -132,14 +135,14 @@ export default function ManualLocationScreen({ navigation }: Props) {
             <TouchableOpacity style={styles.currentLocationBtn} onPress={handleUseCurrentLocation}>
               <Ionicons name="locate" size={20} color={primaryColor} />
               <ThemedText style={[styles.currentLocationText, { color: primaryColor }]}>
-                {t(STRINGS.manualLocationScreen.useCurrentLocation)}
+                {t(STRINGS.manualLocationScreen.useCurrent)}
               </ThemedText>
             </TouchableOpacity>
             
             <View style={styles.divider} />
             
             <Feather name="map" size={48} color={Colors.light.gray300} style={styles.placeholderIcon} />
-            <ThemedText style={styles.placeholderText}>Search for your delivery address</ThemedText>
+            <ThemedText style={styles.placeholderText}>{t(STRINGS.manualLocationScreen.deliverySearch)}</ThemedText>
           </View>
         )}
       </ThemedView>

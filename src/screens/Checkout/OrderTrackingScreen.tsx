@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { STRINGS } from '../../constants';
 import { ThemedText } from '../../components/ThemedText';
 import { ThemedView } from '../../components/ThemedView';
+import { useTranslation } from 'react-i18next';
+import { STRINGS } from '../../constants';
 
 export default function OrderTrackingScreen({ route, navigation }: any) {
   const { t } = useTranslation();

@@ -21,6 +21,7 @@ export default function OrderSuccessScreen() {
   const primaryColor = useThemeColor({}, 'primary');
   const cardColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.secondaryBackground }, 'secondaryBackground');
   const borderColor = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray300 }, 'gray200' as any);
+  const successColor = useThemeColor({ light: Colors.light.success, dark: Colors.dark.success }, 'success' as any);
 
   useEffect(() => {
     Animated.spring(scaleValue, {
@@ -109,7 +110,7 @@ export default function OrderSuccessScreen() {
               <View style={[styles.card, { backgroundColor: cardColor, borderColor }]}>
                 <ThemedText type="subtitle" style={styles.cardTitle}>{t(STRINGS.checkoutScreen.total)}</ThemedText>
                 <View style={styles.amountRow}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.itemSubtotal)}</ThemedText><ThemedText>₹{order.subtotal?.toFixed(2)}</ThemedText></View>
-                {order.discount > 0 && <View style={styles.amountRow}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.discounts)}</ThemedText><ThemedText style={{ color: '#22c55e' }}>-₹{order.discount?.toFixed(2)}</ThemedText></View>}
+                {order.discount > 0 && <View style={styles.amountRow}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.discounts)}</ThemedText><ThemedText style={{ color: successColor }}>-₹{order.discount?.toFixed(2)}</ThemedText></View>}
                 <View style={styles.amountRow}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.deliveryCharges)}</ThemedText><ThemedText>₹{order.deliveryCharge?.toFixed(2)}</ThemedText></View>
                 <View style={styles.amountRow}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.taxes)}</ThemedText><ThemedText>₹{order.taxes?.toFixed(2)}</ThemedText></View>
                 <View style={[styles.amountRow, { borderTopWidth: 1, borderTopColor: borderColor, paddingTop: 12, marginTop: 12 }]}><ThemedText style={{ fontWeight: 'bold', fontSize: 16 }}>{t(STRINGS.cartScreen.totalPayable)}</ThemedText><ThemedText style={{ fontWeight: 'bold', fontSize: 16 }}>₹{order.totalPayable?.toFixed(2)}</ThemedText></View>

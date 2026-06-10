@@ -57,6 +57,7 @@ export default function CheckoutScreen() {
   const borderColor = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray300 }, 'gray200' as any);
   const iconColor = useThemeColor({ light: Colors.light.black, dark: Colors.light.white }, 'primaryText' as any);
   const modalBgColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.secondaryBackground }, 'secondaryBackground' as any);
+  const errorColor = useThemeColor({ light: Colors.light.red600, dark: Colors.dark.error }, 'error' as any);
 
   const discount = subtotal > 0 ? 5 : 0; // Flat ₹5 mock discount for any order
   const deliveryCharge = subtotal > 50 ? 0 : 5.99;
@@ -369,5 +370,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  saveAddressBtn: {
+    marginTop: 12,
+    borderRadius: 12,
+    paddingVertical: 14,
+  },
+  radioButton: {
+    height: 20,
+    width: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 12,
+  },
+  radioButtonInner: {
+    height: 10,
+    width: 10,
+    borderRadius: 5,
   }
 });

@@ -55,6 +55,14 @@ export default function ProductListingScreen() {
   const [filterCategory, setFilterCategory] = useState<string | null>(category === STRINGS.productListing.allProducts || category === 'Special Offers' ? null : category);
   const [filterTag, setFilterTag] = useState<string | null>(null);
 
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
   // Initialize data
   useEffect(() => {
     loadProducts(1, true);
@@ -64,7 +72,9 @@ export default function ProductListingScreen() {
     if (isLoading && !reset) return;
     setIsLoading(true);
 
-    setTimeout(() => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
+    timeoutRef.current = setTimeout(() => {
       let filtered = [...MOCK_PRODUCTS];
 
       if (filterCategory) {

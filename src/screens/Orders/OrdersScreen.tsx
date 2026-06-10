@@ -97,9 +97,9 @@ export default function OrdersScreen() {
           </View>
           <View style={styles.emptyContainer}>
             <Feather name="shopping-bag" size={64} color={borderColor} style={{ marginBottom: 16 }} />
-            <ThemedText style={{ fontSize: 18, marginBottom: 8 }}>No Orders Yet</ThemedText>
+            <ThemedText style={{ fontSize: 18, marginBottom: 8 }}>{t(STRINGS.ordersScreen.noOrders)}</ThemedText>
             <ThemedText useSecondaryText style={{ textAlign: 'center', marginBottom: 24 }}>
-              Looks like you haven't placed any orders yet.
+              {t(STRINGS.ordersScreen.noOrdersSub)}
             </ThemedText>
             <CustomButton 
               title={t(STRINGS.cartScreen.startShopping)} 
