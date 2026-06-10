@@ -35,11 +35,11 @@ const DEFAULT_BANNERS: BannerType[] = [
   },
   {
     id: "2",
-    source: require("../../../assets/Section - Hero Carousel (Bento Style).png"),
+    source: require("../../../assets/banner1.jpg"),
   },
   {
     id: "3",
-    source: require("../../../assets/Section - Hero Carousel (Bento Style).png"),
+    source: require("../../../assets/banner2.jpg"),
   },
 ];
 
