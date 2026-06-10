@@ -109,9 +109,9 @@ export const translations = {
       filterTags: 'Tags',
       filterAvailability: 'Availability',
       priceRanges: {
-        under5: 'Under ₹5',
-        fiveToTen: '₹5 - ₹10',
-        over10: 'Over ₹10',
+        under5: 'Under ₹50',
+        fiveToTen: '₹50 - ₹100',
+        over10: 'Over ₹100',
       }
     },
     productDetail: {
@@ -449,9 +449,9 @@ export const translations = {
       filterTags: 'टैग',
       filterAvailability: 'उपलब्धता',
       priceRanges: {
-        under5: '₹5 से कम',
-        fiveToTen: '₹5 - ₹10',
-        over10: '₹10 से अधिक',
+        under5: '₹50 से कम',
+        fiveToTen: '₹50 - ₹100',
+        over10: '₹100 से अधिक',
       }
     },
     productDetail: {
@@ -787,9 +787,9 @@ export const translations = {
       filterTags: 'Tags',
       filterAvailability: 'Availability',
       priceRanges: {
-        under5: 'Under ₹5',
-        fiveToTen: '₹5 - ₹10',
-        over10: 'Over ₹10',
+        under5: 'Under ₹50',
+        fiveToTen: '₹50 - ₹100',
+        over10: 'Over ₹100',
       }
     },
     productDetail: {

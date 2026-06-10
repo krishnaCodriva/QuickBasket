@@ -8,8 +8,9 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import ThemedInput from '../../components/ThemedInput';
 import { useThemeColor } from '../../hooks';
 import { useCart } from '../../context';
-import { MOCK_PRODUCTS } from '../../data/mockData';
 import { useTranslation } from 'react-i18next';
+import { productApi } from '../../services/productApi';
+const BASE_URL = 'http://192.168.1.58:5000';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 48) / 2; // 2 columns, padding 16 on sides and 16 between columns
@@ -18,7 +19,7 @@ export default function ProductListingScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const { category = STRINGS.productListing.allProducts, query = '' } = route.params || {};
+  const { categoryId, category = STRINGS.productListing.allProducts, query = '' } = route.params || {};
 
   const colorScheme = useColorScheme() ?? 'light';
   const isDark = colorScheme === 'dark';
@@ -34,7 +35,7 @@ export default function ProductListingScreen() {
   const borderColor = useThemeColor({ light: Colors.light.gray300, dark: Colors.dark.gray700 }, 'primaryText' as any);
 
   const [searchQuery, setSearchQuery] = useState(query);
-  const [products, setProducts] = useState<typeof MOCK_PRODUCTS>([]);
+  const [products, setProducts] = useState<any[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -68,61 +69,68 @@ export default function ProductListingScreen() {
     loadProducts(1, true);
   }, [searchQuery, activeSort, inStockOnly, outOfStockOnly, filterPrice, filterCategory, filterTag]);
 
-  const loadProducts = (pageNumber: number, reset: boolean = false) => {
+  const loadProducts = async (pageNumber: number, reset: boolean = false) => {
     if (isLoading && !reset) return;
     setIsLoading(true);
 
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
-    timeoutRef.current = setTimeout(() => {
-      let filtered = [...MOCK_PRODUCTS];
+    // Debounce the API call
+    timeoutRef.current = setTimeout(async () => {
+      try {
+        let minPrice: number | undefined;
+        let maxPrice: number | undefined;
 
-      if (filterCategory) {
-        filtered = filtered.filter(p => p.category.toLowerCase() === filterCategory.toLowerCase());
-      } else if (category && category !== STRINGS.productListing.allProducts && category !== 'Special Offers') {
-        filtered = filtered.filter(p => p.category.toLowerCase() === category.toLowerCase());
-      }
-
-      if (filterPrice) {
         if (filterPrice === STRINGS.productListing.priceRanges.under5) {
-          filtered = filtered.filter(p => p.price < 5);
+          maxPrice = 50;
         } else if (filterPrice === STRINGS.productListing.priceRanges.fiveToTen) {
-          filtered = filtered.filter(p => p.price >= 5 && p.price <= 10);
+          minPrice = 50;
+          maxPrice = 100;
         } else if (filterPrice === STRINGS.productListing.priceRanges.over10) {
-          filtered = filtered.filter(p => p.price > 10);
+          minPrice = 100;
         }
-      }
 
-      if (filterTag) {
-        filtered = filtered.filter(p => p.tags?.includes(filterTag));
-      }
+        let sortBy: 'price_asc' | 'price_desc' | 'latest' | 'popularity' | undefined;
+        if (activeSort === STRINGS.productListing.sortOptions.priceLowHigh) {
+          sortBy = 'price_asc';
+        } else if (activeSort === STRINGS.productListing.sortOptions.priceHighLow) {
+          sortBy = 'price_desc';
+        } else if (activeSort === STRINGS.productListing.sortOptions.newest) {
+          sortBy = 'latest';
+        } else if (activeSort === STRINGS.productListing.sortOptions.relevance) {
+          sortBy = 'popularity';
+        }
 
-      if (searchQuery) {
-        filtered = filtered.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
-      }
-      if (inStockOnly) {
-        filtered = filtered.filter(p => p.inStock === true || p.inStock === 'true' || p.inStock === undefined);
-      } else if (outOfStockOnly) {
-        filtered = filtered.filter(p => p.inStock === false || p.inStock === 'false' || !p.inStock);
-      }
+        const limit = 20;
+        const offset = (pageNumber - 1) * limit;
 
-      if (activeSort === STRINGS.productListing.sortOptions.priceLowHigh) {
-        filtered.sort((a, b) => a.price - b.price);
-      } else if (activeSort === STRINGS.productListing.sortOptions.priceHighLow) {
-        filtered.sort((a, b) => b.price - a.price);
-      } else if (activeSort === STRINGS.productListing.sortOptions.newest) {
-        filtered = filtered.reverse(); // Mock newest
+        const response = await productApi.getProducts({
+          search: searchQuery || undefined,
+          categoryId: categoryId || undefined,
+          minPrice,
+          maxPrice,
+          tag: filterTag || undefined,
+          sortBy,
+          inStock: inStockOnly ? true : outOfStockOnly ? false : undefined,
+          limit,
+          offset,
+        });
+
+        if (response.success) {
+          // Handle both possible response structures based on the API payload
+          const newProducts = Array.isArray(response.data) ? response.data : (response.data?.products || []);
+          setProducts(reset ? newProducts : [...products, ...newProducts]);
+          setPage(pageNumber);
+          // Check if we fetched a full page, meaning there might be more
+          setHasMore(newProducts.length === limit);
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setIsLoading(false);
+        setIsRefreshing(false);
+        setIsInitialLoad(false);
       }
-
-      const startIndex = (pageNumber - 1) * 10;
-      const paginated = filtered.slice(startIndex, startIndex + 10);
-
-      setProducts(reset ? paginated : [...products, ...paginated]);
-      setPage(pageNumber);
-      setHasMore(paginated.length === 10);
-      setIsLoading(false);
-      setIsRefreshing(false);
-      setIsInitialLoad(false);
     }, 500);
   };
 
@@ -234,17 +242,23 @@ export default function ProductListingScreen() {
     />
   );
 
-  const renderProductCard = ({ item }: { item: typeof MOCK_PRODUCTS[0] }) => {
+  const renderProductCard = ({ item }: { item: any }) => {
+    // Generate full image URL if it's a relative path
+    const imageUrl = item.imageUrl?.startsWith('/') 
+      ? `${BASE_URL}${item.imageUrl}` 
+      : (item.imageUrl || "https://via.placeholder.com/150");
+
     return (
       <ProductCard
         id={item.id}
         name={item.name}
-        price={`$${item.price.toFixed(2)}`}
-        mrp={`$${item.mrp.toFixed(2)}`}
-        category={item.category}
-        weight={t(item.weight)}
-        emoji={item.emoji}
-        inStock={item.inStock}
+        price={`₹${Number(item.price || 0).toFixed(2)}`}
+        mrp={`₹${Number(item.compareAtPrice || item.price || 0).toFixed(2)}`}
+        category={item.Category?.name || "Grocery"}
+        weight={item.weight || "1 unit"}
+        emoji={item.emoji || "📦"}
+        inStock={item.stockQuantity > 0 || item.isActive}
+        imageUrl={imageUrl}
         quantity={cartItems.find(i => i.id === item.id)?.quantity || 0}
         onAdd={() => handleUpdateCart(item, 1)}
         onRemove={() => handleUpdateCart(item, -1)}

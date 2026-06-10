@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { storage } from '../utils/storage';
+import { sessionService } from '../services/session/sessionService';
 
 export type User = {
   id: string;
@@ -10,6 +12,7 @@ export type User = {
 
 type AuthContextType = {
   user: User | null;
+  isLoading: boolean; // Added for initial bootstrap state
   verifyOtp: (phone: string, otp: string) => Promise<void>;
   logout: () => void;
   signup: (name: string, email: string, pass: string) => Promise<void>; // keeping for google mock if needed
@@ -20,6 +23,34 @@ const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Bootstrap app on start
+  useEffect(() => {
+    const bootstrapAsync = async () => {
+      try {
+        const userToken = await storage.getUserToken();
+        if (userToken) {
+          // If we have a user token, they are logged in.
+          // For now, we set a mock user. Later, call a /me API.
+          setUser({ id: 'restored', name: 'Logged In User', email: '' });
+        } else {
+          // If not logged in, check for a guest token
+          const guestToken = await storage.getGuestToken();
+          if (!guestToken) {
+            // If completely new user, get a guest token
+            await sessionService.createGuestSession();
+          }
+        }
+      } catch (e) {
+        console.error('Failed to bootstrap app state:', e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    bootstrapAsync();
+  }, []);
 
   const verifyOtp = async (phone: string, otp: string) => {
     return new Promise<void>((resolve, reject) => {
@@ -73,7 +104,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, verifyOtp, signup, logout, updateProfile }}>
+    <AuthContext.Provider value={{ user, isLoading, verifyOtp, signup, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

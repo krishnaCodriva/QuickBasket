@@ -27,78 +27,8 @@ import { setLanguage } from "../../context/localizationContext/localeAction";
 import LocalizationContext from "../../context/localizationContext/LocaleContext";
 import { useCart } from "../../context/CartContext";
 import i18n from "../../localization/i18";
-// Mock Data
-const CATEGORIES = [
-  {
-    id: "1",
-    name: STRINGS.common.categories.fruits,
-    emoji: "🍎",
-    colorName: "red100" as const,
-  },
-  {
-    id: "2",
-    name: STRINGS.common.categories.veg,
-    emoji: "🥕",
-    colorName: "green100" as const,
-  },
-  {
-    id: "3",
-    name: STRINGS.common.categories.dairy,
-    emoji: "🥛",
-    colorName: "blue100" as const,
-  },
-  {
-    id: "4",
-    name: STRINGS.common.categories.bakery,
-    emoji: "🍞",
-    colorName: "orange100" as const,
-  },
-  {
-    id: "5",
-    name: STRINGS.common.categories.meat,
-    emoji: "🥩",
-    colorName: "pink100" as const,
-  },
-  {
-    id: "6",
-    name: STRINGS.common.categories.snacks,
-    emoji: "🍿",
-    colorName: "yellow100" as const,
-  },
-  {
-    id: "7",
-    name: STRINGS.common.categories.drinks,
-    emoji: "🥤",
-    colorName: "indigo100" as const,
-  },
-  {
-    id: "8",
-    name: STRINGS.common.categories.frozen,
-    emoji: "🧊",
-    colorName: "cyan100" as const,
-  },
-];
-
-const HOME_BANNERS = [
-  {
-    id: "1",
-    source: require("../../../assets/Section - Hero Carousel (Bento Style).png"),
-    linkType: "category",
-    linkTarget: STRINGS.common.categories.fruits,
-  },
-  {
-    id: "2",
-    source: require("../../../assets/banner1.jpg"),
-    linkType: "offer",
-    linkTarget: "Avocado",
-  },
-  {
-    id: "3",
-    source: require("../../../assets/banner2.jpg"),
-    linkType: "product",
-    linkTarget: "1",
-  },
-];
+import { homeApi } from "../../services/homeApi";
+// Removed mock data as per backend-driven requirement
 
 type Props = {
   navigation: any;
@@ -141,52 +71,19 @@ export default function HomeScreen({ navigation }: Props) {
   );
 
   const { cartItems, addToCart, updateQuantity, totalItems } = useCart();
-  const [selectedTag, setSelectedTag] = useState(
-    t(STRINGS.homeScreen.tags.all),
-  );
 
-  useEffect(() => {
-    if (selectedTag === t(STRINGS.homeScreen.tags.all)) {
-      setSelectedTag(t(STRINGS.homeScreen.tags.all));
-    }
-  }, [t]);
+  // API States
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [tagsData, setTagsData] = useState<any[]>([]);
+  const [bannersData, setBannersData] = useState<any[]>([]);
+  const [categoriesData, setCategoriesData] = useState<any[]>([]);
+  const [productsData, setProductsData] = useState<any[]>([]);
 
-  const tagsList = [
-    t(STRINGS.homeScreen.tags.all),
-    t(STRINGS.homeScreen.tags.fresh),
-    t(STRINGS.homeScreen.tags.trending),
-    t(STRINGS.homeScreen.tags.dailyEssentials),
-    t(STRINGS.homeScreen.tags.fastDelivery),
-    t(STRINGS.homeScreen.tags.recommended),
-    t(STRINGS.homeScreen.tags.bestSelling),
-    t(STRINGS.homeScreen.tags.newArrivals),
-  ];
-
-  const filteredProducts = MOCK_PRODUCTS.filter((p) => {
-    if (selectedTag === t(STRINGS.homeScreen.tags.all)) return true;
-
-    // Mock tag filtering since mock products don't have tags array
-    if (selectedTag === t(STRINGS.homeScreen.tags.fresh)) {
-      return (
-        p.category === STRINGS.common.categories.fruits ||
-        p.category === STRINGS.common.categories.veg
-      );
-    }
-    if (selectedTag === t(STRINGS.homeScreen.tags.dailyEssentials)) {
-      return (
-        p.category === STRINGS.common.categories.dairy ||
-        p.category === STRINGS.common.categories.bakery
-      );
-    }
-    if (
-      selectedTag === t(STRINGS.homeScreen.tags.trending) ||
-      selectedTag === t(STRINGS.homeScreen.tags.bestSelling)
-    ) {
-      return p.price > 5;
-    }
-
-    // Fallback for other tags
-    return p.tags?.includes(selectedTag) || parseInt(p.id, 10) % 2 === 0;
+  // Filter products strictly based on selectedTag
+  const filteredProducts = productsData.filter((p) => {
+    if (!selectedTag) return true; // If no tag is selected, show all
+    // Backend tag array structure: p.tags = [{ id, name, slug }, ...]
+    return p.tags?.some((t: any) => t.id === selectedTag);
   });
 
   const getProductQuantity = (id: string) => {
@@ -195,19 +92,19 @@ export default function HomeScreen({ navigation }: Props) {
   };
 
   const handleBannerPress = useCallback((banner: any) => {
-    if (banner.linkType === "category" || banner.linkType === "offer") {
+    if (banner.redirectType === "category" || banner.redirectType === "offer") {
       navigation.navigate("ProductListing", {
-        category:
-          banner.linkType === "category" ? banner.linkTarget : "Special Offers",
-        query: banner.linkType === "offer" ? banner.linkTarget : undefined,
+        categoryId: banner.redirectType === "category" ? banner.redirectId : undefined,
+        category: banner.redirectType === "category" ? "Category" : "Special Offers",
+        query: banner.redirectType === "offer" ? banner.redirectId : undefined,
       });
-    } else if (banner.linkType === "product") {
-      const product =
-        MOCK_PRODUCTS.find((p) => p.id === banner.linkTarget) ||
-        MOCK_PRODUCTS[0];
-      navigation.navigate("ProductDetail", { product });
+    } else if (banner.redirectType === "product") {
+      const product = productsData.find((p) => p.id === banner.redirectId);
+      if (product) {
+        navigation.navigate("ProductDetail", { product });
+      }
     }
-  }, [navigation]);
+  }, [navigation, productsData]);
 
   const [currentAddress, setCurrentAddress] = useState("Select Location");
   const [locationModalVisible, setLocationModalVisible] = useState(false);
@@ -235,6 +132,22 @@ export default function HomeScreen({ navigation }: Props) {
     });
     return unsubscribe;
   }, [navigation]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await homeApi();
+        if (res?.data) {
+          setTagsData(res.data.tags || []);
+          setBannersData(res.data.banners || []);
+          setCategoriesData(res.data.categories || []);
+          setProductsData(res.data.products || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch home API data:", error);
+      }
+    })();
+  }, []);
 
   const renderHeader = () => (
     <View style={styles.header}>
@@ -323,17 +236,17 @@ export default function HomeScreen({ navigation }: Props) {
         </TouchableOpacity>
       </View>
       <FlatList
-        data={CATEGORIES}
+        data={categoriesData}
         horizontal
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <CategoryCard
-            name={t(item.name)}
-            emoji={item.emoji}
-            colorName={item.colorName}
+            name={item.name}
+            emoji={item.emoji || "📦"} // Fallback if backend doesn't provide emoji
+            colorName={item.colorName || "blue100"}
             onPress={() =>
-              navigation.navigate("ProductListing", { category: item.name })
+              navigation.navigate("ProductListing", { categoryId: item.id, category: item.name })
             }
           />
         )}
@@ -345,13 +258,17 @@ export default function HomeScreen({ navigation }: Props) {
     <View>
       {renderSearch()}
       <BannerCarousel
-        banners={HOME_BANNERS as any}
+        banners={bannersData.map(b => ({
+          ...b,
+          // Map backend URL to a format the component expects if necessary
+          source: { uri: `http://192.168.1.58:5000${b.imageUrl}` } // Ensure full URL is passed
+        }))}
         onBannerPress={handleBannerPress}
       />
       {renderCategories()}
       <View style={{ marginBottom: 16 }}>
         <QuickFilters
-          tags={tagsList}
+          tags={tagsData}
           selectedTag={selectedTag}
           onSelectTag={setSelectedTag}
         />
@@ -372,12 +289,12 @@ export default function HomeScreen({ navigation }: Props) {
     <ProductCard
       id={item.id}
       name={item.name}
-      price={`₹${item.price.toFixed(2)}`}
-      mrp={item.mrp ? `₹${item.mrp.toFixed(2)}` : undefined}
-      category={item.category}
-      weight={item.weight}
-      emoji={item.emoji}
-      inStock={item.inStock}
+      price={`₹${Number(item.price || 0).toFixed(2)}`}
+      mrp={item.compareAtPrice ? `₹${Number(item.compareAtPrice).toFixed(2)}` : undefined}
+      category={item.Category?.name || "Other"}
+      weight={item.weight || "1 unit"}
+      emoji={item.emoji || "🛍️"} // Assuming backend doesn't send emoji for products, provide a fallback
+      inStock={item.stockQuantity > 0}
       quantity={getProductQuantity(item.id)}
       onAdd={() => {
         if (getProductQuantity(item.id) > 0) {
@@ -390,6 +307,7 @@ export default function HomeScreen({ navigation }: Props) {
       onPress={() => navigation.navigate("ProductDetail", { product: item })}
       isGrid={true}
       containerStyle={{ width: "48%", marginBottom: 16 }}
+    // imageUrl={item.imageUrl ? `http://192.168.1.58:5000${item.imageUrl}` : undefined}
     />
   );
 
@@ -506,7 +424,7 @@ export default function HomeScreen({ navigation }: Props) {
                       setTimeout(async () => {
                         const startTime = Date.now();
                         console.log(`[Performance] Starting language switch to ${lang.code}...`);
-                        
+
                         React.startTransition(() => {
                           i18n.changeLanguage(lang.code).then(() => {
                             initDispatch(setLanguage(lang.code));
