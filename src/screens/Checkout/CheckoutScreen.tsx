@@ -366,12 +366,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  bottomBarRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   saveAddressBtn: {
     marginTop: 12,
     borderRadius: 12,

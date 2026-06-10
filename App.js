@@ -5,18 +5,14 @@ import {
   DefaultTheme,
   DarkTheme,
 } from "@react-navigation/native";
-import { View } from "react-native";
+import { View, useColorScheme } from "react-native";
 import AppNavigator from "./src/navigation/AppNavigator";
 import { CartProvider, OrderProvider, AuthProvider } from "./src/context";
 import { LocalizationContextProvider } from "./src/context/localizationContext/LocaleContext";
 import { Colors } from "./src/constants/colors";
-import { useThemeColor } from "./src/hooks";
 
 export default function App() {
-  const scheme = useThemeColor({
-    light: "primaryBackground",
-    dark: "secondaryBackground",
-  });
+  const scheme = useColorScheme() ?? "light";
 
   const appDarkTheme = {
     ...DarkTheme,

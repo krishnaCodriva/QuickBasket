@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, TouchableOpacity, FlatList, TextInput, useColorScheme, Modal, Dimensions, Platform, StatusBar, ActivityIndicator, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText, ThemedView, CustomButton, ProductCard, ActiveFilterChips, ProductFilterModal } from '../../components';
