@@ -1,6 +1,8 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect , useMemo,
+  useCallback} from 'react';
 import { storage } from '../utils/storage';
 import { sessionService } from '../services/session/sessionService';
+import type { User } from '../core/types/domain';
 
 export type User = {
   id: string;
@@ -15,11 +17,16 @@ type AuthContextType = {
   isLoading: boolean; // Added for initial bootstrap state
   verifyOtp: (phone: string, otp: string) => Promise<void>;
   logout: () => void;
-  signup: (name: string, email: string, pass: string) => Promise<void>; // keeping for google mock if needed
+  /** Kept for Google mock sign-in flow */
+  signup: (name: string, email: string, pass: string) => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<void>;
 };
 
-const AuthContext = createContext<AuthContextType>({} as AuthContextType);
+// ─── Context (null-initialized — safe guard enforced in useAuth) ───────────────
+
+const AuthContext = createContext<AuthContextType | null>(null);
+
+// ─── Provider ─────────────────────────────────────────────────────────────────
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -52,10 +59,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     bootstrapAsync();
   }, []);
 
-  const verifyOtp = async (phone: string, otp: string) => {
+  const verifyOtp = useCallback(async (phone: string, otp: string) => {
     return new Promise<void>((resolve, reject) => {
       setTimeout(() => {
-        if (otp === '123456') { // mock valid otp
+        if (otp === '123456') {
+          // mock valid OTP
           setUser({ id: `u_${Date.now()}`, name: 'Verified User', email: phone });
           resolve();
         } else {
@@ -63,45 +71,53 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       }, 1000);
     });
-  };
+  }, []);
 
-  const signup = async (name: string, email: string, pass: string) => {
-    return new Promise<void>((resolve, reject) => {
-      setTimeout(() => {
-        if (!name || !email || !pass) {
-          reject(new Error('Missing mandatory fields'));
-          return;
-        }
-        setUser({ id: `u_${Date.now()}`, name, email });
-        resolve();
-      }, 1000);
-    });
-  };
+  const signup = useCallback(
+    async (name: string, email: string, pass: string) => {
+      return new Promise<void>((resolve, reject) => {
+        setTimeout(() => {
+          if (!name || !email || !pass) {
+            reject(new Error('Missing mandatory fields'));
+            return;
+          }
+          setUser({ id: `u_${Date.now()}`, name, email });
+          resolve();
+        }, 1000);
+      });
+    },
+    [],
+  );
 
-  const updateProfile = async (updates: Partial<User>) => {
+  const updateProfile = useCallback(async (updates: Partial<User>) => {
     return new Promise<void>((resolve) => {
       setTimeout(() => {
-        setUser(prev => {
+        setUser((prev) => {
           if (prev) {
             return { ...prev, ...updates };
           }
-          // If editing profile while guest, create a mock user object
+          // Allow profile editing even for guest users (creates mock user)
           return {
             id: `u_${Date.now()}`,
-            name: updates.name || '',
-            email: updates.email || '',
+            name: updates.name ?? '',
+            email: updates.email ?? '',
             mobile: updates.mobile,
-            avatar: updates.avatar
+            avatar: updates.avatar,
           };
         });
         resolve();
       }, 500);
     });
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setUser(null);
-  };
+  }, []);
+
+  const contextValue = useMemo(
+    () => ({ user, verifyOtp, signup, updateProfile, logout }),
+    [user, verifyOtp, signup, updateProfile, logout],
+  );
 
   return (
     <AuthContext.Provider value={{ user, isLoading, verifyOtp, signup, logout, updateProfile }}>
@@ -110,4 +126,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+// ─── Hook ─────────────────────────────────────────────────────────────────────
+
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (context === null) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

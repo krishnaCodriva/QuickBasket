@@ -3,12 +3,14 @@ import React from 'react'
 import { Colors } from '../constants';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColor } from '../hooks';
+import { spacing, radius, typography } from '../core/constants/theme';
 
 interface ThemedInputProps extends TextInputProps {
   styleWrapper?: any;
   onClear?: () => void;
   icon?: keyof typeof Ionicons.glyphMap | null;
   isLoading?: boolean;
+  autoFocus?: boolean;
 }
 
 const ThemedInput = ({
@@ -20,6 +22,7 @@ const ThemedInput = ({
     onClear,
     icon = 'search-outline',
     isLoading = false,
+    autoFocus = false,
     ...rest
 }: ThemedInputProps) => {
     const bg = useThemeColor({}, "primaryBackground")
@@ -34,6 +37,7 @@ const ThemedInput = ({
                 value={value}
                 onChangeText={onChangeText}
                 keyboardType={keyboardType}
+                autoFocus={autoFocus}
                 {...rest}
                 style={[{ color: text }, styles.input, rest.style]}
             />
@@ -55,14 +59,14 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: Colors.light.transparentGray015,
-        borderRadius: 8,
-        paddingHorizontal: 12,
+        borderRadius: radius.sm,
+        paddingHorizontal: spacing.smd,
         height: 44,
         width: "100%",
     },
     input: {
         flex: 1,
-        marginLeft: 8,
-        fontSize: 15,
+        marginLeft: spacing.sm,
+        fontSize: typography.size.mdlg || typography.size.md,
     }
 })

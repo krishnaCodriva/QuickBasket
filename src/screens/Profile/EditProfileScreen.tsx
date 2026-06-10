@@ -1,17 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, Alert, KeyboardAvoidingView, Platform, Image } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ThemedView, ThemedText, CustomButton, ThemedInput } from '../../components';
+import { ThemedView, ThemedText, CustomButton, ScreenHeader, FormInput } from '../../components';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Colors, STRINGS, ThemeDimension } from '../../constants';
 import { useThemeColor } from '../../hooks';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import * as ImagePicker from 'expo-image-picker';
+import type { RootStackParamList } from '../../core/types/navigation';
+import { spacing, radius, typography } from '../../core/constants/theme';
+
+type EditProfileNav = NativeStackNavigationProp<RootStackParamList>;
 
 export default function EditProfileScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<EditProfileNav>();
   const { t } = useTranslation();
   const { user, updateProfile } = useAuth();
 
@@ -58,7 +63,7 @@ export default function EditProfileScreen() {
           if (navigation.canGoBack()) {
             navigation.goBack();
           } else {
-            navigation.reset({ index: 0, routes: [{ name: 'HomeTab' as any }] });
+            navigation.reset({ index: 0, routes: [{ name: 'HomeTab' }] });
           }
         }}
       ]);
@@ -91,19 +96,16 @@ export default function EditProfileScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <View style={[styles.header, { borderBottomColor: borderColor }]}>
-          <TouchableOpacity onPress={() => {
+        <ScreenHeader
+          title={t(STRINGS.editProfileScreen.title)}
+          onBack={() => {
             if (navigation.canGoBack()) {
               navigation.goBack();
             } else {
-              navigation.reset({ index: 0, routes: [{ name: 'HomeTab' as any }] });
+              navigation.reset({ index: 0, routes: [{ name: 'HomeTab' }] });
             }
-          }} style={styles.backBtn}>
-            <Feather name="arrow-left" size={24} color={iconColor} />
-          </TouchableOpacity>
-          <ThemedText type="subtitle" style={styles.headerTitle}>{t(STRINGS.editProfileScreen.title)}</ThemedText>
-          <View style={{ width: 24 }} />
-        </View>
+          }}
+        />
 
         <KeyboardAvoidingView 
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -125,41 +127,34 @@ export default function EditProfileScreen() {
             </View>
 
             <View style={[styles.formContainer, { backgroundColor: cardColor, borderColor }]}>
-              <View style={styles.inputGroup}>
-                <ThemedText style={styles.label}>{t(STRINGS.editProfileScreen.fullName)} *</ThemedText>
-                <ThemedInput
-                  value={name}
-                  onChangeText={(text) => { setName(text); setErrors({...errors, name: undefined}) }}
-                  styleWrapper={errors.name ? { borderWidth: 1, borderColor: dangerColor } : { borderWidth: 1, borderColor }}
-                  icon="person-outline"
-                />
-                {errors.name && <ThemedText style={[styles.errorText, { color: dangerColor }]}>{errors.name}</ThemedText>}
-              </View>
+              <FormInput
+                label={t(STRINGS.editProfileScreen.fullName)}
+                required
+                value={name}
+                onChangeText={(text) => { setName(text); setErrors({...errors, name: undefined}); }}
+                placeholder={t(STRINGS.editProfileScreen.fullName)}
+                error={errors.name}
+              />
 
-              <View style={styles.inputGroup}>
-                <ThemedText style={styles.label}>{t(STRINGS.editProfileScreen.mobile)} *</ThemedText>
-                <ThemedInput
-                  value={mobile}
-                  onChangeText={(text) => { setMobile(text); setErrors({...errors, mobile: undefined}) }}
-                  keyboardType="phone-pad"
-                  styleWrapper={errors.mobile ? { borderWidth: 1, borderColor: dangerColor } : { borderWidth: 1, borderColor }}
-                  icon="call-outline"
-                />
-                {errors.mobile && <ThemedText style={[styles.errorText, { color: dangerColor }]}>{errors.mobile}</ThemedText>}
-              </View>
+              <FormInput
+                label={t(STRINGS.editProfileScreen.mobile)}
+                required
+                value={mobile}
+                onChangeText={(text) => { setMobile(text); setErrors({...errors, mobile: undefined}); }}
+                keyboardType="phone-pad"
+                placeholder={t(STRINGS.editProfileScreen.mobile)}
+                error={errors.mobile}
+              />
 
-              <View style={styles.inputGroup}>
-                <ThemedText style={styles.label}>{t(STRINGS.editProfileScreen.email)}</ThemedText>
-                <ThemedInput
-                  value={email}
-                  onChangeText={(text) => { setEmail(text); setErrors({...errors, email: undefined}) }}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  styleWrapper={errors.email ? { borderWidth: 1, borderColor: dangerColor } : { borderWidth: 1, borderColor }}
-                  icon="mail-outline"
-                />
-                {errors.email && <ThemedText style={[styles.errorText, { color: dangerColor }]}>{errors.email}</ThemedText>}
-              </View>
+              <FormInput
+                label={t(STRINGS.editProfileScreen.email)}
+                value={email}
+                onChangeText={(text) => { setEmail(text); setErrors({...errors, email: undefined}); }}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                placeholder={t(STRINGS.editProfileScreen.email)}
+                error={errors.email}
+              />
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -172,7 +167,7 @@ export default function EditProfileScreen() {
               if (navigation.canGoBack()) {
                 navigation.goBack();
               } else {
-                navigation.reset({ index: 0, routes: [{ name: 'HomeTab' as any }] });
+                navigation.reset({ index: 0, routes: [{ name: 'HomeTab' }] });
               }
             }} 
             style={styles.cancelBtn}
@@ -197,16 +192,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.smd,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  backBtn: { padding: 4 },
-  headerTitle: { fontSize: 18 },
-  scrollContent: { padding: 16 },
+  backBtn: { padding: spacing.xs },
+  headerTitle: { fontSize: typography.size.xl },
+  scrollContent: { padding: spacing.md },
   avatarSection: {
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: spacing.lg,
     marginBottom: 32,
   },
   avatarContainer: {
@@ -216,7 +211,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.smd,
   },
   avatarImage: {
     width: 116,
@@ -233,43 +228,43 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: 'transparent', // Will be overridden or rely on parent
+    borderColor: 'transparent',
   },
   changePictureText: {
-    fontSize: 14,
+    fontSize: typography.size.md,
   },
   formContainer: {
-    padding: 20,
-    borderRadius: 16,
+    padding: spacing.mlg,
+    borderRadius: radius.lg,
     borderWidth: 1,
   },
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: spacing.mlg,
   },
   label: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 8,
+    fontSize: typography.size.md,
+    fontWeight: typography.weight.bold,
+    marginBottom: spacing.sm,
   },
   errorText: {
     color: Colors.light.red600,
-    fontSize: 12,
-    marginTop: 4,
+    fontSize: typography.size.sm,
+    marginTop: spacing.xs,
   },
   footer: {
     flexDirection: 'row',
-    padding: 16,
-    paddingBottom: Platform.OS === 'ios' ? 0 : 16,
+    padding: spacing.md,
+    paddingBottom: Platform.OS === 'ios' ? 0 : spacing.md,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   cancelBtn: {
     flex: 1,
-    marginRight: 8,
+    marginRight: spacing.sm,
     marginBottom: 0,
   },
   saveBtn: {
     flex: 1,
-    marginLeft: 8,
+    marginLeft: spacing.sm,
     marginBottom: 0,
   }
 });

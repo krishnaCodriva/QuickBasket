@@ -175,71 +175,21 @@ export default function ProductListingScreen() {
       </TouchableOpacity>
     </View>
   );
-
-  const renderSearchBar = () => (
-    <ThemedInput
-      placeholder={t(STRINGS.productListing.searchPlaceholder)}
-      value={searchQuery}
-      onChangeText={(text) => {
-        setSearchQuery(text);
-        setIsLoading(true);
-      }}
-      onClear={() => {
-        setSearchQuery('');
-        setIsLoading(true);
-      }}
-      styleWrapper={{
-        marginHorizontal: 16,
-        borderWidth: 1,
-        borderColor: borderColor,
-        marginBottom: 16,
-        width: 'auto'
-      }}
-    />
+  const actionBtnBg = useThemeColor(
+    { light: Colors.light.green100, dark: Colors.light.transparentWhite02 },
+    "secondaryBackground" as never,
   );
-
-  const renderSortFilterRow = () => (
-    <View style={styles.sortFilterRow}>
-      <ThemedText style={styles.resultsText}>{t(STRINGS.productListing.showingResults)} {products.length} {t(STRINGS.productListing.resultsText)}</ThemedText>
-      <View style={styles.actionsRow}>
-        <TouchableOpacity
-          style={[styles.actionBtn]}
-          onPress={() => setIsGridFormat(!isGridFormat)}
-        >
-          <Ionicons name={isGridFormat ? "list" : "grid"} size={16} color={iconColor} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.actionBtn, activeSort !== STRINGS.productListing.sortOptions.relevance && { borderColor: primaryColor, backgroundColor: actionBtnBg }]}
-          onPress={() => setSortModalVisible(true)}
-        >
-          <Ionicons name="swap-vertical" size={16} color={activeSort !== STRINGS.productListing.sortOptions.relevance ? primaryColor : iconColor} />
-          <ThemedText style={[styles.actionBtnText, activeSort !== STRINGS.productListing.sortOptions.relevance && { color: primaryColor }]}>{t(STRINGS.productListing.sortBtn)}</ThemedText>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.actionBtn, (inStockOnly || outOfStockOnly) && { borderColor: primaryColor, backgroundColor: actionBtnBg }]}
-          onPress={() => setFilterModalVisible(true)}
-        >
-          <Ionicons name="options-outline" size={16} color={(inStockOnly || outOfStockOnly) ? primaryColor : iconColor} />
-          <ThemedText style={[styles.actionBtnText, (inStockOnly || outOfStockOnly) && { color: primaryColor }]}>{t(STRINGS.productListing.filtersBtn)}</ThemedText>
-        </TouchableOpacity>
-      </View>
-    </View>
+  const bgColor = useThemeColor(
+    { light: Colors.light.gray100, dark: Colors.dark.black },
+    "primaryBackground" as never,
   );
-
-  const renderActiveFilters = () => (
-    <ActiveFilterChips
-      filterCategory={filterCategory}
-      setFilterCategory={setFilterCategory}
-      filterPrice={filterPrice}
-      setFilterPrice={setFilterPrice}
-      filterTag={filterTag}
-      setFilterTag={setFilterTag}
-      inStockOnly={inStockOnly}
-      setInStockOnly={setInStockOnly}
-      outOfStockOnly={outOfStockOnly}
-      setOutOfStockOnly={setOutOfStockOnly}
-      onFilterRemove={() => setIsLoading(true)}
-    />
+  const modalBgColor = useThemeColor(
+    { light: Colors.light.white, dark: Colors.dark.secondaryBackground },
+    "secondaryBackground" as never,
+  );
+  const borderColor = useThemeColor(
+    { light: Colors.light.gray300, dark: Colors.dark.gray300 },
+    'primaryText' as never,
   );
 
   const renderProductCard = ({ item }: { item: any }) => {
@@ -262,114 +212,115 @@ export default function ProductListingScreen() {
         quantity={cartItems.find(i => i.id === item.id)?.quantity || 0}
         onAdd={() => handleUpdateCart(item, 1)}
         onRemove={() => handleUpdateCart(item, -1)}
-        onPress={() => navigation.navigate('ProductDetail', { product: item })}
+        onPress={() => navigation.navigate("ProductDetail", { product: item })}
         isGrid={isGridFormat}
-        containerStyle={isGridFormat ? { width: CARD_WIDTH } : { width: '100%', marginBottom: 16 }}
+        containerStyle={
+          isGridFormat
+            ? { width: CARD_WIDTH }
+            : { width: "100%", marginBottom: spacing.md }
+        }
       />
-    );
-  };
+    ),
+    [cartItems, handleUpdateCart, navigation, isGridFormat, t],
+  );
 
   const renderEmptyState = () => {
     if (isLoading || isInitialLoad) {
-      return (
-        <View style={styles.emptyContainer}>
-          <ActivityIndicator size="large" color={primaryColor} />
-        </View>
-      );
+      return <LoadingState mode="fullscreen" />;
     }
-
     return (
-      <View style={styles.emptyContainer}>
-        <Ionicons name="search" size={64} color={Colors.light.gray300} />
-        <ThemedText style={styles.emptyTitle}>{t(STRINGS.productListing.noProducts)}</ThemedText>
-        <CustomButton
-          title={t(STRINGS.productListing.clearFilters)}
-          type="primary"
-          onPress={() => {
-            setSearchQuery('');
-            setInStockOnly(false);
-            setOutOfStockOnly(false);
-            setIsLoading(true);
-          }}
-          style={{ paddingHorizontal: 24 }}
-        />
-      </View>
+      <EmptyState
+        icon={<Ionicons name="search" size={64} color={Colors.light.gray300} />}
+        title={t(STRINGS.productListing.noProducts)}
+        buttonText={t(STRINGS.productListing.clearFilters)}
+        onButtonPress={() => {
+          setSearchQuery("");
+          setInStockOnly(false);
+          setOutOfStockOnly(false);
+        }}
+      />
     );
   };
 
+  const isSortActive =
+    activeSort !== STRINGS.productListing.sortOptions.relevance;
+
+  // ─── Render ────────────────────────────────────────────────────────────────
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: bgColor }]}>
-      {renderHeader()}
-      {renderSearchBar()}
-      {renderSortFilterRow()}
-      {renderActiveFilters()}
-
-      <FlatList
-        key={isGridFormat ? 'grid' : 'list'}
-        data={products}
-        keyExtractor={(item, index) => `${item.id}-${index}`}
-        renderItem={renderProductCard}
-        numColumns={isGridFormat ? 2 : 1}
-        columnWrapperStyle={isGridFormat ? styles.columnWrapper : undefined}
-        contentContainerStyle={[styles.listContent, totalItems > 0 && { paddingBottom: 100 }]}
-        showsVerticalScrollIndicator={false}
-        onRefresh={handleRefresh}
-        refreshing={isRefreshing}
-        onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.5}
-        ListEmptyComponent={renderEmptyState}
+      <ScreenHeader
+        title={headerTitle}
+        onBack={() => navigation.goBack()}
+        rightElement={
+          <CartHeaderIcon
+            color={iconColor}
+            size={26}
+            badgeBorderColor={bgColor}
+          />
+        }
       />
 
-      {totalItems > 0 && (
-        <View style={styles.cartSummary}>
-          <View>
-            <ThemedText style={styles.cartCountText}>{totalItems} {t(STRINGS.productListing.items)}</ThemedText>
-            <ThemedText style={styles.cartTotalText}>₹{subtotal.toFixed(2)}</ThemedText>
-          </View>
-          <TouchableOpacity style={styles.viewCartBtn} onPress={() => navigation.navigate('Cart')}>
-            <ThemedText style={styles.viewCartText}>{t(STRINGS.productListing.viewCart)}</ThemedText>
-            <Ionicons name="chevron-forward" size={16} color={Colors.light.white} />
+      {/* Search */}
+      <SearchAndFilterBar
+        placeholder={t(STRINGS.productListing.searchPlaceholder)}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onFilterPress={() => setFilterModalVisible(true)}
+        autoFocus={!categoryId}
+        containerStyle={{ marginHorizontal: spacing.md }}
+      />
+
+      {/* Sort / Filter row */}
+      <View style={styles.sortFilterRow}>
+        <ThemedText style={styles.resultsText}>
+          {t(STRINGS.productListing.showingResults)} {products.length}{" "}
+          {t(STRINGS.productListing.resultsText)}
+        </ThemedText>
+        <View style={styles.actionsRow}>
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={() => setIsGridFormat(!isGridFormat)}
+          >
+            <Ionicons
+              name={isGridFormat ? "list" : "grid"}
+              size={16}
+              color={iconColor}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.actionBtn,
+              isSortActive && {
+                borderColor: primaryColor,
+                backgroundColor: actionBtnBg,
+              },
+            ]}
+            onPress={() => setSortModalVisible(true)}
+          >
+            <Ionicons
+              name="swap-vertical"
+              size={16}
+              color={isSortActive ? primaryColor : iconColor}
+            />
+            <ThemedText
+              style={[
+                styles.actionBtnText,
+                isSortActive && { color: primaryColor },
+              ]}
+            >
+              {t(STRINGS.productListing.sortBtn)}
+            </ThemedText>
           </TouchableOpacity>
         </View>
-      )}
+      </View>
 
-      {/* Sort Modal */}
-      <Modal visible={sortModalVisible} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: modalBgColor }]}>
-            <View style={styles.modalHeader}>
-              <ThemedText type="subtitle">{t(STRINGS.productListing.sortBy)}</ThemedText>
-              <TouchableOpacity onPress={() => setSortModalVisible(false)}>
-                <Ionicons name="close" size={24} color={iconColor} />
-              </TouchableOpacity>
-            </View>
-            {[STRINGS.productListing.sortOptions.relevance, STRINGS.productListing.sortOptions.priceLowHigh, STRINGS.productListing.sortOptions.priceHighLow, STRINGS.productListing.sortOptions.newest].map(option => (
-              <TouchableOpacity
-                key={option}
-                style={styles.modalOption}
-                onPress={() => {
-                  if (activeSort !== option) {
-                    setActiveSort(option);
-                    setIsLoading(true);
-                  }
-                  setSortModalVisible(false);
-                }}
-              >
-                <ThemedText style={[styles.modalOptionText, activeSort === option && { color: primaryColor, fontWeight: 'bold' }]}>
-                  {t(option)}
-                </ThemedText>
-                {activeSort === option && <Ionicons name="checkmark" size={20} color={primaryColor} />}
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-      </Modal>
-
-      <ProductFilterModal
-        visible={filterModalVisible}
-        onClose={() => setFilterModalVisible(false)}
-        filterCategory={filterCategory}
-        setFilterCategory={setFilterCategory}
+      {/* Active filter chips */}
+      <ActiveFilterChips
+        filterCategory={filterCategoryId}
+        setFilterCategory={setFilterCategoryId}
+        filterSubCategoryId={filterSubCategoryId}
+        setFilterSubCategoryId={setFilterSubCategoryId}
         filterPrice={filterPrice}
         setFilterPrice={setFilterPrice}
         filterTag={filterTag}
@@ -378,182 +329,192 @@ export default function ProductListingScreen() {
         setInStockOnly={setInStockOnly}
         outOfStockOnly={outOfStockOnly}
         setOutOfStockOnly={setOutOfStockOnly}
-        onFilterChange={() => setIsLoading(true)}
+        onFilterRemove={handleRefresh}
       />
 
+      {/* Product grid / list */}
+      <FlatList
+        key={isGridFormat ? "grid" : "list"}
+        data={products as Product[]}
+        keyExtractor={(item, index) => `${item.id}-${index}`}
+        renderItem={renderProductCard}
+        numColumns={isGridFormat ? 2 : 1}
+        columnWrapperStyle={isGridFormat ? styles.columnWrapper : undefined}
+        contentContainerStyle={[
+          styles.listContent,
+          totalItems > 0 && { paddingBottom: 100 },
+        ]}
+        showsVerticalScrollIndicator={false}
+        onRefresh={handleRefresh}
+        refreshing={isRefreshing}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        ListEmptyComponent={renderEmptyState}
+      />
+
+      {/* Sticky cart bar */}
+      {totalItems > 0 && (
+        <View style={styles.cartSummary}>
+          <View>
+            <ThemedText style={styles.cartCountText}>
+              {totalItems} {t(STRINGS.productListing.items)}
+            </ThemedText>
+            <ThemedText style={styles.cartTotalText}>
+              ₹{subtotal.toFixed(2)}
+            </ThemedText>
+          </View>
+          <TouchableOpacity
+            style={styles.viewCartBtn}
+            onPress={() => navigation.navigate("Cart")}
+          >
+            <ThemedText style={styles.viewCartText}>
+              {t(STRINGS.productListing.viewCart)}
+            </ThemedText>
+            <Ionicons
+              name="chevron-forward"
+              size={16}
+              color={Colors.light.white}
+            />
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Sort Modal */}
+      <SortModal
+        visible={sortModalVisible}
+        activeSort={activeSort}
+        modalBgColor={modalBgColor}
+        iconColor={iconColor}
+        primaryColor={primaryColor}
+        onClose={() => setSortModalVisible(false)}
+        onSelect={(sort) => {
+          setActiveSort(sort);
+          setSortModalVisible(false);
+        }}
+      />
+
+      {/* Filter Modal */}
+      <ProductFilterModal
+        visible={filterModalVisible}
+        onClose={() => setFilterModalVisible(false)}
+        filterCategoryId={filterCategoryId}
+        setFilterCategoryId={setFilterCategoryId}
+        filterSubCategoryId={filterSubCategoryId}
+        setFilterSubCategoryId={setFilterSubCategoryId}
+        filterPrice={filterPrice}
+        setFilterPrice={setFilterPrice}
+        filterTag={filterTag}
+        setFilterTag={setFilterTag}
+        inStockOnly={inStockOnly}
+        setInStockOnly={setInStockOnly}
+        outOfStockOnly={outOfStockOnly}
+        setOutOfStockOnly={setOutOfStockOnly}
+        onFilterChange={handleRefresh}
+      />
     </SafeAreaView>
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 4,
   },
   headerButton: {
-    padding: 8,
-    position: 'relative',
+    padding: spacing.sm,
+    position: "relative",
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: typography.size.xl,
+    fontWeight: typography.weight.bold,
     flex: 1,
-    textAlign: 'center',
-  },
-  badge: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    backgroundColor: Colors.light.red600,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: Colors.light.white,
-    zIndex: 1,
-  },
-  badgeText: {
-    color: Colors.light.white,
-    fontSize: 10,
-    lineHeight: 12,
-    fontWeight: 'bold',
-    includeFontPadding: false,
-    textAlignVertical: 'center',
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: 16,
-    paddingHorizontal: 12,
-    height: 44,
-    borderRadius: 8,
-    borderWidth: 1,
-    marginBottom: 16,
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: 8,
-    fontSize: 15,
+    textAlign: "center",
   },
   sortFilterRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    marginBottom: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
   },
   resultsText: {
-    fontSize: 13,
+    fontSize: typography.size.sm,
     color: Colors.light.gray500,
   },
   actionsRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
   },
   actionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
     borderColor: Colors.light.gray300,
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing.sm + 4,
     paddingVertical: 6,
-    borderRadius: 16,
-    marginLeft: 8,
+    borderRadius: radius.pill,
+    marginLeft: spacing.sm,
   },
   actionBtnText: {
-    fontSize: 12,
-    fontWeight: 'bold',
+    fontSize: typography.size.xs,
+    fontWeight: typography.weight.bold,
     marginLeft: 4,
   },
   columnWrapper: {
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    justifyContent: "space-between",
+    paddingHorizontal: spacing.md,
   },
   listContent: {
-    paddingBottom: 24,
+    paddingBottom: spacing.xl,
   },
-
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 60,
+  },
   cartSummary: {
-    position: 'absolute',
-    bottom: 16,
-    left: 16,
-    right: 16,
+    position: "absolute",
+    bottom: spacing.md,
+    left: spacing.md,
+    right: spacing.md,
     backgroundColor: Colors.light.primary,
-    borderRadius: 12,
-    padding: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     shadowColor: Colors.light.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
-    elevation: 5,
+    ...elevation.md,
   },
   cartCountText: {
     color: Colors.light.white,
-    fontSize: 12,
+    fontSize: typography.size.sm,
   },
   cartTotalText: {
     color: Colors.light.white,
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: typography.size.xl,
+    fontWeight: typography.weight.bold,
   },
   viewCartBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   viewCartText: {
     color: Colors.light.white,
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontSize: typography.size.md,
+    fontWeight: typography.weight.bold,
     marginRight: 4,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 60,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 16,
-    marginBottom: 16,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: Colors.light.transparentBlack05,
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  modalOption: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 16,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.light.gray200,
-  },
-  modalOptionText: {
-    fontSize: 16,
   },
 });

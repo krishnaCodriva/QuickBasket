@@ -2,29 +2,19 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, Ionicons } from '@expo/vector-icons';
-import { ThemedView, ThemedText, CustomButton, CartItemCard, CartPriceSummary } from '../../components';
+import { ThemedView, ThemedText, CustomButton, CartItemCard, CartPriceSummary, ScreenHeader, EmptyState } from '../../components';
 import ThemedInput from '../../components/ThemedInput';
 import { useCart, useOrder } from '../../context';
 import { Colors, STRINGS } from '../../constants';
 import { useThemeColor } from '../../hooks';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import { INITIAL_ADDRESSES, MOCK_PAYMENT_METHODS } from '../../data/mockData';
 import AddressFormModal from './AddressFormModal';
 import AddressSection from './AddressSection';
+import { spacing, radius, elevation } from '../../core/constants/theme';
 import PaymentMethodSection from './PaymentMethodSection';
 
-let INITIAL_ADDRESSES = [
-  { id: 'addr_1', label: 'home', address: '123 Main St, Springfield, IL 62701', fullName: 'John Doe', mobile: '1234567890', flat: '123', street: 'Main St', landmark: '', city: 'Springfield', state: 'IL', pincode: '62701', type: 'home' },
-  { id: 'addr_2', label: 'work', address: '456 Business Rd, Suite 200, Springfield, IL 62704', fullName: 'John Doe', mobile: '1234567890', flat: 'Suite 200', street: 'Business Rd', landmark: '', city: 'Springfield', state: 'IL', pincode: '62704', type: 'work' }
-];
-
-const MOCK_PAYMENT_METHODS = [
-  { id: 'pm_cod', label: 'Cash on Delivery', details: 'Pay when your order arrives' },
-  { id: 'pm_debit', label: 'Debit Card', details: 'Pay using your bank debit card' },
-  { id: 'pm_credit', label: 'Credit Card', details: '**** **** **** 1234' },
-  { id: 'pm_upi', label: 'UPI', details: 'Google Pay, PhonePe, Paytm, etc.' },
-  { id: 'pm_netbanking', label: 'Net Banking', details: 'All major banks available' }
-];
 
 export default function CheckoutScreen() {
   const { cartItems, subtotal, clearCart, totalItems } = useCart();
@@ -53,11 +43,7 @@ export default function CheckoutScreen() {
   });
 
   const cardColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.secondaryBackground }, 'secondaryBackground');
-  const primaryColor = useThemeColor({}, 'primary');
   const borderColor = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray300 }, 'gray200' as any);
-  const iconColor = useThemeColor({ light: Colors.light.black, dark: Colors.light.white }, 'primaryText' as any);
-  const modalBgColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.secondaryBackground }, 'secondaryBackground' as any);
-  const errorColor = useThemeColor({ light: Colors.light.red600, dark: Colors.dark.error }, 'error' as any);
 
   const discount = subtotal > 0 ? 5 : 0; // Flat ₹5 mock discount for any order
   const deliveryCharge = subtotal > 50 ? 0 : 5.99;
@@ -76,20 +62,20 @@ export default function CheckoutScreen() {
 
     if (selectedPayment === 'pm_credit' || selectedPayment === 'pm_debit') {
       if (!/^\d{16}$/.test(paymentDetails.cardNumber.replace(/\s/g, ''))) {
-        Alert.alert("Invalid Card", "Please enter a valid 16-digit card number.");
+        Alert.alert(t(STRINGS.checkoutScreen.invalidCard), t(STRINGS.checkoutScreen.invalidCardMsg));
         return;
       }
       if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(paymentDetails.cardExpiry)) {
-        Alert.alert("Invalid Expiry", "Please enter expiry date in MM/YY format.");
+        Alert.alert(t(STRINGS.checkoutScreen.invalidExpiry), t(STRINGS.checkoutScreen.invalidExpiryMsg));
         return;
       }
       if (!/^\d{3}$/.test(paymentDetails.cardCvv)) {
-        Alert.alert("Invalid CVV", "Please enter a valid 3-digit CVV.");
+        Alert.alert(t(STRINGS.checkoutScreen.invalidCvv), t(STRINGS.checkoutScreen.invalidCvvMsg));
         return;
       }
     } else if (selectedPayment === 'pm_upi') {
       if (!paymentDetails.upiId.includes('@')) {
-        Alert.alert("Invalid UPI ID", "Please enter a valid UPI ID.");
+        Alert.alert(t(STRINGS.checkoutScreen.invalidUpiId), t(STRINGS.checkoutScreen.invalidUpiIdMsg));
         return;
       }
     }
@@ -109,10 +95,12 @@ export default function CheckoutScreen() {
       deliveryCharge,
       taxes,
       totalPayable,
-      address: selectedAddrObj,
+      address: selectedAddrObj
+        ? { ...selectedAddrObj, type: selectedAddrObj.type as 'home' | 'work' | 'other' }
+        : undefined,
       paymentMethod: selectedPaymentObj?.label || '',
       paymentMethodId: selectedPaymentObj?.id || '',
-      estimatedDelivery: 'Arriving in 30-45 mins'
+      estimatedDelivery: t(STRINGS.checkoutScreen.estimatedDelivery)
     };
 
     setTimeout(() => {
@@ -136,22 +124,17 @@ export default function CheckoutScreen() {
 
   const saveAddress = () => {
     if (!form.fullName || !form.mobile || !form.flat || !form.street || !form.city || !form.state || !form.pincode) {
-      Alert.alert(t(STRINGS.checkoutScreen.error), t(STRINGS.checkoutScreen.fillFieldsError) || "Please fill all mandatory fields.");
+      Alert.alert(t(STRINGS.checkoutScreen.error), t(STRINGS.checkoutScreen.fillFieldsError));
       return;
     }
 
     if (!/^\d{10}$/.test(form.mobile)) {
-      Alert.alert(t(STRINGS.checkoutScreen.error), "Please enter a valid 10-digit mobile number.");
+      Alert.alert(t(STRINGS.checkoutScreen.error), t(STRINGS.checkoutScreen.invalidMobileMsg));
       return;
     }
 
     if (!/^\d{5,6}$/.test(form.pincode)) {
-      Alert.alert(t(STRINGS.checkoutScreen.error), "Please enter a valid 5 or 6-digit pincode.");
-      return;
-    }
-
-    if (!/^\d{5,6}$/.test(form.pincode)) {
-      Alert.alert(t(STRINGS.checkoutScreen.error), "Please enter a valid 5 or 6-digit pincode.");
+      Alert.alert(t(STRINGS.checkoutScreen.error), t(STRINGS.checkoutScreen.invalidPincodeMsg));
       return;
     }
 
@@ -169,13 +152,13 @@ export default function CheckoutScreen() {
 
   const deleteAddress = (id: string) => {
     Alert.alert(
-      "Delete Address",
-      "Are you sure you want to delete this address?",
+      t(STRINGS.checkoutScreen.deleteAddress),
+      t(STRINGS.checkoutScreen.deleteAddressConfirm),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t(STRINGS.checkoutScreen.deleteAddressCancel), style: 'cancel' },
         {
-          text: "Delete",
-          style: "destructive",
+          text: t(STRINGS.checkoutScreen.deleteAddressConfirmBtn),
+          style: 'destructive',
           onPress: () => {
             setAddresses(prev => prev.filter(a => a.id !== id));
             if (selectedAddress === id) setSelectedAddress('');
@@ -186,22 +169,23 @@ export default function CheckoutScreen() {
   };
 
   const renderHeader = () => (
-    <View style={styles.header}>
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBtn}>
-        <Feather name="arrow-left" size={24} color={iconColor} />
-      </TouchableOpacity>
-      <View style={styles.headerTitleContainer}>
-        <ThemedText type="subtitle" style={styles.headerTitle}>{t(STRINGS.checkoutScreen.title)}</ThemedText>
-      </View>
-      <View style={{ width: 32 }} />
-    </View>
+    <ScreenHeader 
+      title={t(STRINGS.checkoutScreen.title)} 
+      onBack={() => navigation.goBack()} 
+      showBorder={false}
+      style={{ paddingHorizontal: 16 }}
+    />
   );
 
   if (cartItems.length === 0) {
     return (
       <ThemedView style={styles.emptyContainer}>
-        <ThemedText>{t(STRINGS.checkoutScreen.emptyCart)}</ThemedText>
-        <CustomButton title={t(STRINGS.checkoutScreen.goShopping)} onPress={() => navigation.navigate('HomeTab', { screen: 'Home' })} style={{ marginTop: 20 }} />
+        <EmptyState
+          emoji="🛒"
+          title={t(STRINGS.checkoutScreen.emptyCart)}
+          buttonText={t(STRINGS.checkoutScreen.goShopping)}
+          onButtonPress={() => navigation.navigate('HomeTab', { screen: 'Home' })}
+        />
       </ThemedView>
     );
   }
@@ -294,56 +278,39 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  headerBtn: {
-    padding: 4,
-  },
-  headerTitleContainer: {
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: spacing.mlg,
   },
   scrollContent: {
     paddingBottom: 100,
   },
   section: {
-    paddingHorizontal: 16,
-    paddingTop: 24,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.lg,
   },
   sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.smd,
   },
   sectionTitle: {
     marginBottom: 0,
   },
   optionCard: {
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    marginBottom: spacing.smd,
     flexDirection: 'row',
     alignItems: 'center',
   },
   paymentForm: {
-    padding: 16,
-    borderBottomLeftRadius: 12,
-    borderBottomRightRadius: 12,
+    padding: spacing.md,
+    borderBottomLeftRadius: radius.md,
+    borderBottomRightRadius: radius.md,
     borderWidth: 2,
     borderTopWidth: 0,
     marginTop: -4,
@@ -353,13 +320,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 16,
+    padding: spacing.md,
     borderTopWidth: StyleSheet.hairlineWidth,
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    ...elevation.lg,
   },
   bottomBarRow: {
     flexDirection: 'row',
@@ -367,18 +330,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   saveAddressBtn: {
-    marginTop: 12,
-    borderRadius: 12,
+    marginTop: spacing.smd,
+    borderRadius: radius.md,
     paddingVertical: 14,
   },
   radioButton: {
     height: 20,
     width: 20,
-    borderRadius: 10,
+    borderRadius: radius.circle,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 12,
+    marginLeft: spacing.smd,
   },
   radioButtonInner: {
     height: 10,

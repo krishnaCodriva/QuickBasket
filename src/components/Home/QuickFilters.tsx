@@ -3,18 +3,20 @@ import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { ThemedText } from '../ThemedText';
 import { Colors } from '../../constants';
 import { useThemeColor } from '../../hooks';
+import { spacing, radius, typography } from '../../core/constants/theme';
+
+export type TagItem = { id: string; label: string };
 
 type TagItem = { id: string; name: string; slug: string };
 
 type Props = {
   tags: TagItem[];
-  selectedTag: string | null;
   onSelectTag: (tagId: string | null) => void;
+  selectedTag: string | null;
 };
 
-const QuickFilters = ({ tags, selectedTag, onSelectTag }: Props) => {
-
-  console.log("tsgs is : ", tags)
+const QuickFilters = ({ tags, selectedTagId, onSelectTag }: Props) => {
+console.log("tsgs is : ", tags)
   const primaryColor = useThemeColor({}, 'primary');
   const bgColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.primaryBackground }, 'primaryBackground' as any);
   return (
@@ -52,18 +54,18 @@ const QuickFilters = ({ tags, selectedTag, onSelectTag }: Props) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   tag: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 50,
+    paddingHorizontal: spacing.smd,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.pill,
     borderWidth: 1,
-    marginRight: 10,
+    marginRight: spacing.smd,
   },
   tagText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: typography.size.md,
+    fontWeight: typography.weight.semiBold,
   },
 });
 

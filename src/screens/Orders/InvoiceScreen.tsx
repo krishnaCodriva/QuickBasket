@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Share, ActivityIndicator, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ThemedView, ThemedText, CustomButton } from '../../components';
+import { ThemedView, ThemedText, CustomButton, ScreenHeader } from '../../components';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Colors, STRINGS } from '../../constants';
@@ -12,7 +12,8 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as IntentLauncher from 'expo-intent-launcher';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { StorageService, STORAGE_KEYS } from '../../services';
+import { spacing, radius, typography, elevation } from '../../core/constants/theme';
 
 
 
@@ -40,8 +41,8 @@ export default function InvoiceScreen() {
         type: 'application/pdf'
       });
     } catch (err) {
-      console.log("Error opening PDF: ", err);
-      Alert.alert("Error", "Could not open the PDF. Please check your chosen folder to view it.");
+      console.log('Error opening PDF: ', err);
+      Alert.alert(t(STRINGS.invoiceScreen.error), t(STRINGS.invoiceScreen.errorOpenPdf));
     }
   };
 
@@ -55,13 +56,10 @@ export default function InvoiceScreen() {
     return (
       <ThemedView style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
-          <View style={[styles.header, { borderBottomColor: borderColor }]}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-              <Feather name="arrow-left" size={24} color={iconColor} />
-            </TouchableOpacity>
-            <ThemedText type="subtitle">Invoice Not Found</ThemedText>
-            <View style={{ width: 24 }} />
-          </View>
+          <ScreenHeader
+            title={t(STRINGS.invoiceScreen.notFound)}
+            onBack={() => navigation.goBack()}
+          />
         </SafeAreaView>
       </ThemedView>
     );
@@ -80,14 +78,14 @@ export default function InvoiceScreen() {
         await Sharing.shareAsync(uri, { 
           UTI: '.pdf', 
           mimeType: 'application/pdf',
-          dialogTitle: 'Share Invoice'
+          dialogTitle: t(STRINGS.invoiceScreen.share)
         });
       } else {
-        Alert.alert("Error", "Sharing is not available on this device.");
+        Alert.alert(t(STRINGS.invoiceScreen.error), t(STRINGS.invoiceScreen.sharingUnavailable));
       }
     } catch (error) {
       console.log('Error sharing invoice:', error);
-      Alert.alert("Error", "Could not share the invoice.");
+      Alert.alert(t(STRINGS.invoiceScreen.error), t(STRINGS.invoiceScreen.errorSharing));
     } finally {
       setIsSharing(false);
     }
@@ -132,26 +130,26 @@ export default function InvoiceScreen() {
 
           <div class="row">
             <div>
-              <div class="section-title" style="margin-top:0;">Billed To</div>
+              <div class="section-title" style="margin-top:0;">${t(STRINGS.invoiceScreen.pdfBilledTo)}</div>
               <strong>${order.address?.fullName}</strong><br />
               ${order.address?.address}<br />
               Mobile: ${order.address?.mobile}
             </div>
             <div class="text-right">
-              <div class="section-title" style="margin-top:0;">Invoice Details</div>
-              <strong>Invoice #:</strong> ${invoiceNumber}<br />
-              <strong>Order ID:</strong> ${order.id}<br />
-              <strong>Order Date:</strong> ${new Date(order.date).toLocaleDateString()}<br />
-              <strong>Payment Method:</strong> ${order.paymentMethodId ? t(`checkoutScreen.paymentMethods.${order.paymentMethodId}_label` as any, { defaultValue: order.paymentMethod }) : order.paymentMethod}
+              <div class="section-title" style="margin-top:0;">${t(STRINGS.invoiceScreen.pdfInvoiceDetails)}</div>
+              <strong>${t(STRINGS.invoiceScreen.pdfInvoiceNo)}</strong> ${invoiceNumber}<br />
+              <strong>${t(STRINGS.invoiceScreen.pdfOrderId)}</strong> ${order.id}<br />
+              <strong>${t(STRINGS.invoiceScreen.pdfOrderDate)}</strong> ${new Date(order.date).toLocaleDateString()}<br />
+              <strong>${t(STRINGS.invoiceScreen.pdfPaymentMethod)}</strong> ${order.paymentMethodId ? t(`checkoutScreen.paymentMethods.${order.paymentMethodId}_label` as any, { defaultValue: order.paymentMethod }) : order.paymentMethod}
             </div>
           </div>
 
           <table>
             <thead>
               <tr>
-                <th>Item Description</th>
-                <th class="text-center">Qty</th>
-                <th class="text-right">Amount</th>
+                <th>${t(STRINGS.invoiceScreen.pdfItemDescription)}</th>
+                <th class="text-center">${t(STRINGS.invoiceScreen.qty)}</th>
+                <th class="text-right">${t(STRINGS.invoiceScreen.price)}</th>
               </tr>
             </thead>
             <tbody>
@@ -161,31 +159,30 @@ export default function InvoiceScreen() {
 
           <div class="totals-container">
             <div class="total-row">
-              <span>Subtotal</span>
+              <span>${t(STRINGS.invoiceScreen.pdfSubtotal)}</span>
               <span>₹${order.subtotal?.toFixed(2)}</span>
             </div>
             ${order.discount > 0 ? `
             <div class="total-row" style="color: #22c55e;">
-              <span>Discount</span>
+              <span>${t(STRINGS.invoiceScreen.pdfDiscount)}</span>
               <span>-₹${order.discount?.toFixed(2)}</span>
             </div>` : ''}
             <div class="total-row">
-              <span>Delivery</span>
+              <span>${t(STRINGS.invoiceScreen.pdfDelivery)}</span>
               <span>₹${order.deliveryCharge?.toFixed(2)}</span>
             </div>
             <div class="total-row">
-              <span>Taxes</span>
+              <span>${t(STRINGS.invoiceScreen.pdfTaxes)}</span>
               <span>₹${order.taxes?.toFixed(2)}</span>
             </div>
             <div class="total-row grand-total">
-              <span>Grand Total</span>
+              <span>${t(STRINGS.invoiceScreen.pdfGrandTotal)}</span>
               <span>₹${order.totalPayable?.toFixed(2)}</span>
             </div>
           </div>
 
           <div class="footer">
-            This is a computer-generated invoice and does not require a physical signature.<br />
-            Thank you for shopping with QuickBasket!
+            ${t(STRINGS.invoiceScreen.pdfFooter)}
           </div>
         </body>
       </html>
@@ -198,11 +195,11 @@ export default function InvoiceScreen() {
     await FileSystem.writeAsStringAsync(savedUri, base64, { encoding: FileSystem.EncodingType.Base64 });
     
     Alert.alert(
-      'Download Complete',
-      `${invoiceNum}.pdf has been saved to your chosen folder.`,
+      t(STRINGS.invoiceScreen.downloadComplete),
+      `${invoiceNum}.pdf ${t(STRINGS.invoiceScreen.downloadCompleteMsg)}`,
       [
-        { text: 'Later', style: 'cancel' },
-        { text: 'Open File', onPress: () => openPdf(savedUri) }
+        { text: t(STRINGS.invoiceScreen.later), style: 'cancel' },
+        { text: t(STRINGS.invoiceScreen.openFile), onPress: () => openPdf(savedUri) }
       ]
     );
   };
@@ -215,7 +212,7 @@ export default function InvoiceScreen() {
       const { uri } = await Print.printToFileAsync({ html });
       
       if (Platform.OS === 'android') {
-        const savedDirUri = await AsyncStorage.getItem('downloadDirectoryUri');
+        const savedDirUri = await StorageService.getItem(STORAGE_KEYS.DOWNLOAD_DIRECTORY_URI);
 
         if (savedDirUri) {
           try {
@@ -229,16 +226,16 @@ export default function InvoiceScreen() {
 
         // If no saved dir or it failed, ask once
         Alert.alert(
-          "One-Time Setup",
-          "Android requires you to select a folder (like Downloads) to save your invoices. We will remember this folder for all future automatic downloads.",
+          t(STRINGS.invoiceScreen.setupTitle),
+          t(STRINGS.invoiceScreen.setupMessage),
           [
-            { text: "Cancel", style: "cancel" },
+            { text: t(STRINGS.checkoutScreen.deleteAddressCancel), style: 'cancel' },
             { 
-              text: "Select Folder", 
+              text: t(STRINGS.invoiceScreen.selectFolder), 
               onPress: async () => {
                 const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
                 if (permissions.granted) {
-                  await AsyncStorage.setItem('downloadDirectoryUri', permissions.directoryUri);
+                  await StorageService.setItem(STORAGE_KEYS.DOWNLOAD_DIRECTORY_URI, permissions.directoryUri);
                   await savePdfToAndroidDir(uri, permissions.directoryUri, invoiceNumber);
                 }
               }
@@ -257,7 +254,7 @@ export default function InvoiceScreen() {
       }
     } catch (error) {
       console.log('Error generating PDF:', error);
-      Alert.alert("Error", "Could not download the invoice.");
+      Alert.alert(t(STRINGS.invoiceScreen.error), t(STRINGS.invoiceScreen.errorDownload));
     } finally {
       setIsGenerating(false);
     }
@@ -266,15 +263,15 @@ export default function InvoiceScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-        <View style={[styles.header, { borderBottomColor: borderColor }]}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Feather name="arrow-left" size={24} color={iconColor} />
-          </TouchableOpacity>
-          <ThemedText type="subtitle" style={styles.headerTitle}>{t(STRINGS.invoiceScreen.title)}</ThemedText>
-          <TouchableOpacity onPress={handleShare} style={styles.backBtn}>
-            <Feather name="share-2" size={24} color={primaryColor} />
-          </TouchableOpacity>
-        </View>
+        <ScreenHeader
+          title={t(STRINGS.invoiceScreen.title)}
+          onBack={() => navigation.goBack()}
+          rightElement={
+            <TouchableOpacity onPress={handleShare}>
+              <Feather name="share-2" size={24} color={primaryColor} />
+            </TouchableOpacity>
+          }
+        />
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <View style={[styles.invoiceCard, { backgroundColor: cardColor, borderColor }]}>
@@ -308,20 +305,20 @@ export default function InvoiceScreen() {
 
             {/* Customer Info */}
             <View style={[styles.section, { borderBottomColor: borderColor, borderBottomWidth: 1 }]}>
-              <ThemedText type="subtitle" style={{ marginBottom: 8, fontSize: 16 }}>{t(STRINGS.invoiceScreen.customerDetails)}</ThemedText>
-              <ThemedText style={{ fontWeight: 'bold' }}>{order.address?.fullName}</ThemedText>
+              <ThemedText type="subtitle" style={{ marginBottom: spacing.sm, fontSize: typography.size.lg }}>{t(STRINGS.invoiceScreen.customerDetails)}</ThemedText>
+              <ThemedText style={{ fontWeight: typography.weight.bold }}>{order.address?.fullName}</ThemedText>
               <ThemedText>{order.address?.address}</ThemedText>
               <ThemedText>Mobile: {order.address?.mobile}</ThemedText>
             </View>
 
             {/* Product Table */}
             <View style={styles.section}>
-              <ThemedText type="subtitle" style={{ marginBottom: 12, fontSize: 16 }}>{t(STRINGS.checkoutScreen.orderItems)}</ThemedText>
+              <ThemedText type="subtitle" style={{ marginBottom: spacing.smd, fontSize: typography.size.lg }}>{t(STRINGS.checkoutScreen.orderItems)}</ThemedText>
               
               <View style={[styles.tableHeader, { backgroundColor: borderColor, opacity: 0.8 }]}>
-                <ThemedText style={[styles.tableCol, { flex: 3, fontWeight: 'bold' }]}>{t(STRINGS.invoiceScreen.item)}</ThemedText>
-                <ThemedText style={[styles.tableCol, { flex: 1, fontWeight: 'bold', textAlign: 'center' }]}>{t(STRINGS.invoiceScreen.qty)}</ThemedText>
-                <ThemedText style={[styles.tableCol, { flex: 1, fontWeight: 'bold', textAlign: 'right' }]}>{t(STRINGS.invoiceScreen.price)}</ThemedText>
+                <ThemedText style={[styles.tableCol, { flex: 3, fontWeight: typography.weight.bold }]}>{t(STRINGS.invoiceScreen.item)}</ThemedText>
+                <ThemedText style={[styles.tableCol, { flex: 1, fontWeight: typography.weight.bold, textAlign: 'center' }]}>{t(STRINGS.invoiceScreen.qty)}</ThemedText>
+                <ThemedText style={[styles.tableCol, { flex: 1, fontWeight: typography.weight.bold, textAlign: 'right' }]}>{t(STRINGS.invoiceScreen.price)}</ThemedText>
               </View>
 
               {order.items.map(item => (
@@ -339,9 +336,9 @@ export default function InvoiceScreen() {
               {order.discount > 0 && <View style={styles.rowBetween}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.discounts)}</ThemedText><ThemedText style={{ color: successColor }}>-₹{order.discount?.toFixed(2)}</ThemedText></View>}
               <View style={styles.rowBetween}><ThemedText useSecondaryText>{t(STRINGS.invoiceScreen.deliveryFee)}</ThemedText><ThemedText>₹{order.deliveryCharge?.toFixed(2)}</ThemedText></View>
               <View style={styles.rowBetween}><ThemedText useSecondaryText>{t(STRINGS.invoiceScreen.taxes)}</ThemedText><ThemedText>₹{order.taxes?.toFixed(2)}</ThemedText></View>
-              <View style={[styles.rowBetween, { borderTopWidth: 1, borderTopColor: cardColor, paddingTop: 12, marginTop: 12 }]}>
-                <ThemedText style={{ fontWeight: 'bold', fontSize: 16 }}>{t(STRINGS.invoiceScreen.grandTotal)}</ThemedText>
-                <ThemedText style={{ fontWeight: 'bold', fontSize: 16, color: primaryColor }}>₹{order.totalPayable?.toFixed(2)}</ThemedText>
+              <View style={[styles.rowBetween, { borderTopWidth: 1, borderTopColor: cardColor, paddingTop: spacing.smd, marginTop: spacing.smd }]}>
+                <ThemedText style={{ fontWeight: typography.weight.bold, fontSize: typography.size.lg }}>{t(STRINGS.invoiceScreen.grandTotal)}</ThemedText>
+                <ThemedText style={{ fontWeight: typography.weight.bold, fontSize: typography.size.lg, color: primaryColor }}>₹{order.totalPayable?.toFixed(2)}</ThemedText>
               </View>
             </View>
 
@@ -385,49 +382,45 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.smd,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  backBtn: { padding: 4 },
-  headerTitle: { fontSize: 18, marginBottom: 0 },
-  scrollContent: { padding: 16, paddingBottom: 40 },
+  backBtn: { padding: spacing.xs },
+  headerTitle: { fontSize: typography.size.xl, marginBottom: 0 },
+  scrollContent: { padding: spacing.md, paddingBottom: spacing.xxxl },
   invoiceCard: {
-    borderRadius: 12,
+    borderRadius: radius.md,
     borderWidth: 1,
-    padding: 16,
+    padding: spacing.md,
     paddingBottom: 0,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
+    ...elevation.sm,
   },
   section: {
-    paddingVertical: 16,
+    paddingVertical: spacing.md,
   },
   rowBetween: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: spacing.xs,
   },
   tableHeader: {
     flexDirection: 'row',
-    padding: 8,
-    borderRadius: 4,
-    marginBottom: 8,
+    padding: spacing.sm,
+    borderRadius: radius.xs,
+    marginBottom: spacing.sm,
   },
   tableRow: {
     flexDirection: 'row',
-    paddingVertical: 8,
-    paddingHorizontal: 8,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
   },
   tableCol: {
-    fontSize: 14,
+    fontSize: typography.size.md,
   },
   footer: {
-    marginTop: 24,
+    marginTop: spacing.xl,
   },
   actionBtn: {
     width: '100%',

@@ -2,14 +2,17 @@ import React, { useEffect } from 'react';
 import { View, StyleSheet, ActivityIndicator, Image } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { ThemedView, ThemedText } from '../../components';
-import { Colors } from '../../constants';
+import { Colors, STRINGS } from '../../constants';
 import { useAuth } from '../../context';
+import { useTranslation } from 'react-i18next';
+import { spacing, radius, typography, elevation } from '../../core/constants/theme';
 
 export default function DummyGoogleScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { returnTo } = route.params || {};
   const { signup } = useAuth();
+  const { t } = useTranslation();
 
   useEffect(() => {
     // Simulate a fake authentication delay, then log them in
@@ -36,7 +39,7 @@ export default function DummyGoogleScreen() {
           style={styles.logo} 
           resizeMode="contain" 
         />
-        <ThemedText style={styles.title}>Sign in with Google</ThemedText>
+        <ThemedText style={styles.title}>{t(STRINGS.auth.signInWithGoogle)}</ThemedText>
         <ThemedText style={styles.subtitle} useSecondaryText>
           Connecting to Mock Google Account...
         </ThemedText>
@@ -54,30 +57,26 @@ const styles = StyleSheet.create({
   },
   content: {
     alignItems: 'center',
-    padding: 20,
+    padding: spacing.mlg,
     backgroundColor: Colors.light.white,
-    borderRadius: 16,
-    shadowColor: Colors.light.black,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
+    borderRadius: radius.lg,
+    ...elevation.md,
     width: '80%',
     paddingVertical: 40,
   },
   logo: {
     width: 60,
     height: 60,
-    marginBottom: 20,
+    marginBottom: spacing.mlg,
   },
   title: {
-    fontSize: 22,
-    fontWeight: 'bold',
+    fontSize: typography.size.xxl,
+    fontWeight: typography.weight.bold,
     color: Colors.light.gray900,
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: typography.size.md,
     textAlign: 'center',
   }
 });
