@@ -4,6 +4,7 @@ import { ThemedText } from '../ThemedText';
 import { Colors, ThemeDimension } from '../../constants';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { spacing, radius, typography, elevation } from '../../core/constants/theme';
 
 export type ImageCategoryCardProps = {
   name: string;
@@ -62,7 +63,7 @@ export default function ImageCategoryCard({
 const styles = StyleSheet.create({
   container: {
     height: 180,
-    marginBottom: 16,
+    marginBottom: spacing.md,
     borderRadius: ThemeDimension.borderRadius.l,
     backgroundColor: Colors.dark.gray800, // Placeholder color while loading
     ...Platform.select({
@@ -73,7 +74,7 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
       },
       android: {
-        elevation: 4,
+        ...elevation.sm,
       },
     }),
   },
@@ -96,37 +97,37 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     justifyContent: 'flex-end',
-    padding: 16,
+    padding: spacing.md,
     borderRadius: ThemeDimension.borderRadius.l,
   },
   iconContainer: {
     position: 'absolute',
-    top: 16,
-    left: 16,
+    top: spacing.md,
+    left: spacing.md,
     width: 32,
     height: 32,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: radius.sm,
+    backgroundColor: Colors.light.transparentWhite02,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: Colors.light.transparentWhite04,
   },
   textContainer: {
     marginTop: 'auto',
   },
   title: {
     color: Colors.light.white,
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 4,
+    fontSize: typography.size.xl,
+    fontWeight: typography.weight.bold,
+    marginBottom: spacing.xs,
     textShadowColor: 'rgba(0,0,0,0.5)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
   subtitle: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 12,
-    fontWeight: '500',
+    color: Colors.light.transparentWhite07,
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.medium,
   },
 });

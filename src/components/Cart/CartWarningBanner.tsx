@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '../ThemedText';
 import { Colors, STRINGS } from '../../constants';
 import { useTranslation } from 'react-i18next';
+import { spacing, radius, typography } from '../../core/constants/theme';
 
 interface CartWarningBannerProps {
   visible: boolean;
@@ -28,14 +29,14 @@ const styles = StyleSheet.create({
   warningBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    marginHorizontal: 16,
-    marginBottom: 12,
-    borderRadius: 8,
+    padding: spacing.smd,
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.smd,
+    borderRadius: radius.sm,
   },
   warningText: {
-    fontSize: 13,
-    marginLeft: 8,
+    fontSize: typography.size.sm,
+    marginLeft: spacing.sm,
     flex: 1,
   },
 });

@@ -1,118 +1,192 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Dimensions, Platform, StatusBar, ScrollView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
-import { useTranslation } from 'react-i18next';
-import { ThemedView, ThemedText, ImageCategoryCard } from '../../components';
-import { Colors, ThemeDimension, STRINGS } from '../../constants';
-import { useThemeColor } from '../../hooks';
-import { useCart } from '../../context/CartContext';
-
-const { width } = Dimensions.get('window');
-
-// Data using generic high-quality placeholders for now.
-// Real app would fetch these from an API.
-const CATEGORY_DATA = [
-  { id: '1', name: STRINGS.common.categories.fruits, itemCount: 124, deliveryTime: STRINGS.common.categories.deliveryIn, imageUrl: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?q=80&w=800&auto=format&fit=crop', span: 'full' as const, iconName: 'fruit-cherries' as const },
-  { id: '2', name: STRINGS.common.categories.veg, itemCount: 89, imageUrl: 'https://images.unsplash.com/photo-1597362925123-77861d3fbac7?q=80&w=800&auto=format&fit=crop', span: 'half' as const },
-  { id: '3', name: STRINGS.common.categories.dairy, itemCount: 45, imageUrl: 'https://images.unsplash.com/photo-1628088062854-d1870b4553da?q=80&w=800&auto=format&fit=crop', span: 'half' as const },
-  { id: '4', name: STRINGS.common.categories.bakery, itemCount: 32, imageUrl: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=800&auto=format&fit=crop', span: 'half' as const },
-  { id: '5', name: STRINGS.common.categories.drinks, itemCount: 112, imageUrl: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?q=80&w=800&auto=format&fit=crop', span: 'full' as const, iconName: 'cup-outline' as const },
-  { id: '6', name: STRINGS.common.categories.snacks, itemCount: 240, imageUrl: 'https://images.unsplash.com/photo-1599490659213-e2b9527bd087?q=80&w=800&auto=format&fit=crop', span: 'half' as const },
-  { id: '7', name: STRINGS.common.categories.meat, itemCount: 67, imageUrl: 'https://images.unsplash.com/photo-1603048297172-c92544798d5e?q=80&w=800&auto=format&fit=crop', span: 'half' as const },
-];
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+  StatusBar,
+  FlatList,
+  ActivityIndicator,
+  Image,
+} from "react-native";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
+import { ThemedView, ThemedText, CartHeaderIcon } from "../../components";
+import { CategoryCard } from "../../components/Home";
+import { Colors, STRINGS } from "../../constants";
+import { useThemeColor, useCategories, useSubCategories } from "../../hooks";
+import { spacing, radius, typography } from "../../core/constants/theme";
+import type { Category, SubCategory } from "../../core/types/domain";
+import type { TabParamList } from "../../core/types/navigation";
 
 export default function CategoriesScreen() {
   const navigation = useNavigation<any>();
-  const { totalItems } = useCart();
+  const route = useRoute<RouteProp<TabParamList, "CategoriesTab">>();
   const { t } = useTranslation();
 
-  const bgColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.primaryBackground }, 'primaryBackground' as any);
-  const textColor = useThemeColor({}, 'primaryText');
-  const searchBg = useThemeColor({ light: Colors.light.gray100, dark: 'rgba(255,255,255,0.1)' }, 'gray100' as any);
-  const iconColor = useThemeColor({}, 'iconColor' as any);
-  const primaryColor = useThemeColor({}, 'primary');
-  
-  // Arrange items into rows. Full span gets its own row. Half spans pair up.
-  const rows: any[][] = [];
-  let currentRow: any[] = [];
+  const { categories, isLoading: categoriesLoading } = useCategories();
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
+    null,
+  );
 
-  CATEGORY_DATA.forEach((item) => {
-    if (item.span === 'full') {
-      if (currentRow.length > 0) {
-        rows.push([...currentRow]);
-        currentRow = [];
-      }
-      rows.push([item]);
-    } else {
-      currentRow.push(item);
-      if (currentRow.length === 2) {
-        rows.push([...currentRow]);
-        currentRow = [];
+  // Auto-select first category when loaded or categoryId from params
+  useEffect(() => {
+    if (categories.length > 0) {
+      if (route.params?.categoryId) {
+        setSelectedCategoryId(route.params.categoryId);
+        // Clear param so subsequent changes aren't overridden
+        navigation.setParams({ categoryId: undefined });
+      } else if (!selectedCategoryId) {
+        setSelectedCategoryId(categories[0].id);
       }
     }
-  });
-  if (currentRow.length > 0) {
-    rows.push([...currentRow]);
-  }
+  }, [categories, selectedCategoryId, route.params?.categoryId, navigation]);
+
+  const { subCategories, isLoading: subCategoriesLoading } =
+    useSubCategories(selectedCategoryId);
+
+  const bgColor = useThemeColor(
+    { light: Colors.light.white, dark: Colors.dark.primaryBackground },
+    "primaryBackground" as any,
+  );
+  const iconColor = useThemeColor({}, "iconColor" as any);
+  const searchBg = useThemeColor(
+    { light: Colors.light.gray100, dark: "rgba(255,255,255,0.1)" },
+    "gray100" as any,
+  );
+  const primaryColor = useThemeColor({}, "primary");
+
+  const leftColBg = useThemeColor(
+    { light: Colors.light.gray50, dark: Colors.dark.secondaryBackground },
+    "secondaryBackground" as any,
+  );
+  const selectedCatBg = useThemeColor(
+    { light: Colors.light.white, dark: Colors.dark.primaryBackground },
+    "primaryBackground" as any,
+  );
+  const imageBgColor = useThemeColor(
+    { light: "rgba(0,0,0,0.05)", dark: "rgba(255,255,255,0.05)" },
+    "transparentWhite04" as any,
+  );
+
+  const handleSubCategoryPress = (subCategory: SubCategory) => {
+    navigation.navigate("ProductListing", {
+      categoryId: subCategory.categoryId,
+      subCategoryId: subCategory.id,
+    });
+  };
+
+  const renderCategoryItem = ({ item }: { item: Category }) => {
+    const isSelected = item.id === selectedCategoryId;
+    return (
+      <CategoryCard
+        name={t(item.nameKey)}
+        emoji={item.emoji}
+        colorName={item.colorName}
+        isSelected={isSelected}
+        onPress={() => setSelectedCategoryId(item.id)}
+        containerStyle={{
+          width: "100%",
+          marginRight: 0,
+          paddingVertical: spacing.md,
+          backgroundColor: isSelected ? selectedCatBg : leftColBg,
+        }}
+      />
+    );
+  };
+
+  const renderSubCategoryItem = ({ item }: { item: SubCategory }) => (
+    <TouchableOpacity
+      style={[styles.subCategoryCard, { backgroundColor: searchBg }]}
+      onPress={() => handleSubCategoryPress(item)}
+    >
+      <Image
+        source={{ uri: item.imageUrl }}
+        style={[styles.subCategoryImage, { backgroundColor: imageBgColor }]}
+      />
+      <ThemedText style={styles.subCategoryName} numberOfLines={2}>
+        {t(item.nameKey)}
+      </ThemedText>
+    </TouchableOpacity>
+  );
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: bgColor }]}>
       {/* Top Header */}
       <View style={[styles.header, { backgroundColor: bgColor }]}>
         <Ionicons name="location-outline" size={24} color={iconColor} />
-        <ThemedText style={styles.headerTitle}>{t(STRINGS.common.appName)}</ThemedText>
-        <TouchableOpacity style={styles.cartBtn} onPress={() => navigation.navigate('Cart')}>
-          <Ionicons name="cart-outline" size={28} color={iconColor} />
-          {totalItems > 0 && (
-            <View style={[styles.badge, { backgroundColor: primaryColor }]}>
-              <ThemedText style={styles.badgeText}>{totalItems}</ThemedText>
-            </View>
-          )}
+        <ThemedText style={styles.headerTitle}>
+          {t(STRINGS.common.appName)}
+        </ThemedText>
+        <CartHeaderIcon color={iconColor} badgeBorderColor={bgColor} />
+      </View>
+
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <TouchableOpacity
+          style={[styles.searchBar, { backgroundColor: searchBg }]}
+          onPress={() => navigation.navigate("ProductListing")}
+        >
+          <Ionicons
+            name="search-outline"
+            size={20}
+            color={Colors.light.gray400}
+            style={styles.searchIcon}
+          />
+          <ThemedText style={styles.searchPlaceholder}>
+            {t(STRINGS.homeScreen.searchPlaceholder)}
+          </ThemedText>
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        
-        {/* Search Bar */}
-        <TouchableOpacity
-          style={[styles.searchBar, { backgroundColor: searchBg }]}
-          onPress={() => navigation.navigate('ProductListing')}
-        >
-          <Ionicons name="search-outline" size={20} color={Colors.light.gray400} style={styles.searchIcon} />
-          <ThemedText style={styles.searchPlaceholder}>{t(STRINGS.homeScreen.searchPlaceholder)}</ThemedText>
-          <View style={[styles.searchArrow, { backgroundColor: primaryColor }]}>
-            <Ionicons name="arrow-forward" size={16} color={Colors.light.white} />
-          </View>
-        </TouchableOpacity>
-
-        {/* Section Title */}
-        <View style={styles.sectionTitleRow}>
-          <ThemedText style={styles.sectionTitle}>{t(STRINGS.common.categories.browseCategories)}</ThemedText>
-          <ThemedText style={styles.sectionSubtitle} useSecondaryText>{t(STRINGS.common.categories.allDepartments)}</ThemedText>
+      <View style={styles.contentContainer}>
+        {/* Left Column: Main Categories */}
+        <View style={[styles.leftColumn, { backgroundColor: leftColBg }]}>
+          {categoriesLoading ? (
+            <ActivityIndicator
+              size="small"
+              color={primaryColor}
+              style={{ marginTop: spacing.xl }}
+            />
+          ) : (
+            <FlatList
+              data={categories}
+              keyExtractor={(item) => item.id}
+              renderItem={renderCategoryItem}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: spacing.xxl }}
+            />
+          )}
         </View>
 
-        {/* Mixed Grid Layout */}
-        <View style={styles.grid}>
-          {rows.map((row, rowIndex) => (
-            <View key={rowIndex} style={styles.row}>
-              {row.map((item, colIndex) => (
-                <ImageCategoryCard
-                  key={item.id}
-                  name={t(item.name)}
-                  itemCount={item.itemCount}
-                  deliveryTime={item.deliveryTime ? t(item.deliveryTime) : undefined}
-                  imageUrl={item.imageUrl}
-                  iconName={item.iconName}
-                  span={item.span}
-                  onPress={() => navigation.navigate('ProductListing', { category: item.name })}
-                />
-              ))}
+        {/* Right Column: Sub Categories */}
+        <View style={styles.rightColumn}>
+          {subCategoriesLoading ? (
+            <ActivityIndicator
+              size="large"
+              color={primaryColor}
+              style={{ marginTop: spacing.xxxl }}
+            />
+          ) : subCategories.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <ThemedText useSecondaryText>
+                {t(STRINGS.productListing.noProducts)}
+              </ThemedText>
             </View>
-          ))}
+          ) : (
+            <FlatList
+              data={subCategories}
+              keyExtractor={(item) => item.id}
+              renderItem={renderSubCategoryItem}
+              numColumns={2}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.subCatListContent}
+              columnWrapperStyle={styles.subCatColumnWrapper}
+            />
+          )}
         </View>
-
-      </ScrollView>
+      </View>
     </ThemedView>
   );
 }
@@ -122,85 +196,78 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight ?? 0) + 10 : 50,
-    paddingBottom: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: spacing.md,
+    paddingTop:
+      Platform.OS === "android"
+        ? (StatusBar.currentHeight ?? 0) + spacing.smd
+        : spacing.xxxl,
+    paddingBottom: spacing.sm,
   },
   headerTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
+    fontSize: typography.size.xxl,
+    fontWeight: typography.weight.bold,
   },
-  cartBtn: {
-    padding: 4,
-    position: 'relative',
-  },
-  badge: {
-    position: 'absolute',
-    top: -2,
-    right: -4,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: Colors.light.white,
-    paddingHorizontal: 4,
-  },
-  badgeText: {
-    color: Colors.light.white,
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  scrollContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 40,
+  searchContainer: {
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
   },
   searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 50,
-    borderRadius: ThemeDimension.borderRadius.l,
-    paddingHorizontal: 16,
-    marginBottom: 24,
+    flexDirection: "row",
+    alignItems: "center",
+    height: 44,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
   },
   searchIcon: {
-    marginRight: 8,
+    marginRight: spacing.sm,
   },
   searchPlaceholder: {
     color: Colors.light.gray400,
-    fontSize: 14,
+    fontSize: typography.size.sm,
     flex: 1,
   },
-  searchArrow: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
+  contentContainer: {
+    flex: 1,
+    flexDirection: "row",
   },
-  sectionTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
+  leftColumn: {
+    width: "21%",
+    height: "100%",
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+  rightColumn: {
+    width: "79%",
+    height: "100%",
   },
-  sectionSubtitle: {
-    fontSize: 12,
+  subCatListContent: {
+    padding: spacing.md,
+    paddingBottom: spacing.xxxl,
   },
-  grid: {
-    width: '100%',
+  subCatColumnWrapper: {
+    justifyContent: "space-between",
   },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
+  subCategoryCard: {
+    width: "47%",
+    borderRadius: radius.md,
+    overflow: "hidden",
+    marginBottom: spacing.md,
+    alignItems: "center",
+  },
+  subCategoryImage: {
+    width: "100%",
+    height: 80,
+  },
+  subCategoryName: {
+    fontSize: typography.size.xs,
+    fontWeight: typography.weight.medium,
+    textAlign: "center",
+    padding: spacing.sm,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

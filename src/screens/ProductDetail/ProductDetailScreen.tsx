@@ -2,17 +2,18 @@ import React, { useState, useRef } from 'react';
 import { StyleSheet, View, ScrollView, TouchableOpacity, Platform, StatusBar, FlatList, Modal, Dimensions, TouchableWithoutFeedback } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ThemedText, ThemedView, CustomButton, ProductCard, QuantitySelector } from '../../components';
+import { ThemedText, ThemedView, CustomButton, ProductCard, QuantitySelector, CartHeaderIcon, PriceDisplay, Tag, ScreenHeader } from '../../components';
 import { Colors, STRINGS } from '../../constants';
 import { useThemeColor } from '../../hooks';
 import { useCart } from '../../context';
 import { MOCK_PRODUCTS } from '../../data/mockData';
 import { useTranslation } from 'react-i18next';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../../core/types/navigation';
+import type { Product } from '../../core/types/domain';
+import { spacing, radius, typography, elevation, zIndex } from '../../core/constants/theme';
 
-type Props = {
-  navigation: any;
-  route: any;
-};
+type Props = NativeStackScreenProps<RootStackParamList, 'ProductDetail'>;
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -27,8 +28,9 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
   const bottomBarBgColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.black }, 'primaryBackground' as any);
   const bottomBarBorderColor = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray300 }, 'gray200' as any);
   
-  // Ensure we have a product object
-  const product = route?.params?.product || MOCK_PRODUCTS[0];
+  // Ensure we have a product object — typed via route.params, extended fields from mockData
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const product: any = route?.params?.product ?? MOCK_PRODUCTS[0];
   
   // Dynamic Related Products based on category
   const relatedProducts = MOCK_PRODUCTS.filter(
@@ -67,23 +69,29 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
 
   // --- RENDER SECTIONS ---
   const renderHeader = () => (
-    <View style={styles.header}>
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBtn}>
-        <Feather name="arrow-left" size={24} color={iconColor} />
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.navigate('Cart')}>
-        <Ionicons name="cart-outline" size={28} color={iconColor} />
-        {totalItems > 0 && (
-          <View style={[styles.badge, { backgroundColor: Colors.light.red600, borderColor: bottomBarBgColor }]}>
-            <ThemedText style={styles.badgeText}>{totalItems}</ThemedText>
-          </View>
-        )}
-      </TouchableOpacity>
-    </View>
+    <ScreenHeader
+      title=""
+      onBack={() => navigation.goBack()}
+      rightElement={
+        <CartHeaderIcon
+          color={iconColor}
+          size={28}
+          badgeBorderColor={bottomBarBgColor}
+        />
+      }
+      showBorder={false}
+      style={{
+        position: 'absolute',
+        top: Math.max(insets.top, 10),
+        left: 0,
+        right: 0,
+        zIndex: zIndex.elevated,
+      }}
+    />
   );
 
   const renderImageGallery = () => (
-    <View style={styles.galleryContainer}>
+    <View style={styles.imageCarousel}>
       <FlatList
         data={images}
         horizontal
@@ -93,7 +101,7 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
           <TouchableOpacity activeOpacity={0.9} onPress={() => openZoom(item)}>
-            <View style={[styles.imageBox, { width: SCREEN_WIDTH, backgroundColor: item.color || imageBgColor }]}>
+            <View style={[styles.imageSlide, { width: SCREEN_WIDTH, backgroundColor: item.color || imageBgColor }]}>
               <ThemedText style={styles.imageEmoji}>{item.emoji}</ThemedText>
             </View>
           </TouchableOpacity>
@@ -131,19 +139,17 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
 
       {/* Pricing & Stock */}
       <View style={styles.priceRow}>
-        <ThemedText style={[styles.price, { color: primaryColor }]}>
-          {typeof product.price === 'number' ? `₹${product.price.toFixed(2)}` : product.price}
-        </ThemedText>
-        {product.mrp && (
-          <ThemedText style={styles.mrp} useSecondaryText>
-            {typeof product.mrp === 'number' ? `₹${product.mrp.toFixed(2)}` : product.mrp}
-          </ThemedText>
-        )}
-        <View style={[styles.stockBadge, { backgroundColor: product.inStock ? Colors.light.transparentGreen015 : Colors.light.transparentRed015 }]}>
-          <ThemedText style={[styles.stockText, { color: product.inStock ? Colors.light.success : Colors.light.error }]}>
-            {product.inStock ? t(STRINGS.productDetail.inStock) : t(STRINGS.productDetail.outOfStock)}
-          </ThemedText>
-        </View>
+        <PriceDisplay
+          price={typeof product.price === 'number' ? product.price : parseFloat(product.price)}
+          mrp={product.mrp && typeof product.mrp === 'number' ? product.mrp : undefined}
+          size="lg"
+        />
+        <Tag
+          label={product.inStock ? t(STRINGS.productDetail.inStock) : t(STRINGS.productDetail.outOfStock)}
+          variant="subtle"
+          color={product.inStock ? 'success' : 'error'}
+          style={{ marginLeft: 8 }}
+        />
       </View>
       <ThemedText style={styles.weight} useSecondaryText>{product.weight}</ThemedText>
 
@@ -340,12 +346,13 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
     textAlignVertical: 'center',
   },
-  galleryContainer: {
-    position: 'relative',
-    height: 380,
+  imageCarousel: {
+    width: SCREEN_WIDTH,
+    height: SCREEN_WIDTH * 0.8,
   },
-  imageBox: {
-    height: 380,
+  imageSlide: {
+    width: SCREEN_WIDTH,
+    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -354,7 +361,7 @@ const styles = StyleSheet.create({
   },
   pagination: {
     position: 'absolute',
-    bottom: 20,
+    bottom: spacing.mlg,
     left: 0,
     right: 0,
     flexDirection: 'row',
@@ -362,138 +369,137 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginHorizontal: 4,
+    width: spacing.sm,
+    height: spacing.sm,
+    borderRadius: radius.xs,
+    marginHorizontal: spacing.xs,
   },
   infoContainer: {
-    padding: 16,
+    padding: spacing.md,
   },
   productName: {
-    fontSize: 26,
-    marginBottom: 4,
+    fontSize: typography.size.xxl,
+    marginBottom: spacing.xs,
   },
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   brandLogoContainer: {
     width: 28,
     height: 28,
-    borderRadius: 14,
+    borderRadius: radius.circle,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 8,
+    marginRight: spacing.sm,
   },
   brandLogo: {
-    fontSize: 14,
+    fontSize: typography.size.sm,
   },
   brandText: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.medium,
   },
   priceRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: spacing.xs,
   },
   price: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginRight: 10,
+    fontSize: typography.size.xxxl,
+    fontWeight: typography.weight.bold,
+    marginRight: spacing.smd,
   },
   mrp: {
-    fontSize: 16,
+    fontSize: typography.size.lg,
     textDecorationLine: 'line-through',
-    marginRight: 16,
+    marginRight: spacing.md,
   },
   stockBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.xs,
   },
   stockText: {
-    fontSize: 12,
-    fontWeight: 'bold',
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.bold,
   },
   weight: {
-    fontSize: 14,
-    marginBottom: 24,
+    fontSize: typography.size.md,
+    marginBottom: spacing.lg,
   },
   specsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   specCard: {
     width: '48%',
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 12,
+    padding: spacing.smd,
+    borderRadius: radius.md,
+    marginBottom: spacing.smd,
   },
   specIcon: {
-    marginRight: 10,
+    marginRight: spacing.smd,
   },
   specKey: {
-    fontSize: 11,
-    marginBottom: 2,
+    fontSize: typography.size.xs,
+    marginBottom: spacing.xxs,
   },
   specValue: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: typography.size.smmd,
+    fontWeight: typography.weight.semiBold,
   },
   descSection: {
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   sectionTitle: {
-    fontSize: 18,
-    marginBottom: 12,
+    fontSize: typography.size.xl,
+    marginBottom: spacing.smd,
   },
   descriptionText: {
-    fontSize: 14,
+    fontSize: typography.size.md,
     lineHeight: 22,
   },
   storeSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    marginBottom: spacing.md,
   },
   storeDetails: {
-    marginLeft: 16,
+    marginLeft: spacing.md,
   },
   storeName: {
-    fontSize: 15,
-    fontWeight: '600',
-    marginBottom: 4,
+    fontSize: typography.size.mdlg,
+    fontWeight: typography.weight.semiBold,
+    marginBottom: spacing.xs,
   },
   storeRatingRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   storeRating: {
-    fontSize: 13,
-    marginLeft: 4,
+    fontSize: typography.size.smmd,
+    marginLeft: spacing.xs,
   },
   relatedSection: {
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
-
   bottomBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 16,
-    paddingBottom: Platform.OS === 'ios' ? 32 : 16,
+    padding: spacing.md,
+    paddingBottom: Platform.OS === 'ios' ? spacing.xxl : spacing.md,
     borderTopWidth: 1,
-    elevation: 10,
+    ...elevation.lg,
   },
   quantityControl: {
     width: '100%',
@@ -510,7 +516,7 @@ const styles = StyleSheet.create({
   zoomBox: {
     width: SCREEN_WIDTH - 32,
     height: SCREEN_WIDTH - 32,
-    borderRadius: 24,
+    borderRadius: radius.xxl,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
@@ -520,10 +526,10 @@ const styles = StyleSheet.create({
   },
   closeZoom: {
     position: 'absolute',
-    top: 16,
-    right: 16,
+    top: spacing.md,
+    right: spacing.md,
     backgroundColor: Colors.light.transparentBlack05,
-    borderRadius: 20,
-    padding: 8,
+    borderRadius: radius.xl,
+    padding: spacing.sm,
   }
 });

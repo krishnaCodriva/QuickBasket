@@ -6,6 +6,7 @@ import ThemedInput from '../../components/ThemedInput';
 import { Colors, STRINGS } from '../../constants';
 import { useThemeColor } from '../../hooks';
 import { useTranslation } from 'react-i18next';
+import { spacing, radius, typography } from '../../core/constants/theme';
 
 interface AddressFormModalProps {
   visible: boolean;
@@ -48,7 +49,7 @@ export default function AddressFormModal({ visible, onClose, onSave, editingAddr
           <View style={[styles.dragHandle, { backgroundColor: gray300Color }]} />
 
           <View style={styles.modalHeader}>
-            <ThemedText type="subtitle" style={{ fontSize: 20 }}>
+            <ThemedText type="subtitle" style={{ fontSize: typography.size.xxl }}>
               {editingAddressId ? t(STRINGS.checkoutScreen.editAddressTitle) : t(STRINGS.checkoutScreen.addAddressTitle)}
             </ThemedText>
             <TouchableOpacity onPress={onClose} style={[styles.closeBtn, { backgroundColor: gray100Color }]}>
@@ -74,7 +75,7 @@ export default function AddressFormModal({ visible, onClose, onSave, editingAddr
 
             <View style={[styles.inputDivider, { backgroundColor: gray200Color }]} />
 
-            <ThemedText style={{ marginBottom: 12, fontSize: 16, fontWeight: '600' }}>
+            <ThemedText style={{ marginBottom: spacing.smd, fontSize: typography.size.lg, fontWeight: typography.weight.semiBold }}>
               {t(STRINGS.checkoutScreen.addressType)}
             </ThemedText>
             <View style={styles.typeRow}>
@@ -114,10 +115,10 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 24,
-    paddingTop: 12,
+    borderTopLeftRadius: radius.xxl,
+    borderTopRightRadius: radius.xxl,
+    paddingHorizontal: spacing.mlg,
+    paddingTop: spacing.smd,
     maxHeight: '90%',
   },
   dragHandle: {
@@ -125,7 +126,7 @@ const styles = StyleSheet.create({
     height: 5,
     borderRadius: 3,
     alignSelf: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -134,36 +135,36 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   closeBtn: {
-    padding: 4,
-    borderRadius: 16,
+    padding: spacing.xs,
+    borderRadius: radius.lg,
   },
   inputDivider: {
     height: 1,
-    marginVertical: 16,
+    marginVertical: spacing.md,
   },
   input: {
-    marginBottom: 16,
-    borderRadius: 12, // More rounded inputs
-    borderWidth: 1, // Added border
+    marginBottom: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
   },
   typeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 12,
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   typeBtn: {
-    flex: 1, // Make them equally sized
-    paddingVertical: 12,
-    borderRadius: 12,
+    flex: 1,
+    paddingVertical: spacing.smd,
+    borderRadius: radius.md,
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
   saveAddressBtn: {
-    marginTop: 12,
-    borderRadius: 12,
+    marginTop: spacing.smd,
+    borderRadius: radius.md,
     paddingVertical: 14,
   }
 });

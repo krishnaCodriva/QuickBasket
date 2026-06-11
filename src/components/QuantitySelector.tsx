@@ -2,8 +2,9 @@ import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { ThemedText } from './ThemedText';
-import { Colors } from '../constants';
 import { useThemeColor } from '../hooks';
+import { Colors } from '../constants';
+import { typography } from '../core/constants/theme';
 
 interface QuantitySelectorProps {
   quantity: number;
@@ -35,7 +36,7 @@ export default function QuantitySelector({
   const iconSize = isLarge ? 20 : 16;
   const iconBtnColor = isLarge ? primaryColor : iconColor;
   const textWidth = isLarge ? 40 : 30;
-  const fontSize = isLarge ? 18 : 16;
+  const fontSize = isLarge ? typography.size.xl : typography.size.lg;
   
   const opacity = disabled ? 0.3 : 1;
 
@@ -94,7 +95,7 @@ const styles = StyleSheet.create({
   },
   text: {
     textAlign: 'center',
-    fontWeight: '600',
+    fontWeight: typography.weight.semiBold,
     includeFontPadding: false,
     textAlignVertical: 'center',
   },

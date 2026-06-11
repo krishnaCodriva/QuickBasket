@@ -1,9 +1,10 @@
 import { Colors } from '../../constants/colors';
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, StyleProp, ViewStyle } from 'react-native';
 import { ThemedText } from '../ThemedText';
 import { useThemeColor } from '../../hooks';
 import { Image } from 'expo-image';
+import { spacing, typography, radius } from '../../core/constants/theme';
 
 type Props = {
   name: string;
@@ -11,29 +12,34 @@ type Props = {
   imageUrl?: string;
   colorName: keyof typeof Colors.light & keyof typeof Colors.dark;
   onPress: () => void;
+  isSelected?: boolean;
+  containerStyle?: StyleProp<ViewStyle>;
 };
 
-const CategoryCard = ({ name, emoji, imageUrl, colorName, onPress }: Props) => {
+const CategoryCard = ({ name, emoji, colorName, onPress, isSelected, containerStyle }: Props) => {
   const bgColor = useThemeColor({}, colorName);
   const innerBg = useThemeColor({}, 'transparentWhite04');
+  const primaryColor = useThemeColor({}, 'primary');
 
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress}>
+    <TouchableOpacity style={[styles.container, containerStyle]} onPress={onPress}>
       {/* Outer Circle */}
-      <View style={[styles.circle, { backgroundColor: bgColor }]}>
-        {imageUrl ? (
-          <Image 
-            source={{ uri: imageUrl }} 
-            style={{ width: 44, height: 44 }} 
-            contentFit="contain" 
-          />
-        ) : (
-          <View style={[styles.innerCircle, { backgroundColor: innerBg }]}>
-            <ThemedText style={styles.emoji}>{emoji}</ThemedText>
-          </View>
-        )}
+      <View style={[
+        styles.circle, 
+        { backgroundColor: bgColor },
+        isSelected && { borderWidth: 2, borderColor: primaryColor }
+      ]}>
+        {/* Inner Circle */}
+        <View style={[styles.innerCircle, { backgroundColor: innerBg }]}>
+          <ThemedText style={styles.emoji}>{emoji}</ThemedText>
+        </View>
       </View>
-      <ThemedText style={styles.name} numberOfLines={1}>{name}</ThemedText>
+      <ThemedText 
+        style={[styles.name, isSelected && { color: primaryColor }]} 
+        numberOfLines={1}
+      >
+        {name}
+      </ThemedText>
     </TouchableOpacity>
   );
 }
@@ -42,29 +48,29 @@ const styles = StyleSheet.create({
   container: {
     width: 70,
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: spacing.md,
   },
   circle: {
     width: 64,
     height: 64,
-    borderRadius: 32,
+    borderRadius: radius.circle,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   innerCircle: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: radius.circle,
     justifyContent: 'center',
     alignItems: 'center',
   },
   emoji: {
-    fontSize: 24,
+    fontSize: typography.size.xxl,
   },
   name: {
-    fontSize: 12,
-    fontWeight: 'bold',
+    fontSize: typography.size.xs,
+    fontWeight: typography.weight.bold,
     textAlign: 'center',
   },
 });

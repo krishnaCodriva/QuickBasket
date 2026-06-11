@@ -5,6 +5,7 @@ import { ThemedText } from '../../components';
 import { Colors, STRINGS } from '../../constants';
 import { useThemeColor } from '../../hooks';
 import { useTranslation } from 'react-i18next';
+import { spacing, radius, typography } from '../../core/constants/theme';
 
 interface AddressSectionProps {
   addresses: any[];
@@ -57,17 +58,17 @@ export default function AddressSection({ addresses, selectedAddress, onSelect, o
             style={{ flex: 1 }}
             onPress={() => onSelect(addr.id)}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-              <Feather name={getAddressTypeIcon(addr.label)} size={16} color={iconColor} style={{ marginRight: 6 }} />
-              <ThemedText type="defaultSemiBold" style={{ fontSize: 16 }}>{getAddressTypeLabel(addr.label)}</ThemedText>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.xs }}>
+              <Feather name={getAddressTypeIcon(addr.label)} size={16} color={iconColor} style={{ marginRight: spacing.xs }} />
+              <ThemedText type="defaultSemiBold" style={{ fontSize: typography.size.lg }}>{getAddressTypeLabel(addr.label)}</ThemedText>
             </View>
-            <ThemedText useSecondaryText style={{ fontSize: 14, lineHeight: 20 }}>{addr.address}</ThemedText>
+            <ThemedText useSecondaryText style={{ fontSize: typography.size.md, lineHeight: 20 }}>{addr.address}</ThemedText>
           </TouchableOpacity>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <TouchableOpacity onPress={() => onEdit(addr)} style={{ padding: 8 }}>
+            <TouchableOpacity onPress={() => onEdit(addr)} style={{ padding: spacing.sm }}>
               <Feather name="edit-2" size={18} color={iconColor} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => onDelete(addr.id)} style={{ padding: 8 }}>
+            <TouchableOpacity onPress={() => onDelete(addr.id)} style={{ padding: spacing.sm }}>
               <Feather name="trash-2" size={18} color={errorColor} />
             </TouchableOpacity>
           </View>
@@ -79,22 +80,22 @@ export default function AddressSection({ addresses, selectedAddress, onSelect, o
 
 const styles = StyleSheet.create({
   section: {
-    paddingHorizontal: 16,
-    paddingTop: 24,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.lg,
   },
   sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.smd,
   },
   sectionTitle: {
     marginBottom: 0,
   },
   optionCard: {
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    marginBottom: spacing.smd,
     flexDirection: 'row',
     alignItems: 'center',
   }
