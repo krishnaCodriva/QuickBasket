@@ -5,9 +5,7 @@ import { Colors } from '../../constants';
 import { useThemeColor } from '../../hooks';
 import { spacing, radius, typography } from '../../core/constants/theme';
 
-export type TagItem = { id: string; label: string };
-
-type TagItem = { id: string; name: string; slug: string };
+export type TagItem = { id: string; name: string };
 
 type Props = {
   tags: TagItem[];
@@ -15,8 +13,8 @@ type Props = {
   selectedTag: string | null;
 };
 
-const QuickFilters = ({ tags, selectedTagId, onSelectTag }: Props) => {
-console.log("tsgs is : ", tags)
+const QuickFilters = ({ tags, selectedTag, onSelectTag }: Props) => {
+  console.log("tsgs is : ", tags)
   const primaryColor = useThemeColor({}, 'primary');
   const bgColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.primaryBackground }, 'primaryBackground' as any);
   return (

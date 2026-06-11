@@ -1,5 +1,5 @@
 import { Colors } from "../../constants/colors";
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useRef, useMemo, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Image } from "expo-image";
-import { ThemedText } from "../ThemedText";
 import { ThemeDimension } from "../../constants/ThemeDimension";
 import { useThemeColor } from "../../hooks";
 import { spacing, radius, typography } from "../../core/constants/theme";
@@ -52,14 +51,39 @@ function BannerCarousel({ banners = DEFAULT_BANNERS, onBannerPress }: Props) {
     { light: Colors.light.gray900, dark: Colors.dark.gray200 },
     "gray900" as any,
   );
+  const flatListRef = useRef<FlatList>(null);
 
-  const infiniteBanners = useMemo(() => Array(3).fill(banners).flat(), [banners]);
+  // Seamless jump trick: Add last item to start, and first item to end
+  const loopedBanners = useMemo(() => {
+    if (!banners || banners.length === 0) return [];
+    if (banners.length === 1) return banners;
+    return [banners[banners.length - 1], ...banners, banners[0]];
+  }, [banners]);
+
   const slideSize = BANNER_WIDTH + BANNER_PADDING;
 
   const handleScroll = (event: any) => {
     const offsetX = event.nativeEvent.contentOffset.x;
     const index = Math.round(offsetX / slideSize);
-    setActiveIndex(index % banners.length);
+    
+    // Jump logic for seamless loop
+    if (index === 0) {
+      // Reached the fake first item -> Jump to the real last item
+      flatListRef.current?.scrollToOffset({
+        offset: banners.length * slideSize,
+        animated: false,
+      });
+      setActiveIndex(banners.length - 1);
+    } else if (index === loopedBanners.length - 1) {
+      // Reached the fake last item -> Jump to the real first item
+      flatListRef.current?.scrollToOffset({
+        offset: slideSize,
+        animated: false,
+      });
+      setActiveIndex(0);
+    } else {
+      setActiveIndex(index - 1);
+    }
   };
 
   const getItemLayout = (_: any, index: number) => ({
@@ -68,7 +92,21 @@ function BannerCarousel({ banners = DEFAULT_BANNERS, onBannerPress }: Props) {
     index,
   });
 
-  const renderItem = useCallback(({ item, index }: { item: BannerType; index: number }) => (
+  // Auto-play effect
+  useEffect(() => {
+    if (banners.length <= 1) return;
+    const timer = setInterval(() => {
+      // Scroll to the next item
+      const nextIndex = activeIndex + 2; 
+      flatListRef.current?.scrollToOffset({
+        offset: nextIndex * slideSize,
+        animated: true,
+      });
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [activeIndex, banners.length, slideSize]);
+
+  const renderItem = ({ item }: { item: BannerType }) => (
     <TouchableOpacity
       activeOpacity={1}
       onPress={() => onBannerPress && onBannerPress(item)}
@@ -81,39 +119,23 @@ function BannerCarousel({ banners = DEFAULT_BANNERS, onBannerPress }: Props) {
         cachePolicy="memory-disk"
       />
     </TouchableOpacity>
-  ), [onBannerPress, bannerBgColor]);
+  );
 
   return (
     <View style={[styles.container, { marginHorizontal: -BANNER_PADDING }]}>
       <FlatList
-        data={infiniteBanners}
+        ref={flatListRef}
+        data={loopedBanners}
         renderItem={renderItem}
         keyExtractor={(_, index) => `banner-${index}`}
         horizontal
         showsHorizontalScrollIndicator={false}
-        removeClippedSubviews
-        initialScrollIndex={banners.length}
+        removeClippedSubviews={false}
         getItemLayout={getItemLayout}
         contentContainerStyle={{ paddingHorizontal: BANNER_PADDING }}
         onMomentumScrollEnd={handleScroll}
+        contentOffset={{ x: banners.length > 1 ? slideSize : 0, y: 0 }}
       />
-      {/* 
-      <View style={styles.paginationContainer}>
-        {banners.map((_, index) => (
-          <View
-            key={index}
-            style={[
-              styles.dot,
-              {
-                backgroundColor:
-                  index === activeIndex ? activeColor : inactiveColor,
-                width: index === activeIndex ? 20 : 8,
-              },
-            ]}
-          />
-        ))}
-      </View>
-      */}
     </View>
   );
 }

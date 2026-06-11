@@ -10,7 +10,7 @@ import { spacing, radius, typography } from '../../core/constants/theme';
 import { useAuth } from '../../context';
 
 const OTP_LENGTH = 6;
-const CORRECT_OTP = '123456';
+// const CORRECT_OTP = '123456';
 const TIMER_START = 30;
 
 export default function OtpScreen() {
@@ -18,14 +18,14 @@ export default function OtpScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { phoneNumber, returnTo } = route.params || { phoneNumber: '+91 0000000000' };
-  
+
   const { verifyOtp } = useAuth();
 
   const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''));
   const [timer, setTimer] = useState(TIMER_START);
   const [isVerifying, setIsVerifying] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  
+
   const inputRefs = useRef<Array<TextInput | null>>([]);
 
   const primaryColor = useThemeColor({}, 'primary');
@@ -50,7 +50,7 @@ export default function OtpScreen() {
 
   const handleOtpChange = (text: string, index: number) => {
     const newOtp = [...otp];
-    
+
     // Handle pasting a full code
     if (text.length > 1) {
       const chars = text.replace(/[^0-9]/g, '').split('').slice(0, OTP_LENGTH);
@@ -100,8 +100,9 @@ export default function OtpScreen() {
       const enteredOtp = otp.join('');
       // In a real app, you would pass the phone number and OTP to your backend.
       // Here, verifyOtp just expects '1234' for simplicity.
-      await verifyOtp(phoneNumber, enteredOtp);
-      
+      const formattedPhone = phoneNumber.replace(/\s/g, '');
+      await verifyOtp(formattedPhone, enteredOtp);
+
       if (returnTo) {
         navigation.replace(returnTo);
       } else {
@@ -125,7 +126,7 @@ export default function OtpScreen() {
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: bgColor }]}>
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
@@ -153,7 +154,7 @@ export default function OtpScreen() {
                   ref={(ref) => (inputRefs.current[index] = ref)}
                   style={[
                     styles.otpBox,
-                    { 
+                    {
                       backgroundColor: inputBgColor,
                       color: textColor,
                       borderColor: isOtpComplete ? primaryColor : (isActive ? primaryColor : borderColor),
@@ -190,8 +191,8 @@ export default function OtpScreen() {
             )}
           </View>
 
-          <CustomButton 
-            title={t(STRINGS.auth.verifyOtp)} 
+          <CustomButton
+            title={t(STRINGS.auth.verifyOtp)}
             onPress={handleVerify}
             disabled={!isOtpComplete}
             loading={isVerifying}
@@ -263,7 +264,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   errorPlaceholder: {
-    height: 34, 
+    height: 34,
   },
   timerContainer: {
     flexDirection: 'row',

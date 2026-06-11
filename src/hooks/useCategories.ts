@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Category } from '../core/types/domain';
-import { CATEGORIES } from '../data/mockData';
+import { categoryApi } from '../services/categoryApi';
 
 interface UseCategoriesResult {
   categories: Category[];
@@ -14,23 +14,31 @@ export function useCategories(): UseCategoriesResult {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async (forceRefresh = false) => {
     setIsLoading(true);
     setError(null);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setCategories(CATEGORIES);
+      const response = await categoryApi.getCategories(forceRefresh);
+      if (response.success && response.data) {
+        setCategories(response.data);
+      } else {
+        throw new Error(response.error || 'Failed to load categories');
+      }
     } catch (err: any) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch categories'));
+      setError(err instanceof Error ? err : new Error(err.message || 'Failed to fetch categories'));
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchCategories();
-  }, []);
+  }, [fetchCategories]);
 
-  return { categories, isLoading, error, refresh: fetchCategories };
+  return { 
+    categories, 
+    isLoading, 
+    error, 
+    refresh: () => fetchCategories(true) 
+  };
 }

@@ -3,7 +3,7 @@ import { ScrollView, TouchableOpacity, View, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { ThemedText } from "./ThemedText";
 import { STRINGS, Colors } from "../constants";
-import { useThemeColor } from "../hooks";
+import { useThemeColor, useCategories } from "../hooks";
 import { useTranslation } from "react-i18next";
 import { spacing, radius, typography } from "../core/constants/theme";
 
@@ -39,8 +39,15 @@ const ActiveFilterChips: React.FC<ActiveFilterChipsProps> = ({
   onFilterRemove,
 }) => {
   const { t } = useTranslation();
+  const { categories } = useCategories();
+  const selectedCategory = categories.find(c => c.id === filterCategory);
+  const subCategories = selectedCategory?.subcategories || [];
+
   const hasActiveFilters =
     filterPrice || filterCategory || filterSubCategoryId || filterTag || inStockOnly || outOfStockOnly;
+
+  const categoryNameKey = categories.find(c => c.id === filterCategory)?.nameKey || filterCategory;
+  const subCategoryNameKey = subCategories.find(s => s.id === filterSubCategoryId)?.nameKey || filterSubCategoryId;
 
   const chipBgColor = useThemeColor(
     { light: Colors.light.gray200, dark: Colors.dark.gray800 },
@@ -87,7 +94,7 @@ const ActiveFilterChips: React.FC<ActiveFilterChipsProps> = ({
             <ThemedText
               style={[styles.filterChipText, { color: chipTextColor }]}
             >
-              {t(filterCategory)}
+              {categoryNameKey ? t(categoryNameKey) : ''}
             </ThemedText>
             <Ionicons name="close-circle" size={16} color={closeIconColor} />
           </TouchableOpacity>
@@ -103,7 +110,7 @@ const ActiveFilterChips: React.FC<ActiveFilterChipsProps> = ({
             <ThemedText
               style={[styles.filterChipText, { color: chipTextColor }]}
             >
-              {t(filterSubCategoryId)}
+              {subCategoryNameKey ? t(subCategoryNameKey) : ''}
             </ThemedText>
             <Ionicons name="close-circle" size={16} color={closeIconColor} />
           </TouchableOpacity>

@@ -1,19 +1,4 @@
-/**
- * HomeScreen.tsx
- * Refactored under the QuickBasket Enterprise Architecture Plan.
- *
- * Changes:
- * - Fixed critical syntax error: duplicate/unclosed filteredProducts declaration
- * - Removed navigation: any — uses typed NativeStackScreenProps
- * - Extracted LocationModal to dedicated component
- * - Extracted LanguageModal to dedicated component
- * - Replaced inline language array with SUPPORTED_LANGUAGES constant
- * - Replaced hardcoded "Select Language" with i18n key
- * - Removed all console.log debug statements
- * - Replaced inline spacing values with design tokens where feasible
- * - handleBannerPress correctly typed with Banner domain type
- * - filteredProducts correctly uses ProductService.getProductsByTag
- */
+
 
 import React, { useState, useEffect, useContext, useCallback } from "react";
 import {
@@ -146,28 +131,6 @@ export default function HomeScreen({ navigation }: Props) {
     }
   }, [navigation, productsData]);
 
-  const handleBannerPress = useCallback(
-    (banner: Banner) => {
-      if (banner.linkType === "category" || banner.linkType === "offer") {
-        navigation.navigate("ProductListing", {
-          category:
-            banner.linkType === "category"
-              ? banner.linkTarget
-              : "Special Offers",
-          query:
-            banner.linkType === "offer" ? banner.linkTarget : undefined,
-        });
-      } else if (banner.linkType === "product") {
-        const product =
-          ProductService.getProductById(banner.linkTarget) ??
-          ProductService.getProducts({ page: 1 }).products[0];
-        if (product) {
-          navigation.navigate("ProductDetail", { product });
-        }
-      }
-    },
-    [navigation],
-  );
 
   // ─── Location ──────────────────────────────────────────────────────────────
   const [currentAddress, setCurrentAddress] = useState("");
@@ -266,7 +229,7 @@ export default function HomeScreen({ navigation }: Props) {
   const renderSearch = () => (
     <SearchAndFilterBar
       searchQuery={""}
-      onSearchChange={() => {}}
+      onSearchChange={() => { }}
       onPress={() => navigation.navigate("ProductListing" as never)}
       containerStyle={styles.searchBarContainer}
     />
@@ -295,7 +258,7 @@ export default function HomeScreen({ navigation }: Props) {
             emoji={item.emoji || "📦"} // Fallback if backend doesn't provide emoji
             colorName={item.colorName || "blue100"}
             onPress={() =>
-              navigation.navigate("ProductListing", { categoryId: item.id, category: item.name })
+              navigation.navigate("ProductListing", { categoryId: item.id, category: item.name } as any)
             }
           />
         )}
@@ -328,7 +291,7 @@ export default function HomeScreen({ navigation }: Props) {
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <Ionicons name="search" size={40} color={Colors.light.gray300} />
-      <ThemedText style={styles.emptyTitle}>
+      <ThemedText style={{ fontSize: 16, color: Colors.light.gray500, marginTop: 8, fontWeight: "500" }}>
         {t(STRINGS.homeScreen.noProductsFound)}
       </ThemedText>
     </View>
@@ -343,6 +306,9 @@ export default function HomeScreen({ navigation }: Props) {
       category={item.Category?.name || "Other"}
       weight={item.weight || "1 unit"}
       emoji={item.emoji || "🛍️"} // Assuming backend doesn't send emoji for products, provide a fallback
+      imageUrl={item.imageUrl}
+      brand={item.brand}
+      tags={item.tags}
       inStock={item.stockQuantity > 0}
       quantity={getProductQuantity(item.id)}
       onAdd={() => {
@@ -356,149 +322,11 @@ export default function HomeScreen({ navigation }: Props) {
       onPress={() => navigation.navigate("ProductDetail", { product: item })}
       isGrid={true}
       containerStyle={{ width: "48%", marginBottom: 16 }}
-    // imageUrl={item.imageUrl ? `http://192.168.1.58:5000${item.imageUrl}` : undefined}
-    <EmptyState
-      icon={<Ionicons name="search" size={40} color={Colors.light.gray300} />}
-      title={t(STRINGS.homeScreen.noProductsFound)}
-      containerStyle={styles.emptyContainer}
+      imageUrl={item.imageUrl ? `http://192.168.1.58:5000${item.imageUrl}` : undefined}
     />
   );
 
-  const renderProductItem = useCallback(
-    ({ item }: { item: ReturnType<typeof ProductService.getProductsByTag>[0] }) => (
-      <ProductCard
-        id={item.id}
-        name={item.name}
-        price={`₹${item.price.toFixed(2)}`}
-        mrp={item.mrp ? `₹${item.mrp.toFixed(2)}` : undefined}
-        category={item.category}
-        weight={item.weight}
-        emoji={item.emoji}
-        inStock={item.inStock}
-        quantity={getProductQuantity(item.id)}
-        onAdd={() => {
-          if (getProductQuantity(item.id) > 0) {
-            updateQuantity(item.id, 1);
-          } else {
-            addToCart(item, 1);
-          }
-        }}
-        onRemove={() => updateQuantity(item.id, -1)}
-        onPress={() => navigation.navigate("ProductDetail", { product: item })}
-        isGrid
-        containerStyle={{ width: "48%", marginBottom: spacing.md }}
-      />
-    ),
-    [getProductQuantity, updateQuantity, addToCart, navigation],
-  );
 
-  const renderLanguageModal = () => (
-    <Modal
-      visible={langModalVisible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={() => setLangModalVisible(false)}
-    >
-      <TouchableWithoutFeedback onPress={() => setLangModalVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <TouchableWithoutFeedback>
-            <View style={[styles.bottomSheet, { backgroundColor: sheetBg }]}>
-              <View style={styles.sheetHeader}>
-                <ThemedText style={styles.sheetTitle}>
-                  Select Language
-                </ThemedText>
-                <TouchableOpacity onPress={() => setLangModalVisible(false)}>
-                  <Ionicons
-                    name="close"
-                    size={24}
-                    color={Colors.light.gray400}
-                  />
-                </TouchableOpacity>
-              </View>
-
-              {[
-                { code: "en", label: "English", icon: "A" },
-                { code: "hi", label: "हिंदी", icon: "अ" },
-                { code: "hinglish", label: "Hinglish", icon: "H" },
-                { code: "ml", label: "മലയാളം", icon: "മ" },
-              ].map((lang, index) => (
-                <View key={lang.code}>
-                  <TouchableOpacity
-                    style={styles.sheetOption}
-                    onPress={() => {
-                      setLangModalVisible(false);
-                      setTimeout(async () => {
-                        const startTime = Date.now();
-                        console.log(`[Performance] Starting language switch to ${lang.code}...`);
-
-                        React.startTransition(() => {
-                          i18n.changeLanguage(lang.code).then(() => {
-                            initDispatch(setLanguage(lang.code));
-                            console.log(`[Performance] Language switch completed in ${Date.now() - startTime}ms`);
-                          });
-                        });
-                      }, 300);
-                    }}
-                  >
-                    <View
-                      style={[
-                        styles.iconButton,
-                        {
-                          width: 32,
-                          height: 32,
-                          borderRadius: 16,
-                          backgroundColor: Colors.light.gray100,
-                          justifyContent: "center",
-                          alignItems: "center",
-                        },
-                      ]}
-                    >
-                      <ThemedText
-                        style={{
-                          color: Colors.light.gray800,
-                          fontWeight: "bold",
-                        }}
-                      >
-                        {lang.icon}
-                      </ThemedText>
-                    </View>
-                    <View style={styles.sheetOptionText}>
-                      <ThemedText
-                        style={[
-                          styles.sheetOptionTitle,
-                          initLang?.lange === lang.code && {
-                            color: primaryColor,
-                            fontWeight: "bold",
-                          },
-                        ]}
-                      >
-                        {lang.label}
-                      </ThemedText>
-                    </View>
-                    {initLang?.lange === lang.code && (
-                      <Ionicons
-                        name="checkmark"
-                        size={24}
-                        color={primaryColor}
-                      />
-                    )}
-                  </TouchableOpacity>
-                  {index < 3 && (
-                    <View
-                      style={[
-                        styles.sheetDivider,
-                        { backgroundColor: sheetDivider },
-                      ]}
-                    />
-                  )}
-                </View>
-              ))}
-            </View>
-          </TouchableWithoutFeedback>
-        </View>
-      </TouchableWithoutFeedback>
-    </Modal>
-  );
 
   return (
     <ThemedView style={styles.container}>

@@ -1,12 +1,13 @@
 import axios from 'axios';
 import { storage } from '../utils/storage';
 
-const API_BASE_URL = 'http://192.168.1.58:5000/api/v1'; // Replaced localhost with your actual network IP
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
+    'ngrok-skip-browser-warning': 'true',
   },
   timeout: 10000,
 });

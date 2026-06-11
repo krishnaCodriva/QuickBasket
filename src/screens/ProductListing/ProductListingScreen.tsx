@@ -1,17 +1,33 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, TouchableOpacity, FlatList, TextInput, useColorScheme, Modal, Dimensions, Platform, StatusBar, ActivityIndicator, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, TouchableOpacity, FlatList, useColorScheme, Platform, StatusBar, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ThemedText, ThemedView, CustomButton, ProductCard, ActiveFilterChips, ProductFilterModal } from '../../components';
+import { 
+  ThemedText, 
+  ThemedView, 
+  ProductCard, 
+  ActiveFilterChips, 
+  ProductFilterModal,
+  EmptyState,
+  LoadingState,
+  ScreenHeader,
+  CartHeaderIcon,
+  SearchAndFilterBar,
+  SortModal
+} from '../../components';
 import { Colors, STRINGS } from '../../constants';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import ThemedInput from '../../components/ThemedInput';
-import { useThemeColor } from '../../hooks';
+import { useThemeColor, useCategories } from '../../hooks';
 import { useCart } from '../../context';
 import { useTranslation } from 'react-i18next';
-import { productApi } from '../../services/productApi';
-const BASE_URL = 'http://192.168.1.58:5000';
+import { useProductListing } from './useProductListing';
+import { spacing } from '../../core/constants/theme/spacing';
+import { typography } from '../../core/constants/theme/typography';
+import { radius } from '../../core/constants/theme/radius';
+import { elevation } from '../../core/constants/theme/elevation';
+import type { Product } from '../../core/types/domain';
 
+const BASE_URL = 'http://192.168.1.58:5000';
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 48) / 2; // 2 columns, padding 16 on sides and 16 between columns
 
@@ -29,168 +45,51 @@ export default function ProductListingScreen() {
   const actionBtnBg = useThemeColor({ light: Colors.light.green100, dark: Colors.light.transparentWhite02 }, 'secondaryBackground' as any);
   const bgColor = useThemeColor({ light: Colors.light.gray100, dark: Colors.dark.black }, 'primaryBackground' as any);
   const modalBgColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.secondaryBackground }, 'secondaryBackground' as any);
-  const chipBgColor = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray800 }, 'secondaryBackground' as any);
-  const chipTextColor = useThemeColor({ light: Colors.light.gray800, dark: Colors.dark.gray200 }, 'primaryText' as any);
-  const closeIconColor = useThemeColor({ light: Colors.light.gray500, dark: Colors.dark.gray400 }, 'primaryText' as any);
-  const borderColor = useThemeColor({ light: Colors.light.gray300, dark: Colors.dark.gray700 }, 'primaryText' as any);
 
-  const [searchQuery, setSearchQuery] = useState(query);
-  const [products, setProducts] = useState<any[]>([]);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const { cartItems, addToCart, updateQuantity, removeFromCart, totalItems, subtotal } = useCart();
-  const [isGridFormat, setIsGridFormat] = useState(true);
-
+  const { cartItems, totalItems, subtotal } = useCart();
   const [sortModalVisible, setSortModalVisible] = useState(false);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const { categories } = useCategories();
 
-  const [activeSort, setActiveSort] = useState(STRINGS.productListing.sortOptions.relevance);
-  const [inStockOnly, setInStockOnly] = useState(false);
-  const [outOfStockOnly, setOutOfStockOnly] = useState(false);
+  // Initialize the hook
+  const {
+    products,
+    isLoading,
+    isInitialLoad,
+    isRefreshing,
+    hasMore,
+    searchQuery,
+    setSearchQuery,
+    activeSort,
+    setActiveSort,
+    inStockOnly,
+    setInStockOnly,
+    outOfStockOnly,
+    setOutOfStockOnly,
+    filterPrice,
+    setFilterPrice,
+    filterCategoryId,
+    setFilterCategoryId,
+    filterSubCategoryId,
+    setFilterSubCategoryId,
+    filterTag,
+    setFilterTag,
+    isGridFormat,
+    setIsGridFormat,
+    handleRefresh,
+    handleLoadMore,
+    handleUpdateCart,
+  } = useProductListing({ categoryId, query });
 
-  const [filterPrice, setFilterPrice] = useState<string | null>(null);
-  const [filterCategory, setFilterCategory] = useState<string | null>(category === STRINGS.productListing.allProducts || category === 'Special Offers' ? null : category);
-  const [filterTag, setFilterTag] = useState<string | null>(null);
-
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, []);
-
-  // Initialize data
-  useEffect(() => {
-    loadProducts(1, true);
-  }, [searchQuery, activeSort, inStockOnly, outOfStockOnly, filterPrice, filterCategory, filterTag]);
-
-  const loadProducts = async (pageNumber: number, reset: boolean = false) => {
-    if (isLoading && !reset) return;
-    setIsLoading(true);
-
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-
-    // Debounce the API call
-    timeoutRef.current = setTimeout(async () => {
-      try {
-        let minPrice: number | undefined;
-        let maxPrice: number | undefined;
-
-        if (filterPrice === STRINGS.productListing.priceRanges.under5) {
-          maxPrice = 50;
-        } else if (filterPrice === STRINGS.productListing.priceRanges.fiveToTen) {
-          minPrice = 50;
-          maxPrice = 100;
-        } else if (filterPrice === STRINGS.productListing.priceRanges.over10) {
-          minPrice = 100;
-        }
-
-        let sortBy: 'price_asc' | 'price_desc' | 'latest' | 'popularity' | undefined;
-        if (activeSort === STRINGS.productListing.sortOptions.priceLowHigh) {
-          sortBy = 'price_asc';
-        } else if (activeSort === STRINGS.productListing.sortOptions.priceHighLow) {
-          sortBy = 'price_desc';
-        } else if (activeSort === STRINGS.productListing.sortOptions.newest) {
-          sortBy = 'latest';
-        } else if (activeSort === STRINGS.productListing.sortOptions.relevance) {
-          sortBy = 'popularity';
-        }
-
-        const limit = 20;
-        const offset = (pageNumber - 1) * limit;
-
-        const response = await productApi.getProducts({
-          search: searchQuery || undefined,
-          categoryId: categoryId || undefined,
-          minPrice,
-          maxPrice,
-          tag: filterTag || undefined,
-          sortBy,
-          inStock: inStockOnly ? true : outOfStockOnly ? false : undefined,
-          limit,
-          offset,
-        });
-
-        if (response.success) {
-          // Handle both possible response structures based on the API payload
-          const newProducts = Array.isArray(response.data) ? response.data : (response.data?.products || []);
-          setProducts(reset ? newProducts : [...products, ...newProducts]);
-          setPage(pageNumber);
-          // Check if we fetched a full page, meaning there might be more
-          setHasMore(newProducts.length === limit);
-        }
-      } catch (error) {
-        console.error('Error fetching products:', error);
-      } finally {
-        setIsLoading(false);
-        setIsRefreshing(false);
-        setIsInitialLoad(false);
-      }
-    }, 500);
-  };
-
-  const handleRefresh = () => {
-    setIsRefreshing(true);
-    loadProducts(1, true);
-  };
-
-  const handleLoadMore = () => {
-    if (hasMore && products.length > 0) {
-      loadProducts(page + 1);
-    }
-  };
-
-  const handleUpdateCart = (product: any, delta: number) => {
-    if (delta > 0) {
-      const item = cartItems.find(i => i.id === product.id);
-      if (item) {
-        updateQuantity(product.id, delta);
-      } else {
-        addToCart(product, delta);
-      }
+  let headerTitle = t(STRINGS.productListing.allProducts);
+  if (filterCategoryId) {
+    if (filterCategoryId === categoryId) {
+      headerTitle = t(category);
     } else {
-      updateQuantity(product.id, delta);
+      const currentCategory = categories.find(c => c.id === filterCategoryId);
+      headerTitle = currentCategory ? t(currentCategory.nameKey || currentCategory.name) : t(category);
     }
-  };
-
-
-  const renderHeader = () => (
-    <View style={styles.header}>
-      <TouchableOpacity style={styles.headerButton} onPress={() => navigation.goBack()}>
-        <Ionicons name="arrow-back" size={24} color={iconColor} />
-      </TouchableOpacity>
-      <ThemedText style={styles.headerTitle} numberOfLines={1}>{t(filterCategory || category)}</ThemedText>
-      <TouchableOpacity style={styles.headerButton} onPress={() => navigation.navigate('Cart')}>
-        <Ionicons name="cart-outline" size={26} color={iconColor} />
-        {totalItems > 0 && (
-          <View style={[styles.badge, { borderColor: bgColor }]}>
-            <ThemedText style={styles.badgeText}>{totalItems}</ThemedText>
-          </View>
-        )}
-      </TouchableOpacity>
-    </View>
-  );
-  const actionBtnBg = useThemeColor(
-    { light: Colors.light.green100, dark: Colors.light.transparentWhite02 },
-    "secondaryBackground" as never,
-  );
-  const bgColor = useThemeColor(
-    { light: Colors.light.gray100, dark: Colors.dark.black },
-    "primaryBackground" as never,
-  );
-  const modalBgColor = useThemeColor(
-    { light: Colors.light.white, dark: Colors.dark.secondaryBackground },
-    "secondaryBackground" as never,
-  );
-  const borderColor = useThemeColor(
-    { light: Colors.light.gray300, dark: Colors.dark.gray300 },
-    'primaryText' as never,
-  );
+  }
 
   const renderProductCard = ({ item }: { item: any }) => {
     // Generate full image URL if it's a relative path
@@ -209,6 +108,8 @@ export default function ProductListingScreen() {
         emoji={item.emoji || "📦"}
         inStock={item.stockQuantity > 0 || item.isActive}
         imageUrl={imageUrl}
+        brand={item.brand}
+        tags={item.tags}
         quantity={cartItems.find(i => i.id === item.id)?.quantity || 0}
         onAdd={() => handleUpdateCart(item, 1)}
         onRemove={() => handleUpdateCart(item, -1)}
@@ -220,9 +121,8 @@ export default function ProductListingScreen() {
             : { width: "100%", marginBottom: spacing.md }
         }
       />
-    ),
-    [cartItems, handleUpdateCart, navigation, isGridFormat, t],
-  );
+    );
+  };
 
   const renderEmptyState = () => {
     if (isLoading || isInitialLoad) {
@@ -242,8 +142,7 @@ export default function ProductListingScreen() {
     );
   };
 
-  const isSortActive =
-    activeSort !== STRINGS.productListing.sortOptions.relevance;
+  const isSortActive = activeSort !== STRINGS.productListing.sortOptions.relevance;
 
   // ─── Render ────────────────────────────────────────────────────────────────
 

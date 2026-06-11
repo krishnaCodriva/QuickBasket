@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, TouchableOpacity } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { ThemedText } from "./ThemedText";
 import { TranslatedText } from "./TranslatedText";
 import { Colors, STRINGS } from "../constants";
@@ -19,6 +19,9 @@ type Props = {
   inStock?: boolean;
   isGrid?: boolean;
   containerStyle?: any;
+  imageUrl?: string;
+  brand?: string;
+  tags?: any[];
   onAdd: () => void;
   onRemove: () => void;
   onPress?: () => void;
@@ -36,6 +39,9 @@ const ProductCard = ({
   inStock = true,
   isGrid = false,
   containerStyle,
+  imageUrl,
+  brand,
+  tags,
   onAdd,
   onRemove,
   onPress,
@@ -106,6 +112,14 @@ const ProductCard = ({
     { light: Colors.light.white, dark: Colors.light.white },
     "white" as any,
   );
+  const tagBg = useThemeColor(
+    { light: Colors.light.green100, dark: Colors.dark.green900 },
+    "secondaryBackground" as any
+  );
+  const tagColor = useThemeColor(
+    { light: Colors.light.green800, dark: Colors.dark.green100 },
+    "primary" as any
+  );
 
   return (
     <TouchableOpacity
@@ -142,26 +156,54 @@ const ProductCard = ({
             color={isFavorite ? activeHeartColor : hearColor}
           />
         </TouchableOpacity>
-        <ThemedText style={[styles.emoji, isGrid && styles.gridEmoji]}>
-          {emoji}
-        </ThemedText>
 
-        <View style={styles.pillsContainer}>
-          <View style={[styles.pill, { backgroundColor: cardBg }]}>
-            <TranslatedText
-              numberOfLines={1}
-              style={[styles.pillText, { color: categoryColor }]}
-              textKey={category}
-            />
-          </View>
-          <View style={[styles.pill, { backgroundColor: cardBg }]}>
-            <ThemedText
-              numberOfLines={1}
-              style={[styles.pillText, { color: categoryColor }]}
-            >
-              {weight}
+        {!!brand && (
+          <View style={[styles.brandBadge, { backgroundColor: cardBg }]}>
+            <ThemedText style={[styles.brandBadgeText, { color: nameColor }]} numberOfLines={1}>
+              {brand}
             </ThemedText>
           </View>
+        )}
+        
+        {imageUrl ? (
+          <Image 
+            source={{ uri: imageUrl }} 
+            style={[styles.productImage, isGrid && styles.gridProductImage]} 
+            resizeMode="contain" 
+          />
+        ) : (
+          <ThemedText style={[styles.emoji, isGrid && styles.gridEmoji]}>
+            {emoji}
+          </ThemedText>
+        )}
+
+        <View style={styles.pillsContainer}>
+          {tags && tags.length > 0 && tags.slice(0, 1).map((tag, idx) => (
+            <View key={`tag-${idx}`} style={[styles.pill, { backgroundColor: tagBg }]}>
+              <ThemedText style={[styles.pillText, { color: tagColor }]} numberOfLines={1}>
+                {tag.name || tag}
+              </ThemedText>
+            </View>
+          ))}
+          {!!category && (
+            <View style={[styles.pill, { backgroundColor: cardBg }]}>
+              <TranslatedText
+                numberOfLines={1}
+                style={[styles.pillText, { color: categoryColor }]}
+                textKey={category}
+              />
+            </View>
+          )}
+          {!!weight && (
+            <View style={[styles.pill, { backgroundColor: cardBg }]}>
+              <ThemedText
+                numberOfLines={1}
+                style={[styles.pillText, { color: categoryColor }]}
+              >
+                {weight}
+              </ThemedText>
+            </View>
+          )}
         </View>
 
         {!inStock && (
@@ -339,6 +381,14 @@ const styles = StyleSheet.create({
   gridEmoji: {
     fontSize: 64,
   },
+  productImage: {
+    width: "70%",
+    height: "70%",
+  },
+  gridProductImage: {
+    width: "60%",
+    height: "60%",
+  },
   infoContainer: {
     paddingTop: spacing.smd,
     flex: 1,
@@ -356,6 +406,21 @@ const styles = StyleSheet.create({
   gridName: {
     fontSize: typography.size.smmd,
     minHeight: 36,
+  },
+  brandBadge: {
+    position: 'absolute',
+    top: spacing.sm,
+    left: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.md,
+    zIndex: zIndex.elevated,
+    ...elevation.sm,
+  },
+  brandBadgeText: {
+    fontSize: typography.size.xxs,
+    fontWeight: typography.weight.bold,
+    textTransform: 'uppercase',
   },
   bottomRow: {
     flexDirection: "row",

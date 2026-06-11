@@ -12,14 +12,22 @@ export interface Product {
   name: string;
   price: number;
   mrp: number;
-  weight: string;
-  emoji: string;
-  categoryId: string;
+  weight?: string;
+  emoji?: string;
+  categoryId?: string;
   subCategoryId?: string;
-  category: string; // legacy string representation for UI
-  inStock: boolean;
-  tags?: string[];
+  category?: string; // legacy string representation for UI
+  inStock?: boolean;
+  tags?: any[];
   brand?: string;
+  // New fields from API
+  description?: string;
+  stockQuantity?: number;
+  imageUrl?: string;
+  brandLogoUrl?: string | null;
+  gallery?: string[] | null;
+  storeId?: string;
+  relatedProducts?: Partial<Product>[];
 }
 
 // ─── Cart ────────────────────────────────────────────────────────────────────
@@ -117,19 +125,32 @@ export type CategoryColorName =
   | 'indigo100'
   | 'cyan100';
 
-export interface Category {
-  id: string;
-  /** i18n key for the category name */
-  nameKey: string;
-  emoji: string;
-  colorName: CategoryColorName;
-}
-
 export interface SubCategory {
   id: string;
-  categoryId: string; // foreign key to Category.id
-  nameKey: string;
+  parentId: string; // Maps to parent Category.id
+  name: string;
+  slug: string;
+  description?: string;
   imageUrl: string;
+  isActive?: boolean;
+  // Legacy fields for UI
+  nameKey?: string;
+  categoryId?: string; 
+}
+
+export interface Category {
+  id: string;
+  parentId: string | null;
+  name: string;
+  slug: string;
+  description?: string;
+  imageUrl?: string;
+  isActive?: boolean;
+  subcategories?: SubCategory[];
+  // Legacy fields for UI compatibility
+  nameKey?: string;
+  emoji?: string;
+  colorName?: CategoryColorName;
 }
 
 // ─── Banner ───────────────────────────────────────────────────────────────────
