@@ -67,20 +67,22 @@ function BannerCarousel({ banners = DEFAULT_BANNERS, onBannerPress }: Props) {
     index,
   });
 
-  const renderItem = ({ item, index }: { item: BannerType; index: number }) => (
-    <TouchableOpacity
-      activeOpacity={1}
-      onPress={() => onBannerPress && onBannerPress(item)}
-      style={{ marginRight: BANNER_PADDING }}
-    >
-      <Image
-        source={item.source}
-        style={[styles.banner, { backgroundColor: bannerBgColor }]}
-        contentFit="cover"
-        cachePolicy="memory-disk"
-      />
-    </TouchableOpacity>
-  );
+  const renderItem = ({ item, index }: { item: BannerType; index: number }) => {
+    return (
+      <TouchableOpacity
+        activeOpacity={1}
+        onPress={() => onBannerPress && onBannerPress(item)}
+        style={{ marginRight: BANNER_PADDING }}
+      >
+        <Image
+          source={item.source}
+          style={[styles.banner, { backgroundColor: bannerBgColor }]}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+        />
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={[styles.container, { marginHorizontal: -BANNER_PADDING }]}>

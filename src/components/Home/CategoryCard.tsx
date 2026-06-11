@@ -3,15 +3,17 @@ import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { ThemedText } from '../ThemedText';
 import { useThemeColor } from '../../hooks';
+import { Image } from 'expo-image';
 
 type Props = {
   name: string;
-  emoji: string;
+  emoji?: string;
+  imageUrl?: string;
   colorName: keyof typeof Colors.light & keyof typeof Colors.dark;
   onPress: () => void;
 };
 
-const CategoryCard = ({ name, emoji, colorName, onPress }: Props) => {
+const CategoryCard = ({ name, emoji, imageUrl, colorName, onPress }: Props) => {
   const bgColor = useThemeColor({}, colorName);
   const innerBg = useThemeColor({}, 'transparentWhite04');
 
@@ -19,10 +21,17 @@ const CategoryCard = ({ name, emoji, colorName, onPress }: Props) => {
     <TouchableOpacity style={styles.container} onPress={onPress}>
       {/* Outer Circle */}
       <View style={[styles.circle, { backgroundColor: bgColor }]}>
-        {/* Inner Circle */}
-        <View style={[styles.innerCircle, { backgroundColor: innerBg }]}>
-          <ThemedText style={styles.emoji}>{emoji}</ThemedText>
-        </View>
+        {imageUrl ? (
+          <Image 
+            source={{ uri: imageUrl }} 
+            style={{ width: 44, height: 44 }} 
+            contentFit="contain" 
+          />
+        ) : (
+          <View style={[styles.innerCircle, { backgroundColor: innerBg }]}>
+            <ThemedText style={styles.emoji}>{emoji}</ThemedText>
+          </View>
+        )}
       </View>
       <ThemedText style={styles.name} numberOfLines={1}>{name}</ThemedText>
     </TouchableOpacity>

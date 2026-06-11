@@ -10,6 +10,7 @@ import {
   ScrollView,
   Modal,
   TouchableWithoutFeedback,
+  ActivityIndicator,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useThemeColor } from "../../hooks";
@@ -21,6 +22,8 @@ import {
 } from "../../components/Home";
 import { ThemeDimension, Colors, STRINGS } from "../../constants";
 import { MOCK_PRODUCTS } from "../../data/mockData";
+import { HomeApi } from "../../services/api/home.api";
+import { Banner, Category, Product } from "../../types/api";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import { setLanguage } from "../../context/localizationContext/localeAction";
@@ -141,52 +144,82 @@ export default function HomeScreen({ navigation }: Props) {
   );
 
   const { cartItems, addToCart, updateQuantity, totalItems } = useCart();
-  const [selectedTag, setSelectedTag] = useState(
-    t(STRINGS.homeScreen.tags.all),
-  );
+  const [selectedTag, setSelectedTag] = useState<string>("");
+
+  const [apiCategories, setApiCategories] = useState<Category[]>([]);
+  const [apiBanners, setApiBanners] = useState<Banner[]>([]);
+  const [apiProducts, setApiProducts] = useState<Product[]>([]);
+  const [apiTags, setApiTags] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (selectedTag === t(STRINGS.homeScreen.tags.all)) {
-      setSelectedTag(t(STRINGS.homeScreen.tags.all));
-    }
-  }, [t]);
+    const loadHomeData = async () => {
+      setIsLoading(true);
+      const res = await HomeApi.getHomeFeed(1, 10);
+      // console.log("response  : ", JSON.stringify(res))
 
-  const tagsList = [
-    t(STRINGS.homeScreen.tags.all),
-    t(STRINGS.homeScreen.tags.fresh),
-    t(STRINGS.homeScreen.tags.trending),
-    t(STRINGS.homeScreen.tags.dailyEssentials),
-    t(STRINGS.homeScreen.tags.fastDelivery),
-    t(STRINGS.homeScreen.tags.recommended),
-    t(STRINGS.homeScreen.tags.bestSelling),
-    t(STRINGS.homeScreen.tags.newArrivals),
-  ];
+      if (res?.success) {
+        // Extract base URL for images (remove /api/v1)
+        const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.58:5000/api/v1';
+        const baseUrl = apiUrl.replace('/api/v1', '');
 
-  const filteredProducts = MOCK_PRODUCTS.filter((p) => {
-    if (selectedTag === t(STRINGS.homeScreen.tags.all)) return true;
+        // Map Banners
+        const mappedBanners = (res?.data?.banners || []).map((b: any) => ({
+          id: b.id,
+          source: { uri: baseUrl + b.imageUrl },
+          linkType: b.redirectType,
+          linkTarget: b.redirectId || b.redirectUrl,
+        }));
 
-    // Mock tag filtering since mock products don't have tags array
-    if (selectedTag === t(STRINGS.homeScreen.tags.fresh)) {
-      return (
-        p.category === STRINGS.common.categories.fruits ||
-        p.category === STRINGS.common.categories.veg
-      );
-    }
-    if (selectedTag === t(STRINGS.homeScreen.tags.dailyEssentials)) {
-      return (
-        p.category === STRINGS.common.categories.dairy ||
-        p.category === STRINGS.common.categories.bakery
-      );
-    }
-    if (
-      selectedTag === t(STRINGS.homeScreen.tags.trending) ||
-      selectedTag === t(STRINGS.homeScreen.tags.bestSelling)
-    ) {
-      return p.price > 5;
-    }
+        // Map Categories (we will fallback to emoji if imageUrl fails)
+        const mappedCategories = (res.data.categories || []).map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          imageUrl: baseUrl + c.imageUrl,
+          emoji: "📦", // Fallback if needed
+          colorName: "gray100"
+        }));
 
-    // Fallback for other tags
-    return p.tags?.includes(selectedTag) || parseInt(p.id, 10) % 2 === 0;
+        // Map Products
+        const mappedProducts = (res.data.products || []).map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          price: Number(p.price || 0),
+          mrp: p.compareAtPrice ? Number(p.compareAtPrice) : undefined,
+          category: p.Category?.name || '',
+          weight: "1 pc", // Fallback or map from attributes if it exists
+          imageUrl: baseUrl + p.imageUrl,
+          inStock: p.isActive && p.stockQuantity > 0,
+          tags: (p.tags || []).map((t: any) => t.name), // Extract tag names for filtering
+        }));
+
+        // Map Tags for QuickFilters: Safely handle if backend sends it as an object or array
+        let rawTags = res.data.tags || [];
+        if (!Array.isArray(rawTags) && typeof rawTags === 'object') {
+          rawTags = Object.values(rawTags);
+        }
+        const backendTags = rawTags.map((t: any) => t.name).filter(Boolean);
+        console.log("Parsed backend tags:", backendTags);
+
+        setApiBanners(mappedBanners);
+        setApiCategories(mappedCategories);
+        setApiProducts(mappedProducts);
+        setApiTags(backendTags);
+      }
+      setIsLoading(false);
+    };
+    loadHomeData();
+  }, []);
+
+  // REMOVED MOCK DATA FALLBACK: strictly use what backend provides
+  const displayProducts = apiProducts;
+
+  const filteredProducts = displayProducts.filter((p: any) => {
+    // If no tag is selected, show all products
+    if (!selectedTag) return true;
+    
+    // Only use backend tags filtering
+    return p.tags?.includes(selectedTag);
   });
 
   const getProductQuantity = (id: string) => {
@@ -203,11 +236,11 @@ export default function HomeScreen({ navigation }: Props) {
       });
     } else if (banner.linkType === "product") {
       const product =
-        MOCK_PRODUCTS.find((p) => p.id === banner.linkTarget) ||
-        MOCK_PRODUCTS[0];
+        displayProducts.find((p: any) => p.id === banner.linkTarget) ||
+        displayProducts[0];
       navigation.navigate("ProductDetail", { product });
     }
-  }, [navigation]);
+  }, [navigation, displayProducts]);
 
   const [currentAddress, setCurrentAddress] = useState("Select Location");
   const [locationModalVisible, setLocationModalVisible] = useState(false);
@@ -310,54 +343,63 @@ export default function HomeScreen({ navigation }: Props) {
     </TouchableOpacity>
   );
 
-  const renderCategories = () => (
-    <View style={styles.section}>
-      <View style={styles.sectionHeaderRow}>
-        <ThemedText type="subtitle">
-          {t(STRINGS.common.categories.browseCategories)}
-        </ThemedText>
-        <TouchableOpacity onPress={() => navigation.navigate("CategoriesTab")}>
-          <ThemedText style={[styles.seeAllText, { color: seeAllColor }]}>
-            {t(STRINGS.common.seeAll)}
+  const renderCategories = () => {
+    const displayCategories = apiCategories;
+    return (
+      <View style={styles.section}>
+        <View style={styles.sectionHeaderRow}>
+          <ThemedText type="subtitle">
+            {t(STRINGS.common.categories.browseCategories)}
           </ThemedText>
-        </TouchableOpacity>
-      </View>
-      <FlatList
-        data={CATEGORIES}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <CategoryCard
-            name={t(item.name)}
-            emoji={item.emoji}
-            colorName={item.colorName}
-            onPress={() =>
-              navigation.navigate("ProductListing", { category: item.name })
-            }
-          />
-        )}
-      />
-    </View>
-  );
-
-  const renderListHeader = () => (
-    <View>
-      {renderSearch()}
-      <BannerCarousel
-        banners={HOME_BANNERS as any}
-        onBannerPress={handleBannerPress}
-      />
-      {renderCategories()}
-      <View style={{ marginBottom: 16 }}>
-        <QuickFilters
-          tags={tagsList}
-          selectedTag={selectedTag}
-          onSelectTag={setSelectedTag}
+          <TouchableOpacity onPress={() => navigation.navigate("CategoriesTab")}>
+            <ThemedText style={[styles.seeAllText, { color: seeAllColor }]}>
+              {t(STRINGS.common.seeAll)}
+            </ThemedText>
+          </TouchableOpacity>
+        </View>
+        <FlatList
+          data={displayCategories}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }: { item: any }) => (
+            <CategoryCard
+              name={t(item.name)}
+              emoji={item.emoji || "📦"}
+              colorName={item.colorName || "gray100"}
+              onPress={() =>
+                navigation.navigate("ProductListing", { category: item.name })
+              }
+            />
+          )}
         />
       </View>
-    </View>
-  );
+    );
+  };
+
+  const renderListHeader = () => {
+    const displayBanners = apiBanners;
+    return (
+      <View>
+        {renderSearch()}
+        {displayBanners.length > 0 && (
+          <BannerCarousel
+            key={`banners-${displayBanners.length}-${displayBanners[0]?.id}`}
+            banners={displayBanners as any}
+            onBannerPress={handleBannerPress}
+          />
+        )}
+        {apiCategories.length > 0 && renderCategories()}
+        <View style={{ marginBottom: 16 }}>
+          <QuickFilters
+            tags={apiTags}
+            selectedTag={selectedTag}
+            onSelectTag={(tag) => setSelectedTag(prev => prev === tag ? "" : tag)}
+          />
+        </View>
+      </View>
+    );
+  };
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
@@ -368,30 +410,36 @@ export default function HomeScreen({ navigation }: Props) {
     </View>
   );
 
-  const renderProductItem = ({ item }: { item: any }) => (
-    <ProductCard
-      id={item.id}
-      name={item.name}
-      price={`₹${item.price.toFixed(2)}`}
-      mrp={item.mrp ? `₹${item.mrp.toFixed(2)}` : undefined}
-      category={item.category}
-      weight={item.weight}
-      emoji={item.emoji}
-      inStock={item.inStock}
-      quantity={getProductQuantity(item.id)}
-      onAdd={() => {
-        if (getProductQuantity(item.id) > 0) {
-          updateQuantity(item.id, 1);
-        } else {
-          addToCart(item, 1);
-        }
-      }}
-      onRemove={() => updateQuantity(item.id, -1)}
-      onPress={() => navigation.navigate("ProductDetail", { product: item })}
-      isGrid={true}
-      containerStyle={{ width: "48%", marginBottom: 16 }}
-    />
-  );
+  const renderProductItem = ({ item }: { item: any }) => {
+    // Safely parse price and mrp in case they come back as strings or are undefined from the backend
+    const itemPrice = typeof item.price === 'number' ? item.price : parseFloat(item.price || 0);
+    const itemMrp = typeof item.mrp === 'number' ? item.mrp : parseFloat(item.mrp || 0);
+
+    return (
+      <ProductCard
+        id={item.id}
+        name={item.name}
+        price={`₹${itemPrice.toFixed(2)}`}
+        mrp={item.mrp ? `₹${itemMrp.toFixed(2)}` : undefined}
+        category={item.category}
+        weight={item.weight}
+        emoji={item.emoji}
+        inStock={item.inStock}
+        quantity={getProductQuantity(item.id)}
+        onAdd={() => {
+          if (getProductQuantity(item.id) > 0) {
+            updateQuantity(item.id, 1);
+          } else {
+            addToCart(item, 1);
+          }
+        }}
+        onRemove={() => updateQuantity(item.id, -1)}
+        onPress={() => navigation.navigate("ProductDetail", { product: item })}
+        isGrid={true}
+        containerStyle={{ width: "48%", marginBottom: 16 }}
+      />
+    );
+  };
 
   const renderLocationModal = () => (
     <Modal
@@ -506,7 +554,7 @@ export default function HomeScreen({ navigation }: Props) {
                       setTimeout(async () => {
                         const startTime = Date.now();
                         console.log(`[Performance] Starting language switch to ${lang.code}...`);
-                        
+
                         React.startTransition(() => {
                           i18n.changeLanguage(lang.code).then(() => {
                             initDispatch(setLanguage(lang.code));
@@ -583,17 +631,23 @@ export default function HomeScreen({ navigation }: Props) {
         backgroundColor={statusBarBg}
       />
       {renderHeader()}
-      <FlatList
-        data={filteredProducts}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        columnWrapperStyle={{ justifyContent: "space-between" }}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        ListHeaderComponent={renderListHeader()}
-        ListEmptyComponent={renderEmptyState()}
-        renderItem={renderProductItem}
-      />
+      {isLoading ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color={primaryColor} />
+        </View>
+      ) : (
+        <FlatList
+          data={filteredProducts}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          columnWrapperStyle={{ justifyContent: "space-between" }}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+          ListHeaderComponent={renderListHeader()}
+          ListEmptyComponent={renderEmptyState()}
+          renderItem={renderProductItem}
+        />
+      )}
       {renderLocationModal()}
       {renderLanguageModal()}
     </ThemedView>

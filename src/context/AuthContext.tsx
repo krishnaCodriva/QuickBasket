@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState } from 'react';
-
-export type User = {
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { AuthApi } from '../services/api/auth.api';
+import * as SecureStore from 'expo-secure-store';export type User = {
   id: string;
   name: string;
   email: string;
@@ -20,7 +20,27 @@ const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
 
+  useEffect(() => {
+    const initializeSession = async () => {
+      try {
+        const existingToken = await SecureStore.getItemAsync('sessionToken');
+        if (!existingToken) {
+          console.log('No session token found. Creating guest session...');
+          await AuthApi.createGuestSession();
+        } else {
+          console.log('Session token exists.');
+        }
+      } catch (error) {
+        console.error('Failed to initialize session:', error);
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+
+    initializeSession();
+  }, []);
   const verifyOtp = async (phone: string, otp: string) => {
     return new Promise<void>((resolve, reject) => {
       setTimeout(() => {
@@ -74,7 +94,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <AuthContext.Provider value={{ user, verifyOtp, signup, logout, updateProfile }}>
-      {children}
+      {!isInitializing && children}
     </AuthContext.Provider>
   );
 };
