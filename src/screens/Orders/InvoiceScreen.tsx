@@ -364,8 +364,9 @@ export default function InvoiceScreen() {
             <CustomButton 
               title={isSharing ? "Preparing PDF..." : t(STRINGS.invoiceScreen.share)} 
               icon="share-variant"
+              type="secondary"
               onPress={handleShare} 
-              style={[styles.actionBtn, { backgroundColor: cardColor, borderColor: primaryColor, borderWidth: 1 }]}
+              style={[styles.actionBtn, { borderColor: primaryColor, borderWidth: 1 }]}
               loading={isSharing}
             />
           </View>
