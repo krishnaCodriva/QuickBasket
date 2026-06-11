@@ -260,7 +260,28 @@ export default function HomeScreen({ navigation }: Props) {
           <ThemedText style={[styles.seeAllText, { color: seeAllColor }]}>
             {t(STRINGS.common.seeAll)}
           </ThemedText>
-        </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate("CategoriesTab")}>
+            <ThemedText style={[styles.seeAllText, { color: seeAllColor }]}>
+              {t(STRINGS.common.seeAll)}
+            </ThemedText>
+          </TouchableOpacity>
+        </View>
+        <FlatList
+          data={displayCategories}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }: { item: any }) => (
+            <CategoryCard
+              name={t(item.name)}
+              emoji={item.emoji || "📦"}
+              colorName={item.colorName || "gray100"}
+              onPress={() =>
+                navigation.navigate("ProductListing", { category: item.name })
+              }
+            />
+          )}
+        />
       </View>
       <FlatList
         data={categories}
@@ -299,8 +320,8 @@ export default function HomeScreen({ navigation }: Props) {
           onSelectTag={setSelectedTagId}
         />
       </View>
-    </View>
-  );
+    );
+  };
 
   const renderEmptyState = () => (
     <EmptyState

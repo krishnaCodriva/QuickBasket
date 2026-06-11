@@ -3,11 +3,13 @@ import React from 'react';
 import { View, StyleSheet, TouchableOpacity, StyleProp, ViewStyle } from 'react-native';
 import { ThemedText } from '../ThemedText';
 import { useThemeColor } from '../../hooks';
+import { Image } from 'expo-image';
 import { spacing, typography, radius } from '../../core/constants/theme';
 
 type Props = {
   name: string;
-  emoji: string;
+  emoji?: string;
+  imageUrl?: string;
   colorName: keyof typeof Colors.light & keyof typeof Colors.dark;
   onPress: () => void;
   isSelected?: boolean;

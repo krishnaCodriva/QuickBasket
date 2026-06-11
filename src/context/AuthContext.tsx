@@ -41,6 +41,24 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  useEffect(() => {
+    const initializeSession = async () => {
+      try {
+        const existingToken = await SecureStore.getItemAsync('sessionToken');
+        if (!existingToken) {
+          console.log('No session token found. Creating guest session...');
+          await AuthApi.createGuestSession();
+        } else {
+          console.log('Session token exists.');
+        }
+      } catch (error) {
+        console.error('Failed to initialize session:', error);
+      } finally {
+        setIsInitializing(false);
+      }
+    };
 
   const verifyOtp = useCallback(async (phone: string, otp: string) => {
     return new Promise<void>((resolve, reject) => {
