@@ -6,10 +6,12 @@ import {
   ActivityIndicator,
   Linking,
   Alert,
+  ScrollView,
 } from "react-native";
 import { ThemedView, ThemedText, CustomButton } from "../../components";
 import { STRINGS, ThemeDimension, Colors } from "../../constants";
 import * as Location from "expo-location";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StorageService, STORAGE_KEYS } from "../../services";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useThemeColor } from "../../hooks";
@@ -26,6 +28,7 @@ export default function LocationScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(false);
   const [viewState, setViewState] = useState<ViewState>("initial");
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
 
   const iconColor = useThemeColor(
     { light: Colors.light.black, dark: Colors.light.white },
@@ -346,9 +349,21 @@ export default function LocationScreen({ navigation }: Props) {
 
   return (
     <ThemedView style={styles.container}>
-      {viewState === "initial" && renderInitialState()}
-      {viewState === "denied" && renderDeniedState()}
-      {viewState === "failed" && renderFailedState()}
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContainer,
+          {
+            paddingTop: Math.max(insets.top + spacing.md, spacing.xxxl),
+            paddingBottom: Math.max(insets.bottom + spacing.sm, spacing.smd),
+          },
+        ]}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
+        {viewState === "initial" && renderInitialState()}
+        {viewState === "denied" && renderDeniedState()}
+        {viewState === "failed" && renderFailedState()}
+      </ScrollView>
     </ThemedView>
   );
 }
@@ -357,10 +372,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  scrollContainer: {
+    flexGrow: 1,
+  },
   contentContainer: {
     flex: 1,
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xxxl,
   },
   headerRow: {
     flexDirection: "row",
@@ -432,7 +449,7 @@ const styles = StyleSheet.create({
   bottomContainer: {
     flex: 1,
     justifyContent: "flex-end",
-    marginBottom: spacing.smd,
+    marginBottom: 0,
   },
 
   textLinkButton: {
