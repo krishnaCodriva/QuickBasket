@@ -46,9 +46,9 @@ export default function CartItemCard({ item, onUpdateQuantity, onRemove, readOnl
 
           <View style={styles.itemDetails}>
             <ThemedText style={styles.itemName} numberOfLines={2}>{item.name}</ThemedText>
-            <ThemedText style={[styles.itemPrice, { color: primaryColor }]}>₹{item.price.toFixed(2)}</ThemedText>
+            <ThemedText style={[styles.itemPrice, { color: primaryColor }]}>₹{Number(item.price || 0).toFixed(2)}</ThemedText>
             {item.inStock ? (
-              <ThemedText style={styles.itemSubtotal} useSecondaryText>{t(STRINGS.cartScreen.itemSubtotal)}: ₹{(item.price * item.quantity).toFixed(2)}</ThemedText>
+              <ThemedText style={styles.itemSubtotal} useSecondaryText>{t(STRINGS.cartScreen.itemSubtotal)}: ₹{(Number(item.price || 0) * item.quantity).toFixed(2)}</ThemedText>
             ) : (
               <View style={[styles.outOfStockBadge, { backgroundColor: dangerColor }]}>
                 <ThemedText style={styles.outOfStockText}>{t(STRINGS.cartScreen.outOfStockBadge)}</ThemedText>

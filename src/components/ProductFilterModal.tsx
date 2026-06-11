@@ -7,7 +7,7 @@ import { STRINGS, Colors } from '../constants';
 import { useThemeColor } from '../hooks';
 import { useTranslation } from 'react-i18next';
 import { spacing, radius, typography } from '../core/constants/theme';
-import { useCategories, useSubCategories } from '../hooks';
+import { useCategories } from '../hooks';
 
 interface ProductFilterModalProps {
   visible: boolean;
@@ -46,7 +46,8 @@ const ProductFilterModal: React.FC<ProductFilterModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const { categories } = useCategories();
-  const { subCategories } = useSubCategories(filterCategoryId);
+  const selectedCategory = categories.find(c => c.id === filterCategoryId);
+  const subCategories = selectedCategory?.subcategories || [];
   
   const iconColor = useThemeColor({ light: Colors.light.black, dark: Colors.light.white }, 'primaryText' as any);
   const primaryColor = useThemeColor({}, 'primary');

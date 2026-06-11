@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect , useMemo,
   useCallback} from 'react';
 import { storage } from '../utils/storage';
 import { sessionService } from '../services/session/sessionService';
+import { authService } from '../services/auth/authService';
 import type { User } from '../core/types/domain';
 
 export type User = {
@@ -15,6 +16,7 @@ export type User = {
 type AuthContextType = {
   user: User | null;
   isLoading: boolean; // Added for initial bootstrap state
+  sendOtp: (phone: string) => Promise<void>;
   verifyOtp: (phone: string, otp: string) => Promise<void>;
   logout: () => void;
   /** Kept for Google mock sign-in flow */
@@ -60,17 +62,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const verifyOtp = useCallback(async (phone: string, otp: string) => {
-    return new Promise<void>((resolve, reject) => {
-      setTimeout(() => {
-        if (otp === '123456') {
-          // mock valid OTP
-          setUser({ id: `u_${Date.now()}`, name: 'Verified User', email: phone });
-          resolve();
-        } else {
-          reject(new Error('Invalid OTP. Please try again.'));
-        }
-      }, 1000);
-    });
+    try {
+      const data = await authService.verifyOtp(phone, otp);
+      // Backend returns: data.data.accessToken and data.data.user
+      const token = data?.data?.accessToken;
+      const verifiedUser = data?.data?.user;
+
+      if (token && verifiedUser) {
+        await storage.setUserToken(token); // Save secure token
+        setUser(verifiedUser);             // Set user state
+      } else {
+        throw new Error('Invalid response from server');
+      }
+    } catch (error: any) {
+      const msg = error.response?.data?.message || 'Invalid OTP. Please try again.';
+      throw new Error(msg);
+    }
+  }, []);
+
+  const sendOtp = useCallback(async (phone: string) => {
+    // Calling the service layer
+    await authService.sendOtp(phone);
   }, []);
 
   const signup = useCallback(
@@ -115,12 +127,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const contextValue = useMemo(
-    () => ({ user, verifyOtp, signup, updateProfile, logout }),
-    [user, verifyOtp, signup, updateProfile, logout],
+    () => ({ user, isLoading, sendOtp, verifyOtp, signup, updateProfile, logout }),
+    [user, isLoading, sendOtp, verifyOtp, signup, updateProfile, logout],
   );
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, verifyOtp, signup, logout, updateProfile }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

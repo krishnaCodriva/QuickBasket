@@ -15,7 +15,7 @@ import { useTranslation } from "react-i18next";
 import { ThemedView, ThemedText, CartHeaderIcon } from "../../components";
 import { CategoryCard } from "../../components/Home";
 import { Colors, STRINGS } from "../../constants";
-import { useThemeColor, useCategories, useSubCategories } from "../../hooks";
+import { useThemeColor, useCategories } from "../../hooks";
 import { spacing, radius, typography } from "../../core/constants/theme";
 import type { Category, SubCategory } from "../../core/types/domain";
 import type { TabParamList } from "../../core/types/navigation";
@@ -43,8 +43,9 @@ export default function CategoriesScreen() {
     }
   }, [categories, selectedCategoryId, route.params?.categoryId, navigation]);
 
-  const { subCategories, isLoading: subCategoriesLoading } =
-    useSubCategories(selectedCategoryId);
+  const selectedCategory = categories.find(c => c.id === selectedCategoryId);
+  const subCategories = selectedCategory?.subcategories || [];
+  const subCategoriesLoading = false;
 
   const bgColor = useThemeColor(
     { light: Colors.light.white, dark: Colors.dark.primaryBackground },
@@ -72,7 +73,7 @@ export default function CategoriesScreen() {
 
   const handleSubCategoryPress = (subCategory: SubCategory) => {
     navigation.navigate("ProductListing", {
-      categoryId: subCategory.categoryId,
+      categoryId: subCategory.parentId || selectedCategoryId,
       subCategoryId: subCategory.id,
     });
   };
@@ -82,8 +83,8 @@ export default function CategoriesScreen() {
     return (
       <CategoryCard
         name={t(item.nameKey)}
-        emoji={item.emoji}
-        colorName={item.colorName}
+        emoji={item.emoji || "📦"}
+        colorName={item.colorName || "blue100"}
         isSelected={isSelected}
         onPress={() => setSelectedCategoryId(item.id)}
         containerStyle={{
@@ -106,7 +107,7 @@ export default function CategoriesScreen() {
         style={[styles.subCategoryImage, { backgroundColor: imageBgColor }]}
       />
       <ThemedText style={styles.subCategoryName} numberOfLines={2}>
-        {t(item.nameKey)}
+        {t(item.nameKey || item.name)}
       </ThemedText>
     </TouchableOpacity>
   );

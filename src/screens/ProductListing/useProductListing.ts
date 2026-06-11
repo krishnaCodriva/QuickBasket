@@ -11,9 +11,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { STRINGS } from '../../constants';
-import { ProductService } from '../../services';
+import { productApi } from '../../services/productApi';
 import { useCart } from '../../context';
-import { MOCK_PRODUCTS } from '../../data/mockData';
 import type { Product } from '../../core/types/domain';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -26,7 +25,7 @@ export interface ProductListingParams {
 
 export interface UseProductListingReturn {
   // Data
-  products: typeof MOCK_PRODUCTS;
+  products: any[];
   // Loading states
   isLoading: boolean;
   isInitialLoad: boolean;
@@ -71,7 +70,7 @@ export function useProductListing(params: ProductListingParams): UseProductListi
 
   // ─── State ──────────────────────────────────────────────────────────────────
   const [searchQuery, setSearchQueryState] = useState(query);
-  const [products, setProducts] = useState<typeof MOCK_PRODUCTS>([]);
+  const [products, setProducts] = useState<any[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -108,42 +107,59 @@ export function useProductListing(params: ProductListingParams): UseProductListi
 
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
-    timeoutRef.current = setTimeout(() => {
-      const result = ProductService.getProducts({
-        page: pageNumber,
-        limit: 10,
-        categoryId: filterCategoryId || undefined,
-        subCategoryId: filterSubCategoryId || undefined,
-        searchQuery,
-        inStockOnly,
-        outOfStockOnly,
-        sortOption: activeSort,
-      });
+    timeoutRef.current = setTimeout(async () => {
+      try {
+        let minPrice: number | undefined;
+        let maxPrice: number | undefined;
 
-      let filtered = result.products;
-
-      // Client-side price range filter
-      if (filterPrice) {
         if (filterPrice === STRINGS.productListing.priceRanges.under5) {
-          filtered = filtered.filter((p) => p.price < 5);
+          maxPrice = 50;
         } else if (filterPrice === STRINGS.productListing.priceRanges.fiveToTen) {
-          filtered = filtered.filter((p) => p.price >= 5 && p.price <= 10);
+          minPrice = 50;
+          maxPrice = 100;
         } else if (filterPrice === STRINGS.productListing.priceRanges.over10) {
-          filtered = filtered.filter((p) => p.price > 10);
+          minPrice = 100;
         }
-      }
 
-      // Client-side tag filter
-      if (filterTag) {
-        filtered = filtered.filter((p) => p.tags?.includes(filterTag));
-      }
+        let sortBy: 'price_asc' | 'price_desc' | 'latest' | 'popularity' | undefined;
+        if (activeSort === STRINGS.productListing.sortOptions.priceLowHigh) {
+          sortBy = 'price_asc';
+        } else if (activeSort === STRINGS.productListing.sortOptions.priceHighLow) {
+          sortBy = 'price_desc';
+        } else if (activeSort === STRINGS.productListing.sortOptions.newest) {
+          sortBy = 'latest';
+        } else if (activeSort === STRINGS.productListing.sortOptions.relevance) {
+          sortBy = 'popularity';
+        }
 
-      setProducts(reset ? filtered : (prev) => [...prev, ...filtered]);
-      setPage(pageNumber);
-      setHasMore(result.hasMore);
-      setIsLoading(false);
-      setIsRefreshing(false);
-      setIsInitialLoad(false);
+        const limit = 20;
+        const offset = (pageNumber - 1) * limit;
+
+        const response = await productApi.getProducts({
+          search: searchQuery || undefined,
+          categoryId: filterCategoryId || undefined,
+          minPrice,
+          maxPrice,
+          tag: filterTag || undefined,
+          sortBy,
+          inStock: inStockOnly ? true : outOfStockOnly ? false : undefined,
+          limit,
+          offset,
+        });
+
+        if (response.success) {
+          const newProducts = Array.isArray(response.data) ? response.data : (response.data?.products || []);
+          setProducts(reset ? newProducts : (prev) => [...prev, ...newProducts]);
+          setPage(pageNumber);
+          setHasMore(newProducts.length === limit);
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setIsLoading(false);
+        setIsRefreshing(false);
+        setIsInitialLoad(false);
+      }
     }, 500);
   };
 

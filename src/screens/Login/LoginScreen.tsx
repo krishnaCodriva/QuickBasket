@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Image } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Image, Alert } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedView, ThemedText, CustomButton } from '../../components';
@@ -15,7 +15,7 @@ export default function LoginScreen() {
   const route = useRoute<any>();
   const returnTo = route.params?.returnTo;
 
-  const { signup } = useAuth(); // for google mock
+  const { signup, sendOtp } = useAuth(); // for google mock, and actual API
 
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -36,14 +36,18 @@ export default function LoginScreen() {
     navigation.navigate('DummyGoogleScreen', { returnTo });
   };
 
-  const handleSendOtp = () => {
+  const handleSendOtp = async () => {
     if (isPhoneValid) {
       setIsOtpLoading(true);
-      setTimeout(() => {
-        setIsOtpLoading(false);
+      try {
+        await sendOtp(`+91${phoneNumber}`);
         // Pass returnTo parameter so OtpScreen knows where to go after verifying
         navigation.navigate('OtpScreen', { phoneNumber: `+91 ${phoneNumber}`, returnTo });
-      }, 1000);
+      } catch (error: any) {
+        Alert.alert(t(STRINGS.auth.errorTitle) || 'Error', error?.response?.data?.message || 'Failed to send OTP. Please try again.');
+      } finally {
+        setIsOtpLoading(false);
+      }
     }
   };
 

@@ -1,12 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { StyleSheet, View, ScrollView, TouchableOpacity, Platform, StatusBar, FlatList, Modal, Dimensions, TouchableWithoutFeedback } from 'react-native';
+import { StyleSheet, View, ScrollView, TouchableOpacity, Platform, StatusBar, FlatList, Modal, Dimensions, TouchableWithoutFeedback, Image, ActivityIndicator } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText, ThemedView, CustomButton, ProductCard, QuantitySelector, CartHeaderIcon, PriceDisplay, Tag, ScreenHeader } from '../../components';
 import { Colors, STRINGS } from '../../constants';
-import { useThemeColor } from '../../hooks';
+import { useThemeColor, useProductDetail } from '../../hooks';
 import { useCart } from '../../context';
-import { MOCK_PRODUCTS } from '../../data/mockData';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../core/types/navigation';
@@ -28,24 +27,38 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
   const bottomBarBgColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.black }, 'primaryBackground' as any);
   const bottomBarBorderColor = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray300 }, 'gray200' as any);
   
-  // Ensure we have a product object — typed via route.params, extended fields from mockData
+  // Optimistic UI: Ensure we have a product object passed from previous screen
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const product: any = route?.params?.product ?? MOCK_PRODUCTS[0];
+  const initialProduct: any = route?.params?.product ?? null;
+  const productId = initialProduct?.id || route?.params?.productId;
+
+  // Fetch full details
+  const { product: fullProduct, isLoading } = useProductDetail(productId);
+
+  // Merge full data with initial data
+  const product = fullProduct || initialProduct;
   
-  // Dynamic Related Products based on category
-  const relatedProducts = MOCK_PRODUCTS.filter(
-    p => p.category === product.category && p.id !== product.id
-  ).slice(0, 4);
-  
+  // Dynamic Related Products from API
+  const relatedProducts = product?.relatedProducts || [];
+
   // State
   const { cartItems, addToCart, updateQuantity, totalItems } = useCart();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isZoomVisible, setIsZoomVisible] = useState(false);
   const [zoomedImage, setZoomedImage] = useState<any>(null);
 
-  const images = product.images || [
-    { id: '1', emoji: product.emoji || '📦', color: imageBgColor }
-  ];
+  // Construct images array for carousel
+  const images = product?.gallery && product.gallery.length > 0
+    ? product.gallery.map((uri: string, index: number) => ({ id: String(index), uri, color: imageBgColor }))
+    : [ { id: '1', emoji: product?.emoji || '📦', uri: product?.imageUrl, color: imageBgColor } ];
+
+  if (!product) {
+    return (
+      <ThemedView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: bottomBarBgColor }}>
+        <ActivityIndicator size="large" color={primaryColor} />
+      </ThemedView>
+    );
+  }
 
   // --- HANDLERS ---
   const handleScroll = (event: any) => {
@@ -102,7 +115,11 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
         renderItem={({ item }) => (
           <TouchableOpacity activeOpacity={0.9} onPress={() => openZoom(item)}>
             <View style={[styles.imageSlide, { width: SCREEN_WIDTH, backgroundColor: item.color || imageBgColor }]}>
-              <ThemedText style={styles.imageEmoji}>{item.emoji}</ThemedText>
+              {item.uri ? (
+                <Image source={{ uri: item.uri }} style={{ width: '80%', height: '80%' }} resizeMode="contain" />
+              ) : (
+                <ThemedText style={styles.imageEmoji}>{item.emoji}</ThemedText>
+              )}
             </View>
           </TouchableOpacity>
         )}
@@ -124,75 +141,87 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
     </View>
   );
 
-  const renderProductInfo = () => (
-    <View style={styles.infoContainer}>
-      {/* Title & Brand */}
-      <ThemedText type="title" style={styles.productName}>{product.name}</ThemedText>
-      <TouchableOpacity onPress={handleBrandPress} style={styles.brandRow}>
-        <View style={[styles.brandLogoContainer, { backgroundColor: imageBgColor }]}>
-          <ThemedText style={styles.brandLogo}>{product.brandLogo || '🏢'}</ThemedText>
-        </View>
-        <ThemedText style={styles.brandText} useSecondaryText>
-          {product.brand || 'QuickBasket'} • {t(STRINGS.productDetail.premiumQuality)}
-        </ThemedText>
-      </TouchableOpacity>
+  const renderProductInfo = () => {
+    const priceNum = typeof product.price === 'number' ? product.price : parseFloat(product.price || '0');
+    const mrpNum = product.compareAtPrice ? parseFloat(product.compareAtPrice) : (product.mrp ? parseFloat(product.mrp) : undefined);
+    const discount = mrpNum && mrpNum > priceNum ? Math.round(((mrpNum - priceNum) / mrpNum) * 100) : 0;
+    const storeObj = product.Store || product.store;
+    const isOutOfStock = product.stockQuantity <= 0 && product.stockQuantity !== undefined;
 
-      {/* Pricing & Stock */}
-      <View style={styles.priceRow}>
-        <PriceDisplay
-          price={typeof product.price === 'number' ? product.price : parseFloat(product.price)}
-          mrp={product.mrp && typeof product.mrp === 'number' ? product.mrp : undefined}
-          size="lg"
-        />
-        <Tag
-          label={product.inStock ? t(STRINGS.productDetail.inStock) : t(STRINGS.productDetail.outOfStock)}
-          variant="subtle"
-          color={product.inStock ? 'success' : 'error'}
-          style={{ marginLeft: 8 }}
-        />
-      </View>
-      <ThemedText style={styles.weight} useSecondaryText>{product.weight}</ThemedText>
+    return (
+      <View style={styles.infoContainer}>
+        {/* Brand & Title */}
+        {!!product.brand && (
+          <TouchableOpacity onPress={handleBrandPress} style={[styles.brandRow, { marginBottom: 4 }]}>
+            {product.brandLogoUrl && (
+              <View style={[styles.brandLogoContainer, { backgroundColor: imageBgColor, width: 20, height: 20, marginRight: 6 }]}>
+                <Image source={{ uri: product.brandLogoUrl }} style={{ width: 16, height: 16 }} resizeMode="contain" />
+              </View>
+            )}
+            <ThemedText style={[styles.brandText, { fontSize: typography.size.xs, textTransform: 'uppercase', letterSpacing: 1 }]} useSecondaryText>
+              {product.brand}
+            </ThemedText>
+          </TouchableOpacity>
+        )}
+        <ThemedText type="title" style={styles.productName}>{product.name}</ThemedText>
 
-      {/* Specifications */}
-      {product.specifications && (
-        <View style={styles.specsContainer}>
-          {Object.entries(product.specifications).map(([key, value]) => (
-            <View key={key} style={[styles.specCard, { backgroundColor: imageBgColor }]}>
-              <View style={styles.specIcon}>
-                <Feather name="info" size={18} color={primaryColor} />
-              </View>
-              <View>
-                <ThemedText style={styles.specKey} useSecondaryText>{key}</ThemedText>
-                <ThemedText style={styles.specValue}>{value as string}</ThemedText>
-              </View>
+        {/* Pricing Block */}
+        <View style={[styles.priceRow, { alignItems: 'flex-end', marginBottom: 12 }]}>
+          <PriceDisplay
+            price={priceNum}
+            mrp={mrpNum}
+            size="lg"
+          />
+          {discount > 0 && (
+            <View style={{ backgroundColor: Colors.light.green100, paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.xs, marginLeft: 8, marginBottom: 4 }}>
+              <ThemedText style={{ color: Colors.light.green800, fontSize: typography.size.xs, fontWeight: 'bold' }}>
+                {discount}% OFF
+              </ThemedText>
             </View>
+          )}
+        </View>
+
+        {/* Trust Badges & Quick Info */}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+          <Tag
+            label={isOutOfStock ? t(STRINGS.productDetail.outOfStock) : t(STRINGS.productDetail.inStock)}
+            variant="subtle"
+            color={isOutOfStock ? 'error' : 'success'}
+          />
+          {!!product.weight && (
+             <Tag label={product.weight} variant="outline" color="secondary" />
+          )}
+          {product.tags && product.tags.length > 0 && product.tags.map((tag: any) => (
+            <Tag key={tag.id || tag} label={tag.name || tag} variant="outline" color="primary" />
           ))}
         </View>
-      )}
 
-      {/* Description */}
-      {product.description && (
-        <View style={styles.descSection}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>{t(STRINGS.productDetail.detailsTitle)}</ThemedText>
-          <ThemedText style={styles.descriptionText} useSecondaryText>{product.description}</ThemedText>
-        </View>
-      )}
+        {/* Description */}
+        {!!product.description && (
+          <View style={styles.descSection}>
+            <ThemedText type="subtitle" style={styles.sectionTitle}>{t(STRINGS.productDetail.detailsTitle)}</ThemedText>
+            <ThemedText style={styles.descriptionText} useSecondaryText>{product.description}</ThemedText>
+          </View>
+        )}
 
-      {/* Store Info */}
-      {product.store && (
-        <View style={[styles.storeSection, { backgroundColor: imageBgColor }]}>
-          <Feather name="shopping-bag" size={24} color={primaryColor} />
-          <View style={styles.storeDetails}>
-            <ThemedText style={styles.storeName}>{t(STRINGS.productDetail.soldBy)}{product.store.name}</ThemedText>
-            <View style={styles.storeRatingRow}>
-              <Ionicons name="star" size={14} color={Colors.light.yellow900} />
-              <ThemedText style={styles.storeRating} useSecondaryText>{product.store.rating}</ThemedText>
+        {/* Store Info */}
+        {!!storeObj && (
+          <View style={[styles.storeSection, { backgroundColor: imageBgColor }]}>
+            <Feather name="shopping-bag" size={24} color={primaryColor} />
+            <View style={styles.storeDetails}>
+              <ThemedText style={styles.storeName}>{t(STRINGS.productDetail.soldBy)}{storeObj.name}</ThemedText>
+              {!!storeObj.rating && (
+                <View style={styles.storeRatingRow}>
+                  <Ionicons name="star" size={14} color={Colors.light.yellow900} />
+                  <ThemedText style={styles.storeRating} useSecondaryText>{storeObj.rating}</ThemedText>
+                </View>
+              )}
             </View>
           </View>
-        </View>
-      )}
-    </View>
-  );
+        )}
+      </View>
+    );
+  };
 
   const renderRelatedProducts = () => (
     <View style={styles.relatedSection}>
@@ -209,11 +238,14 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
             <ProductCard
               id={item.id}
               name={item.name}
-              price={`₹${item.price.toFixed(2)}`}
-              category={item.category}
-              weight={item.weight}
-              emoji={item.emoji}
-              inStock={item.inStock}
+              price={typeof item.price === 'number' ? `₹${item.price.toFixed(2)}` : `₹${parseFloat(item.price || '0').toFixed(2)}`}
+              category={item.Category?.name || item.category || ''}
+              weight={item.weight || ''}
+              emoji={item.emoji || '📦'}
+              imageUrl={item.imageUrl}
+              brand={item.brand}
+              tags={item.tags}
+              inStock={item.inStock ?? true}
               quantity={itemQuantity}
               onAdd={() => {
                 if (itemQuantity === 0) addToCart(item, 1);
