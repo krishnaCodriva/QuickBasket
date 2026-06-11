@@ -1,19 +1,12 @@
 import { apiClient } from './apiClient';
 import type { Category } from '../core/types/domain';
-
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
-const ROOT_URL = BASE_URL.replace(/\/api\/v\d+$/, '');
+import { formatImageUrl } from '../config/api.config';
+import { API_ENDPOINTS } from '../config/api.endpoints';
 
 // In-memory cache
 let cachedCategories: Category[] | null = null;
 let cacheTimestamp: number = 0;
 const CACHE_TTL_MS = 1000 * 60 * 10; // 10 minutes
-
-const formatImageUrl = (url?: string) => {
-  if (!url) return undefined;
-  if (url.startsWith('http')) return url;
-  return `${ROOT_URL}${url}`;
-};
 
 export const categoryApi = {
   getCategories: async (forceRefresh = false): Promise<{ success: boolean; data?: Category[]; error?: string }> => {
@@ -25,7 +18,7 @@ export const categoryApi = {
         return { success: true, data: cachedCategories };
       }
 
-      const response = await apiClient.get('/categories');
+      const response = await apiClient.get(API_ENDPOINTS.CATEGORIES.GET_ALL);
       
       if (response.data && response.data.success) {
         // Recursively format image URLs with the base server URL

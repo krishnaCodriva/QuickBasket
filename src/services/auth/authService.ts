@@ -1,4 +1,5 @@
 import { apiClient } from '../apiClient';
+import { API_ENDPOINTS } from '../../config/api.endpoints';
 
 export const authService = {
   /**
@@ -7,7 +8,7 @@ export const authService = {
    */
   sendOtp: async (phone: string) => {
     try {
-      const response = await apiClient.post('/auth/otp/send', { phone });
+      const response = await apiClient.post(API_ENDPOINTS.AUTH.SEND_OTP, { phone });
       return response.data;
     } catch (error) {
       console.error('Failed to send OTP:', error);
@@ -22,7 +23,7 @@ export const authService = {
    */
   verifyOtp: async (phone: string, code: string) => {
     try {
-      const response = await apiClient.post('/auth/otp/verify', { phone, code });
+      const response = await apiClient.post(API_ENDPOINTS.AUTH.VERIFY_OTP, { phone, code });
       return response.data;
     } catch (error) {
       console.error('Failed to verify OTP:', error);

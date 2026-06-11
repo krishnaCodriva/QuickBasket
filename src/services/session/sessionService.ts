@@ -1,5 +1,6 @@
 import { apiClient } from '../apiClient';
 import { storage } from '../../utils/storage';
+import { API_ENDPOINTS } from '../../config/api.endpoints';
 
 export const sessionService = {
     /**
@@ -8,7 +9,7 @@ export const sessionService = {
      */
     createGuestSession: async (): Promise<string> => {
         try {
-            const response = await apiClient.post('/guest/session');
+            const response = await apiClient.post(API_ENDPOINTS.AUTH.GUEST_SESSION);
 
             // The token is in response.data.data.sessionToken
             const token = response.data?.data?.sessionToken;

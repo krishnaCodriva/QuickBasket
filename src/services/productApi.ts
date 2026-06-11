@@ -1,4 +1,6 @@
 import { apiClient } from './apiClient';
+import { formatImageUrl } from '../config/api.config';
+import { API_ENDPOINTS } from '../config/api.endpoints';
 
 interface GetProductsParams {
   search?: string;
@@ -13,15 +15,6 @@ interface GetProductsParams {
   offset?: number;
 }
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
-const ROOT_URL = BASE_URL.replace(/\/api\/v\d+$/, '');
-
-const formatImageUrl = (url?: string | null) => {
-  if (!url) return undefined;
-  if (url.startsWith('http')) return url;
-  return `${ROOT_URL}${url}`;
-};
-
 export const productApi = {
   getProducts: async (params: GetProductsParams = {}) => {
     try {
@@ -29,7 +22,7 @@ export const productApi = {
       const cleanedParams = Object.fromEntries(
         Object.entries(params).filter(([_, v]) => v !== undefined)
       );
-      const response = await apiClient.get('/products', { params: cleanedParams });
+      const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.GET_ALL, { params: cleanedParams });
       
       // Optionally format imageUrls for the list here if needed, but since it's already working, we leave it or format it
       if (response.data && response.data.data) {
@@ -48,7 +41,7 @@ export const productApi = {
 
   getProductById: async (id: string) => {
     try {
-      const response = await apiClient.get(`/products/${id}`);
+      const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.GET_BY_ID(id));
       if (response.data && response.data.success) {
         const product = response.data.data;
         

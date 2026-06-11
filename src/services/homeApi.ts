@@ -1,8 +1,9 @@
 import { apiClient } from "../services/apiClient";
+import { API_ENDPOINTS } from "../config/api.endpoints";
 
 export const homeApi = async () => {
     try {
-        const response = await apiClient.get('/home');
+        const response = await apiClient.get(API_ENDPOINTS.HOME.GET_ALL);
         return response.data;
     } catch (error) {
         console.error('Error fetching home data:', error);
@@ -12,7 +13,7 @@ export const homeApi = async () => {
 
 export const getCategory = async () => {
     try {
-        const response = await apiClient.get('/category');
+        const response = await apiClient.get(API_ENDPOINTS.CATEGORIES.GET_HOME_CATEGORY);
         return response.data;
     } catch (error) {
         console.error('Error fetching category data:', error);
