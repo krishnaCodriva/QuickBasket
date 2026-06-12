@@ -8,7 +8,7 @@ import { spacing, radius, typography } from '../core/constants/theme';
 
 type ButtonProps = TouchableOpacityProps & {
   title: string;
-  type?: 'primary' | 'secondary';
+  type?: 'primary' | 'secondary' | 'tertiary';
   loading?: boolean;
   icon?: keyof typeof MaterialCommunityIcons.glyphMap;
 };
@@ -23,12 +23,29 @@ export function CustomButton({
   ...rest 
 }: ButtonProps) {
   const isPrimary = type === 'primary';
+  const isTertiary = type === 'tertiary';
   const primaryColor = useThemeColor({}, 'primary');
   const secondaryTextColor = useThemeColor({ light: Colors.light.gray900, dark: Colors.light.white }, 'primaryText' as any);
+  const tertiaryBgColor = useThemeColor({ light: Colors.light.blue100, dark: Colors.dark.secondaryBackground }, 'secondaryBackground' as any);
   const borderColor = useThemeColor({}, 'gray300' as any);
 
-  const buttonStyle = isPrimary ? [styles.primaryButton, { backgroundColor: primaryColor }] : [styles.secondaryButton, { borderColor: borderColor }];
-  const textStyle = isPrimary ? styles.primaryButtonText : [styles.secondaryButtonText, { color: secondaryTextColor }];
+  let buttonStyle;
+  let textStyle;
+  let iconColor;
+
+  if (isPrimary) {
+    buttonStyle = [styles.primaryButton, { backgroundColor: primaryColor }];
+    textStyle = styles.primaryButtonText;
+    iconColor = Colors.light.white;
+  } else if (isTertiary) {
+    buttonStyle = [styles.tertiaryButton, { backgroundColor: tertiaryBgColor }];
+    textStyle = [styles.tertiaryButtonText, { color: primaryColor }];
+    iconColor = primaryColor;
+  } else {
+    buttonStyle = [styles.secondaryButton, { borderColor: borderColor }];
+    textStyle = [styles.secondaryButtonText, { color: secondaryTextColor }];
+    iconColor = secondaryTextColor;
+  }
 
   return (
     <TouchableOpacity
@@ -45,7 +62,7 @@ export function CustomButton({
             <MaterialCommunityIcons 
               name={icon} 
               size={20} 
-              color={isPrimary ? Colors.light.white : secondaryTextColor} 
+              color={iconColor} 
               style={styles.btnIcon} 
             />
           )}
@@ -77,6 +94,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   secondaryButtonText: {
+    fontSize: typography.size.lg,
+    fontWeight: typography.weight.bold,
+  },
+  tertiaryButton: {
+    paddingVertical: spacing.md,
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  tertiaryButtonText: {
     fontSize: typography.size.lg,
     fontWeight: typography.weight.bold,
   },

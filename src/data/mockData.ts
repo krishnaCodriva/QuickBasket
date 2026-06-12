@@ -104,3 +104,14 @@ export const MOCK_PRODUCTS = [
   { id: '36', name: 'Ice Cream Tub', price: 4.99, mrp: 6.00, weight: '500ml', emoji: '🍦', categoryId: 'frozen', subCategoryId: 'frozen-meals', category: STRINGS.common.categories.frozen, inStock: true, tags: [STRINGS.homeScreen.tags.trending, STRINGS.homeScreen.tags.recommended] },
   { id: '37', name: 'Frozen Peas', price: 2.50, mrp: 3.00, weight: '500g', emoji: '🟢', categoryId: 'frozen', subCategoryId: 'frozen-meals', category: STRINGS.common.categories.frozen, inStock: true, tags: [STRINGS.homeScreen.tags.dailyEssentials] },
 ];
+
+export const MOCK_RECENT_SEARCHES = [
+  { id: '1', title: 'Sector 137', subtitle: 'Noida, Uttar Pradesh' },
+  { id: '2', title: 'Pari Chowk', subtitle: 'Greater Noida, Uttar Pradesh' },
+];
+
+export const MOCK_POPULAR_AREAS = [
+  { id: '1', title: 'Cyber Hub', subtitle: 'DLF Phase 2, Gurugram' },
+  { id: '2', title: 'Hauz Khas Village', subtitle: 'South Delhi, New Delhi' },
+  { id: '3', title: 'Connaught Place', subtitle: 'Rajiv Chowk, New Delhi' },
+];

@@ -104,9 +104,18 @@ export default function OtpScreen() {
       await verifyOtp(formattedPhone, enteredOtp);
 
       if (returnTo) {
-        navigation.replace(returnTo);
+        navigation.reset({
+          index: 1,
+          routes: [
+            { name: 'HomeTab' },
+            { name: returnTo }
+          ],
+        });
       } else {
-        navigation.navigate('HomeTab', { screen: 'Home' }); // default fallback
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'HomeTab' }],
+        });
       }
     } catch (error: any) {
       setErrorMsg(error.message || t(STRINGS.auth.invalidOtp));
@@ -132,7 +141,7 @@ export default function OtpScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <TouchableOpacity onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.replace('HomeTab')} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={24} color={textColor} />
           </TouchableOpacity>
           <ThemedText type="subtitle" style={styles.headerTitle}>{t(STRINGS.auth.verifyOtpTitle)}</ThemedText>

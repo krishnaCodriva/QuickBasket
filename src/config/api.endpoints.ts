@@ -4,6 +4,7 @@ export const API_ENDPOINTS = {
     SEND_OTP: '/auth/otp/send',
     VERIFY_OTP: '/auth/otp/verify',
     GUEST_SESSION: '/guest/session',
+    REFRESH_TOKEN: '/auth/session/refresh',
   },
   
   // Home
@@ -25,6 +26,9 @@ export const API_ENDPOINTS = {
     GET_HOME_CATEGORY: '/category', 
   },
 
+  // Location
+  LOCATION: {
+    SERVICEABILITY: '/location/serviceability',
   // Cart
   CART: {
     GET: '/cart',

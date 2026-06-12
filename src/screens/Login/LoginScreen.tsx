@@ -71,7 +71,7 @@ export default function LoginScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <TouchableOpacity onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.replace('HomeTab')} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={24} color={textColor} />
           </TouchableOpacity>
           <ThemedText type="subtitle" style={styles.headerTitle}>{t(STRINGS.auth.loginTitle)}</ThemedText>

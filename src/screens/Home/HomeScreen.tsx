@@ -258,7 +258,7 @@ export default function HomeScreen({ navigation }: Props) {
             emoji={item.emoji || "📦"} // Fallback if backend doesn't provide emoji
             colorName={item.colorName || "blue100"}
             onPress={() =>
-              navigation.navigate("ProductListing", { categoryId: item.id, category: item.name } as any)
+              navigation.navigate("CategoriesTab", { categoryId: item.id })
             }
           />
         )}

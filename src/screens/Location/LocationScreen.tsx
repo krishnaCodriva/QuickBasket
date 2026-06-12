@@ -7,16 +7,17 @@ import {
   Linking,
   Alert,
   ScrollView,
+  Image,
 } from "react-native";
-import { ThemedView, ThemedText, CustomButton } from "../../components";
+import { ThemedView, ThemedText, CustomButton, ScreenHeader } from "../../components";
 import { STRINGS, ThemeDimension, Colors } from "../../constants";
 import * as Location from "expo-location";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StorageService, STORAGE_KEYS } from "../../services";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useThemeColor } from "../../hooks";
+import { Feather, MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
+import { useThemeColor, useLocationServiceability } from "../../hooks";
 import { useTranslation } from "react-i18next";
-import { spacing, radius, typography } from "../../core/constants/theme";
+import { spacing, radius, typography, elevation } from "../../core/constants/theme";
 
 type Props = {
   navigation: any;
@@ -27,6 +28,7 @@ type ViewState = "initial" | "denied" | "failed";
 export default function LocationScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(false);
   const [viewState, setViewState] = useState<ViewState>("initial");
+  const { verifyLocation } = useLocationServiceability();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
@@ -54,6 +56,11 @@ export default function LocationScreen({ navigation }: Props) {
     { light: Colors.light.red600, dark: Colors.dark.error },
     "error" as any,
   );
+  
+  const primaryBrandColor = useThemeColor({}, "primary" as any);
+  const badgeBgColor = useThemeColor({ light: '#F3F4F6', dark: Colors.dark.gray800 }, "background" as any);
+  const badgeTextColor = useThemeColor({ light: Colors.light.gray700, dark: Colors.dark.gray300 }, "primaryText" as any);
+
 
   const enableLocation = async () => {
     setLoading(true);
@@ -142,6 +149,18 @@ export default function LocationScreen({ navigation }: Props) {
           console.log("Reverse geocode failed", e);
         }
 
+        // Check serviceability
+        const isServiceable = await verifyLocation(location.coords.latitude, location.coords.longitude);
+        
+        if (!isServiceable) {
+          setLoading(false);
+          Alert.alert(
+            "Out of Delivery Zone",
+            "Sorry, we don't deliver to this area yet. Please select a different location."
+          );
+          return;
+        }
+
         await StorageService.setItem(STORAGE_KEYS.USER_LOCATION, {
           type: "gps",
           latitude: location.coords.latitude,
@@ -149,7 +168,7 @@ export default function LocationScreen({ navigation }: Props) {
           address: addressStr,
         });
         setLoading(false);
-        navigation.navigate("HomeTab");
+        navigation.reset({ index: 0, routes: [{ name: "HomeTab" }] });
       }
     } catch (error) {
       setLoading(false);
@@ -165,7 +184,7 @@ export default function LocationScreen({ navigation }: Props) {
   const handleSkip = () => {
     // Navigate to Home without saving location to AsyncStorage
     // This ensures SplashScreen will redirect here again next time
-    navigation.navigate("HomeTab");
+    navigation.reset({ index: 0, routes: [{ name: "HomeTab" }] });
   };
 
   const handleBack = () => {
@@ -207,23 +226,24 @@ export default function LocationScreen({ navigation }: Props) {
   }) => <CustomButton title={title} type="secondary" onPress={onPress} />;
 
   const renderInitialState = () => (
-    <View style={styles.contentContainer}>
-      <View style={styles.headerRow}>
-        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <Feather name="arrow-left" size={24} color={iconColor} />
-        </TouchableOpacity>
-        <ThemedText style={styles.headerTitle}>QuickBasket</ThemedText>
-        <View style={{ width: 24 }} />
-      </View>
-
-      <View style={styles.topSpacer} />
-
-      <View style={styles.illustrationContainer}>
-        <View
-          style={[styles.mapPlaceholder, { backgroundColor: mapPlaceholderBg }]}
-        >
-          <Feather name="map-pin" size={40} color={Colors.light.gray400} />
-        </View>
+    <View style={{ flex: 1 }}>
+      <ScreenHeader 
+        title={t(STRINGS.common.appName)} 
+        onBack={handleBack}
+        showBorder={false}
+        rightElement={
+          <TouchableOpacity style={styles.helpButton}>
+            <Ionicons name="help-circle-outline" size={24} color={iconColor} />
+          </TouchableOpacity>
+        }
+      />
+      <View style={styles.contentContainer}>
+        <View style={styles.illustrationContainer}>
+        <Image 
+          source={require('../../../assets/location_illustration.jpg')} 
+          style={styles.heroImage}
+          resizeMode="cover"
+        />
       </View>
 
       <View style={styles.textContainer}>
@@ -233,137 +253,104 @@ export default function LocationScreen({ navigation }: Props) {
         <ThemedText useSecondaryText style={styles.subtitle}>
           {t(STRINGS.locationScreen.initialSubtitle)}
         </ThemedText>
+        
+        <View style={[styles.privacyBadge, { backgroundColor: badgeBgColor }]}>
+          <Feather name="lock" size={12} color={primaryBrandColor} style={{ marginRight: 6 }} />
+          <ThemedText style={[styles.privacyText, { color: badgeTextColor }]}>
+            {t(STRINGS.locationScreen.privacyBadge)}
+          </ThemedText>
+        </View>
       </View>
 
       <View style={styles.bottomContainer}>
-        <PrimaryButton
+        <CustomButton
           title={t(STRINGS.locationScreen.enableButton)}
+          type="primary"
           onPress={enableLocation}
+          loading={loading}
+          icon="crosshairs-gps"
         />
-        <View style={{ height: 12 }} />
-        <SecondaryButton
+        <CustomButton
           title={t(STRINGS.locationScreen.enterAddressButton)}
+          type="secondary"
           onPress={handleManualAddress}
+          icon="home-outline"
         />
         <TouchableOpacity style={styles.textLinkButton} onPress={handleSkip}>
-          <ThemedText style={styles.textLink}>
+          <ThemedText useSecondaryText style={styles.textLink}>
             {t(STRINGS.locationScreen.chooseManuallyButton)}
           </ThemedText>
         </TouchableOpacity>
       </View>
     </View>
-  );
+  </View>
+);
 
-  const renderDeniedState = () => (
-    <View style={styles.contentContainer}>
-      <View style={styles.headerRow}>
-        <View style={{ width: 24 }} />
-        <ThemedText style={styles.headerTitle}>QuickBasket</ThemedText>
-        <Feather name="shopping-cart" size={24} color={iconColor} />
-      </View>
+  const renderErrorState = () => (
+    <View style={styles.errorContainer}>
+      <View style={[styles.mapBackground, { backgroundColor: mapPlaceholderBg }]} />
+      
+      <View style={[styles.bottomSheet, { backgroundColor: badgeBgColor }]}>
+        <View style={styles.dragPillContainer}>
+          <View style={[styles.dragPill, { backgroundColor: mapPlaceholderBg }]} />
+        </View>
+        
+        <View style={styles.errorIconContainer}>
+          <View style={[styles.circleIconSmall, { backgroundColor: errorCircleBg }]}>
+            <MaterialCommunityIcons
+              name="map-marker-off"
+              size={36}
+              color={errorIconColor}
+            />
+          </View>
+        </View>
 
-      <View style={styles.topSpacer} />
+        <View style={styles.errorTextContainer}>
+          <ThemedText type="title" style={styles.errorTitle}>
+            {t(STRINGS.locationScreen.errorTitle)}
+          </ThemedText>
+          <ThemedText useSecondaryText style={styles.errorSubtitle}>
+            {t(STRINGS.locationScreen.errorSubtitle)}
+          </ThemedText>
+        </View>
 
-      <View style={styles.illustrationContainer}>
-        <View style={[styles.circleIcon, { backgroundColor: circleIconBg }]}>
-          <Feather
-            name="map-pin"
-            size={40}
-            color={strikeIconColor}
-            style={styles.strikeIcon}
+        <View style={styles.errorActions}>
+          <CustomButton
+            title={t(STRINGS.locationScreen.tryAgainButton)}
+            type="primary"
+            onPress={enableLocation}
+            icon="reload"
+            loading={loading}
           />
-          <View
-            style={[styles.strikeLine, { backgroundColor: strikeIconColor }]}
+          <CustomButton
+            title={t(STRINGS.locationScreen.enterAddressButton)}
+            type="tertiary"
+            onPress={handleManualAddress}
           />
         </View>
-      </View>
-
-      <View style={styles.textContainer}>
-        <ThemedText type="title" style={styles.title}>
-          {t(STRINGS.locationScreen.deniedTitle)}
-        </ThemedText>
-        <ThemedText useSecondaryText style={styles.subtitle}>
-          {t(STRINGS.locationScreen.deniedSubtitle)}
-        </ThemedText>
-      </View>
-
-      <View style={styles.bottomContainer}>
-        <PrimaryButton
-          title={t(STRINGS.locationScreen.openSettingsButton)}
-          onPress={openSettings}
-        />
-        <SecondaryButton
-          title={t(STRINGS.locationScreen.enterAddressButton)}
-          onPress={handleManualAddress}
-        />
-      </View>
-    </View>
-  );
-
-  const renderFailedState = () => (
-    <View style={styles.contentContainer}>
-      <View style={styles.headerRow}>
-        <View style={{ width: 24 }} />
-        <ThemedText style={styles.headerTitle}>QuickBasket</ThemedText>
-        <Feather name="shopping-cart" size={24} color={iconColor} />
-      </View>
-
-      <View style={styles.topSpacer} />
-
-      <View style={styles.illustrationContainer}>
-        <View style={[styles.circleIcon, { backgroundColor: errorCircleBg }]}>
-          <Feather
-            name="map-pin"
-            size={40}
-            color={errorIconColor}
-            style={styles.strikeIconRed}
-          />
-          <View
-            style={[styles.strikeLineRed, { backgroundColor: errorIconColor }]}
-          />
-        </View>
-      </View>
-
-      <View style={styles.textContainer}>
-        <ThemedText type="title" style={styles.title}>
-          {t(STRINGS.locationScreen.failedTitle)}
-        </ThemedText>
-        <ThemedText useSecondaryText style={styles.subtitle}>
-          {t(STRINGS.locationScreen.failedSubtitle)}
-        </ThemedText>
-      </View>
-
-      <View style={styles.bottomContainer}>
-        <PrimaryButton
-          title={t(STRINGS.locationScreen.retryButton)}
-          onPress={enableLocation}
-          icon
-        />
-        <SecondaryButton
-          title={t(STRINGS.locationScreen.enterAddressButton)}
-          onPress={handleManualAddress}
-        />
       </View>
     </View>
   );
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView
-        contentContainerStyle={[
-          styles.scrollContainer,
-          {
-            paddingTop: Math.max(insets.top + spacing.md, spacing.xxxl),
-            paddingBottom: Math.max(insets.bottom + spacing.sm, spacing.smd),
-          },
-        ]}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-      >
-        {viewState === "initial" && renderInitialState()}
-        {viewState === "denied" && renderDeniedState()}
-        {viewState === "failed" && renderFailedState()}
-      </ScrollView>
+      {viewState === "initial" ? (
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContainer,
+            {
+              paddingTop: Math.max(insets.top + spacing.md, spacing.xxxl),
+              paddingBottom: Math.max(insets.bottom + spacing.sm, spacing.smd),
+            },
+          ]}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+        >
+          {renderInitialState()}
+        </ScrollView>
+      ) : (
+        renderErrorState()
+      )}
     </ThemedView>
   );
 }
@@ -379,26 +366,11 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: spacing.xl,
   },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: spacing.lg,
-  },
-  backButton: {
-    padding: spacing.sm,
-    marginLeft: -spacing.sm,
-  },
-  headerTitle: {
-    fontSize: typography.size.xl,
-    fontWeight: typography.weight.bold,
-  },
-  topSpacer: {
-    flex: 0.8,
-  },
   illustrationContainer: {
     alignItems: "center",
-    marginBottom: spacing.xxxl,
+    marginTop: spacing.md,
+    marginBottom: spacing.xl,
+    paddingHorizontal: spacing.xs,
   },
   mapPlaceholder: {
     width: 200,
@@ -410,56 +382,123 @@ const styles = StyleSheet.create({
   circleIcon: {
     width: 120,
     height: 120,
-    borderRadius: 60,
+    borderRadius: radius.circle,
     justifyContent: "center",
     alignItems: "center",
     position: "relative",
   },
-  strikeIcon: {
-    opacity: 0.8,
+  errorContainer: {
+    flex: 1,
+    position: 'relative',
   },
-  strikeLine: {
-    position: "absolute",
-    width: 60,
-    height: 3,
-    transform: [{ rotate: "-45deg" }],
+  mapBackground: {
+    ...StyleSheet.absoluteFillObject,
   },
-  strikeIconRed: {
-    opacity: 0.9,
+  bottomSheet: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderTopLeftRadius: radius.xxl,
+    borderTopRightRadius: radius.xxl,
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.xxxl,
+    paddingTop: spacing.md,
+    alignItems: 'center',
+    ...elevation.xl,
   },
-  strikeLineRed: {
-    position: "absolute",
-    width: 60,
-    height: 3,
-    transform: [{ rotate: "-45deg" }],
+  dragPillContainer: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: spacing.xl,
+  },
+  dragPill: {
+    width: 48,
+    height: 5,
+    borderRadius: radius.pill,
+  },
+  errorIconContainer: {
+    marginBottom: spacing.lg,
+  },
+  circleIconSmall: {
+    width: 80,
+    height: 80,
+    borderRadius: radius.circle,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorTitle: {
+    fontSize: typography.size.xxl,
+    fontWeight: typography.weight.bold,
+    marginBottom: spacing.sm,
+    textAlign: "center",
+  },
+  errorSubtitle: {
+    textAlign: "center",
+    fontSize: typography.size.md,
+    lineHeight: typography.lineHeight.relaxed,
+    marginBottom: spacing.xl,
+  },
+  errorTextContainer: {
+    alignItems: "center",
+    width: '100%',
+  },
+  errorActions: {
+    width: '100%',
   },
   textContainer: {
     alignItems: "center",
     marginBottom: spacing.xxxl,
   },
   title: {
+    fontSize: typography.size.xxxl,
+    fontWeight: typography.weight.extraBold,
     marginBottom: spacing.xs,
     textAlign: "center",
   },
   subtitle: {
     textAlign: "center",
     paddingHorizontal: spacing.smd,
-    lineHeight: 20,
+    lineHeight: typography.lineHeight.relaxed,
+    fontSize: typography.size.md,
+    marginBottom: spacing.lg,
+  },
+  privacyBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.xl,
+  },
+  privacyText: {
+    fontSize: typography.size.xs,
+    fontWeight: typography.weight.semiBold,
   },
   bottomContainer: {
     flex: 1,
     justifyContent: "flex-end",
     marginBottom: 0,
+    paddingBottom: spacing.sm,
   },
-
   textLinkButton: {
     width: "100%",
     paddingVertical: spacing.md,
     justifyContent: "center",
     alignItems: "center",
+    marginTop: spacing.xs,
   },
   textLink: {
-    fontSize: typography.size.lg,
+    fontSize: typography.size.smmd,
     fontWeight: typography.weight.semiBold,
+  },
+  helpButton: {
+    padding: spacing.sm,
+    marginRight: -spacing.sm,
+  },
+  heroImage: {
+    width: '100%',
+    height: 280,
+    borderRadius: radius.lg,
+    marginBottom: spacing.md,
   },
 });

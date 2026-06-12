@@ -41,10 +41,11 @@ export const translations = {
       subtitle: 'Groceries Delivered in Minutes',
     },
     locationScreen: {
-      initialTitle: 'Enable Your Location',
-      initialSubtitle: 'We need your location to show available stores, calculate delivery times, and ensure accurate order tracking.',
-      enableButton: 'Allow Location',
-      chooseManuallyButton: 'Skip for Now',
+      initialTitle: 'Delivering to the right location',
+      initialSubtitle: 'We use your location to show available products, delivery times, and nearby stores.',
+      privacyBadge: 'Your location is only used for deliveries.',
+      enableButton: 'Enable your location',
+      chooseManuallyButton: 'Skip for now',
 
       deniedTitle: 'Location Required',
       deniedSubtitle: 'We need to know where you are to show available stores, accurate inventory, and estimated delivery times in your neighborhood.',
@@ -59,6 +60,9 @@ export const translations = {
       turnOnGpsTitle: 'Turn on GPS',
       turnOnGpsMessage: 'Please turn on GPS to fetch your location',
       unknownLocation: 'Unknown Location',
+      errorTitle: 'Couldn\'t detect your location',
+      errorSubtitle: 'Try again or enter your address manually to see fresh groceries near you.',
+      tryAgainButton: 'Try Again',
     },
     homeScreen: {
       selectLocation: 'Select Location',
@@ -336,10 +340,13 @@ export const translations = {
     },
     manualLocationScreen: {
       title: 'Enter Address',
-      placeholder: 'Search for area, street, city...',
+      placeholder: 'Search area, street, apartment, landmark or pincode',
       noResults: 'No results found',
-      useCurrent: 'Use my current location',
-      deliverySearch: 'Search for your delivery address'
+      useCurrent: 'Use Current Location',
+      deliverySearch: 'Search for your delivery address',
+      autoDetectLocation: 'Tap to auto-detect your location',
+      recentSearches: 'RECENT SEARCHES',
+      popularNearbyAreas: 'POPULAR NEARBY AREAS'
     },
     profileScreen: {
       comingSoon: 'Profile Coming Soon',
@@ -431,9 +438,10 @@ export const translations = {
       subtitle: 'मिनटों में किराना डिलीवरी',
     },
     locationScreen: {
-      initialTitle: 'अपना स्थान सक्षम करें',
-      initialSubtitle: 'उपलब्ध स्टोर, डिलीवरी समय और ऑर्डर ट्रैकिंग दिखाने के लिए हमें आपकी लोकेशन चाहिए।',
-      enableButton: 'लोकेशन अनुमति दें',
+      initialTitle: 'सही स्थान पर डिलीवरी',
+      initialSubtitle: 'उपलब्ध उत्पाद, डिलीवरी का समय और आस-पास के स्टोर दिखाने के लिए हम आपके स्थान का उपयोग करते हैं।',
+      privacyBadge: 'आपके स्थान का उपयोग केवल डिलीवरी के लिए किया जाता है।',
+      enableButton: 'अपनी लोकेशन चालू करें',
       chooseManuallyButton: 'अभी छोड़ें',
 
       deniedTitle: 'लोकेशन आवश्यक है',
@@ -449,6 +457,9 @@ export const translations = {
       turnOnGpsTitle: 'GPS चालू करें',
       turnOnGpsMessage: 'कृपया अपनी लोकेशन प्राप्त करने के लिए GPS चालू करें',
       unknownLocation: 'अज्ञात स्थान',
+      errorTitle: 'आपकी लोकेशन का पता नहीं लगा सके',
+      errorSubtitle: 'अपने आस-पास ताज़ा किराने का सामान देखने के लिए पुनः प्रयास करें या अपना पता मैन्युअली दर्ज करें।',
+      tryAgainButton: 'पुनः प्रयास करें',
     },
     homeScreen: {
       selectLocation: 'स्थान चुनें',
@@ -728,10 +739,13 @@ export const translations = {
   
     manualLocationScreen: {
       title: 'पता दर्ज करें',
-      placeholder: 'क्षेत्र, सड़क, शहर खोजें...',
+      placeholder: 'क्षेत्र, सड़क, अपार्टमेंट, लैंडमार्क या पिनकोड खोजें',
       noResults: 'कोई परिणाम नहीं मिला',
-      useCurrent: 'मेरे वर्तमान स्थान का उपयोग करें',
-      deliverySearch: 'अपने डिलीवरी पते की खोज करें'
+      useCurrent: 'वर्तमान स्थान का उपयोग करें',
+      deliverySearch: 'अपना डिलीवरी पता खोजें',
+      autoDetectLocation: 'अपना स्थान स्वतः पहचानने के लिए टैप करें',
+      recentSearches: 'हाल की खोजें',
+      popularNearbyAreas: 'लोकप्रिय आस-पास के क्षेत्र'
     },
     profileScreen: {
       comingSoon: 'प्रोफ़ाइल जल्द आ रही है',

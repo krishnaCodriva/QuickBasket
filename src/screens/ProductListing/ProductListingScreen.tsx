@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, FlatList, useColorScheme, Platform, StatusBar, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { 
-  ThemedText, 
-  ThemedView, 
-  ProductCard, 
-  ActiveFilterChips, 
+import {
+  ThemedText,
+  ThemedView,
+  ProductCard,
+  ActiveFilterChips,
   ProductFilterModal,
   EmptyState,
   LoadingState,
@@ -27,7 +27,7 @@ import { radius } from '../../core/constants/theme/radius';
 import { elevation } from '../../core/constants/theme/elevation';
 import type { Product } from '../../core/types/domain';
 
-const BASE_URL = 'http://192.168.1.58:5000';
+
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 48) / 2; // 2 columns, padding 16 on sides and 16 between columns
 
@@ -92,10 +92,7 @@ export default function ProductListingScreen() {
   }
 
   const renderProductCard = ({ item }: { item: any }) => {
-    // Generate full image URL if it's a relative path
-    const imageUrl = item.imageUrl?.startsWith('/') 
-      ? `${BASE_URL}${item.imageUrl}` 
-      : (item.imageUrl || "https://via.placeholder.com/150");
+    const imageUrl = item.imageUrl || "https://via.placeholder.com/150";
 
     return (
       <ProductCard
@@ -217,6 +214,7 @@ export default function ProductListingScreen() {
       {/* Active filter chips */}
       <ActiveFilterChips
         filterCategory={filterCategoryId}
+        initialCategoryName={category}
         setFilterCategory={setFilterCategoryId}
         filterSubCategoryId={filterSubCategoryId}
         setFilterSubCategoryId={setFilterSubCategoryId}

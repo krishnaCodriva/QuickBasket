@@ -137,7 +137,7 @@ export function useProductListing(params: ProductListingParams): UseProductListi
 
         const response = await productApi.getProducts({
           search: searchQuery || undefined,
-          categoryId: filterCategoryId || undefined,
+          categoryId: filterSubCategoryId || filterCategoryId || undefined,
           minPrice,
           maxPrice,
           tag: filterTag || undefined,

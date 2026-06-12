@@ -9,6 +9,7 @@ import { spacing, radius, typography } from "../core/constants/theme";
 
 interface ActiveFilterChipsProps {
   filterCategory: string | null;
+  initialCategoryName?: string;
   setFilterCategory: (val: string | null) => void;
   filterSubCategoryId?: string | null;
   setFilterSubCategoryId?: (val: string | null) => void;
@@ -25,6 +26,7 @@ interface ActiveFilterChipsProps {
 
 const ActiveFilterChips: React.FC<ActiveFilterChipsProps> = ({
   filterCategory,
+  initialCategoryName,
   setFilterCategory,
   filterSubCategoryId,
   setFilterSubCategoryId,
@@ -46,7 +48,7 @@ const ActiveFilterChips: React.FC<ActiveFilterChipsProps> = ({
   const hasActiveFilters =
     filterPrice || filterCategory || filterSubCategoryId || filterTag || inStockOnly || outOfStockOnly;
 
-  const categoryNameKey = categories.find(c => c.id === filterCategory)?.nameKey || filterCategory;
+  const categoryNameKey = categories.find(c => c.id === filterCategory)?.nameKey || initialCategoryName || filterCategory;
   const subCategoryNameKey = subCategories.find(s => s.id === filterSubCategoryId)?.nameKey || filterSubCategoryId;
 
   const chipBgColor = useThemeColor(
