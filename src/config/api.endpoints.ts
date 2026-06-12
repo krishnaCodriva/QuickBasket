@@ -24,4 +24,11 @@ export const API_ENDPOINTS = {
     // We export both just to prevent breaking changes if they are different backend routes.
     GET_HOME_CATEGORY: '/category', 
   },
+
+  // Cart
+  CART: {
+    GET: '/cart',
+    ADD: '/cart/add',
+    REMOVE: (productId: string) => `/cart/items/${productId}`,
+  },
 };
