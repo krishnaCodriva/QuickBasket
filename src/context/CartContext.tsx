@@ -3,11 +3,9 @@
  * Refactored under the QuickBasket Enterprise Architecture Plan.
  *
  * Changes:
- * - addToCart now accepts Product (typed) instead of any
- * - CartItem imported from core/types (single source of truth)
- * - addToCart, updateQuantity, removeFromCart, clearCart wrapped with useCallback
- *   to prevent unnecessary re-renders in all consumer components
- * - contextValue uses useMemo correctly with stable function references
+ * - Uses real backend endpoints from cartApi to fetch/update cart.
+ * - Extracts subtotal, tax, deliveryCharge, grandTotal directly from the API.
+ * - Maps nested or flat backend cart item formats to our UI CartItem type.
  */
 
 import React, {
@@ -16,9 +14,11 @@ import React, {
   useState,
   useMemo,
   useCallback,
+  useEffect,
   ReactNode,
 } from 'react';
 import type { Product, CartItem } from '../core/types/domain';
+import { cartApi } from '../services/cartApi';
 
 // Re-export CartItem so existing imports from CartContext still work
 export type { CartItem };
@@ -27,13 +27,17 @@ export type { CartItem };
 
 interface CartContextType {
   cartItems: CartItem[];
-  addToCart: (product: Product, quantity?: number) => void;
-  updateQuantity: (id: string, delta: number) => void;
-  removeFromCart: (id: string) => void;
-  clearCart: () => void;
+  addToCart: (product: Product, quantity?: number) => Promise<void>;
+  updateQuantity: (id: string, delta: number) => Promise<void>;
+  removeFromCart: (id: string) => Promise<void>;
+  clearCart: () => Promise<void>;
   totalItems: number;
   subtotal: number;
+  tax: number;
+  deliveryCharge: number;
+  grandTotal: number;
   hasOutOfStock: boolean;
+  isLoading: boolean;
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -44,68 +48,139 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [subtotal, setSubtotal] = useState<number>(0);
+  const [tax, setTax] = useState<number>(0);
+  const [deliveryCharge, setDeliveryCharge] = useState<number>(0);
+  const [grandTotal, setGrandTotal] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const addToCart = useCallback((product: Product, quantity: number = 1) => {
-    setCartItems((prev) => {
-      const existing = prev.find((item) => item.id === product.id);
-      if (existing) {
-        return prev.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item,
-        );
-      }
-      return [
-        ...prev,
-        {
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          emoji: product.emoji ?? '📦',
-          inStock: product.inStock !== false,
-          quantity,
-        },
-      ];
+  // Map backend cart structure to frontend state
+  const mapBackendCart = useCallback((cartData: any) => {
+    if (!cartData) {
+      setCartItems([]);
+      setSubtotal(0);
+      setTax(0);
+      setDeliveryCharge(0);
+      setGrandTotal(0);
+      return;
+    }
+    
+    // Safely handle different item arrays
+    const items = cartData.items || [];
+    const mappedItems: CartItem[] = items.map((item: any) => {
+      // The product details might be nested under 'product' or 'productId' or be flat
+      const productObj = item.product || item.productId || item;
+      return {
+        id: productObj._id || productObj.id || item.productId || item.id,
+        name: productObj.name || 'Unknown Item',
+        price: productObj.price || item.price || 0,
+        emoji: productObj.emoji || '📦',
+        quantity: item.quantity || 1,
+        inStock: productObj.inStock !== false,
+      };
     });
+
+    setCartItems(mappedItems);
+    setSubtotal(parseFloat(cartData.calculations?.subtotal || cartData.subtotal || '0'));
+    setTax(parseFloat(cartData.calculations?.tax || cartData.tax || '0'));
+    setDeliveryCharge(parseFloat(cartData.calculations?.deliveryCharge || cartData.deliveryCharge || '0'));
+    setGrandTotal(parseFloat(cartData.calculations?.grandTotal || cartData.grandTotal || '0'));
   }, []);
 
-  const updateQuantity = useCallback((id: string, delta: number) => {
-    setCartItems((prev) =>
-      prev
-        .map((item) => {
-          if (item.id !== id) return item;
-          if (!item.inStock) return item; // Cannot update out-of-stock items
-          return { ...item, quantity: item.quantity + delta };
-        })
-        .filter((item) => item.quantity > 0),
-    );
-  }, []);
+  const fetchCart = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const res = await cartApi.getCart();
+      if (res.success && res.data) {
+        mapBackendCart(res.data);
+      }
+    } catch (e) {
+      console.error('Failed to fetch cart', e);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [mapBackendCart]);
 
-  const removeFromCart = useCallback((id: string) => {
-    setCartItems((prev) => prev.filter((item) => item.id !== id));
-  }, []);
+  // Initial fetch
+  useEffect(() => {
+    fetchCart();
+  }, [fetchCart]);
 
-  const clearCart = useCallback(() => {
-    setCartItems([]);
-  }, []);
+  const addToCart = useCallback(async (product: Product, quantity: number = 1) => {
+    setIsLoading(true);
+    try {
+      const res = await cartApi.addToCart(product.id, quantity);
+      if (res.success && res.data) {
+        mapBackendCart(res.data);
+      } else {
+        await fetchCart();
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [mapBackendCart, fetchCart]);
+
+  const updateQuantity = useCallback(async (id: string, delta: number) => {
+    const item = cartItems.find((i) => i.id === id);
+    if (!item) return;
+
+    const newQuantity = item.quantity + delta;
+    setIsLoading(true);
+    
+    try {
+      if (newQuantity <= 0) {
+        const res = await cartApi.removeFromCart(id);
+        if (res.success && res.data) mapBackendCart(res.data);
+        else await fetchCart();
+      } else {
+        // The backend /cart/add endpoint adds the quantity passed. 
+        // So we just pass the 'delta' (e.g. +1 or -1) instead of the total newQuantity.
+        const res = await cartApi.addToCart(id, delta);
+        if (res.success && res.data) mapBackendCart(res.data);
+        else await fetchCart();
+      }
+    } catch (e) {
+      console.error('Error updating quantity:', e);
+      await fetchCart();
+    } finally {
+      setIsLoading(false);
+    }
+  }, [cartItems, mapBackendCart, fetchCart]);
+
+  const removeFromCart = useCallback(async (id: string) => {
+    setIsLoading(true);
+    try {
+      const res = await cartApi.removeFromCart(id);
+      if (res.success && res.data) {
+        mapBackendCart(res.data);
+      } else {
+        await fetchCart();
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [mapBackendCart, fetchCart]);
+
+  const clearCart = useCallback(async () => {
+    console.warn("Backend CLEAR endpoint not provided yet. Cannot clear fully via API.");
+    // Temporarily clear locally since no endpoint is provided
+    mapBackendCart(null);
+  }, [mapBackendCart]);
 
   // ─── Derived values ──────────────────────────────────────────────────────────
+  
   const totalItems = useMemo(
     () => cartItems.length,
-    [cartItems],
-  );
-
-  const subtotal = useMemo(
-    () => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
-    [cartItems],
+    [cartItems]
   );
 
   const hasOutOfStock = useMemo(
     () => cartItems.some((item) => !item.inStock),
-    [cartItems],
+    [cartItems]
   );
 
   // ─── Context value — stable references via useCallback + useMemo ─────────────
+  
   const contextValue = useMemo(
     () => ({
       cartItems,
@@ -115,7 +190,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       clearCart,
       totalItems,
       subtotal,
+      tax,
+      deliveryCharge,
+      grandTotal,
       hasOutOfStock,
+      isLoading
     }),
     [
       cartItems,
@@ -125,8 +204,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       clearCart,
       totalItems,
       subtotal,
+      tax,
+      deliveryCharge,
+      grandTotal,
       hasOutOfStock,
-    ],
+      isLoading
+    ]
   );
 
   return (
