@@ -60,10 +60,8 @@ export default function ProfileScreen() {
   const confirmLogout = () => {
     setIsLogoutModalVisible(false);
     logout();
-    navigation.reset({
-      index: 0,
-      routes: [{ name: "Login" }],
-    });
+    // Redirect to HomeTab as a guest user instead of forcing Login screen
+    navigation.navigate("HomeTab", { screen: "Home" });
   };
 
   const renderGridCard = (

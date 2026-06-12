@@ -9,6 +9,7 @@ export const authService = {
   sendOtp: async (phone: string) => {
     try {
       const response = await apiClient.post(API_ENDPOINTS.AUTH.SEND_OTP, { phone });
+      console.log('✅ OTP API Response from Backend:', JSON.stringify(response.data, null, 2));
       return response.data;
     } catch (error) {
       console.error('Failed to send OTP:', error);

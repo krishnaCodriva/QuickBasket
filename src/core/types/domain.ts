@@ -61,6 +61,14 @@ export interface Address {
   address: string;
 }
 
+// ─── Location / Serviceability ──────────────────────────────────────────────────
+
+export interface ServiceabilityResponse {
+  success: boolean;
+  serviceable: boolean;
+  distance: number;
+}
+
 // ─── Payment ─────────────────────────────────────────────────────────────────
 
 export interface PaymentMethod {

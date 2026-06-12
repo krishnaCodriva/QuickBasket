@@ -19,7 +19,7 @@
  */
 
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, ViewStyle, TextStyle } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { ThemedText } from './ThemedText';
 import { useThemeColor } from '../hooks';
@@ -42,6 +42,8 @@ export interface ScreenHeaderProps {
   showBorder?: boolean;
   /** Additional styles for the container */
   style?: ViewStyle;
+  /** Additional styles for the title text */
+  titleStyle?: TextStyle;
   /** For testing */
   testID?: string;
 }
@@ -55,6 +57,7 @@ export function ScreenHeader({
   rightElement,
   showBorder = true,
   style,
+  titleStyle,
   testID,
 }: ScreenHeaderProps) {
   const iconColor = useThemeColor(
@@ -92,7 +95,7 @@ export function ScreenHeader({
 
       {/* Centre — title & subtitle */}
       <View style={styles.titleContainer}>
-        <ThemedText style={styles.title} numberOfLines={1}>
+        <ThemedText style={[styles.title, titleStyle]} numberOfLines={1}>
           {title}
         </ThemedText>
         {subtitle && (

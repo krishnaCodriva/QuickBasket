@@ -18,11 +18,12 @@ export const categoryApi = {
         return { success: true, data: cachedCategories };
       }
 
-      const response = await apiClient.get(API_ENDPOINTS.CATEGORIES.GET_ALL);
+      const response = await apiClient.get(API_ENDPOINTS.HOME.GET_ALL);
       
       if (response.data && response.data.success) {
+        const categoriesData = response.data.data?.categories || [];
         // Recursively format image URLs with the base server URL
-        const mappedData: Category[] = response.data.data.map((cat: any) => ({
+        const mappedData: Category[] = categoriesData.map((cat: any) => ({
           ...cat,
           imageUrl: formatImageUrl(cat.imageUrl),
           // Map legacy fields for UI compatibility
