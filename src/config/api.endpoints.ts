@@ -29,5 +29,10 @@ export const API_ENDPOINTS = {
   // Location
   LOCATION: {
     SERVICEABILITY: '/location/serviceability',
+  // Cart
+  CART: {
+    GET: '/cart',
+    ADD: '/cart/add',
+    REMOVE: (productId: string) => `/cart/items/${productId}`,
   },
 };
