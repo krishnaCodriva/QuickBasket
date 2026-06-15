@@ -34,28 +34,30 @@ const RootContent = ({ scheme, appDarkTheme, appLightTheme }) => {
   }
 
   return (
-    <CartProvider>
-      <OrderProvider>
-        <LocalizationContextProvider>
-          <View
-            style={{
-              flex: 1,
-              backgroundColor:
-                scheme === "dark"
-                  ? Colors.dark.primaryBackground
-                  : Colors.light.primaryBackground,
-            }}
-          >
-            <NavigationContainer
-              theme={scheme === "dark" ? appDarkTheme : appLightTheme}
+    <AddressProvider>
+      <CartProvider>
+        <OrderProvider>
+          <LocalizationContextProvider>
+            <View
+              style={{
+                flex: 1,
+                backgroundColor:
+                  scheme === "dark"
+                    ? Colors.dark.primaryBackground
+                    : Colors.light.primaryBackground,
+              }}
             >
-              <StatusBar style="auto" />
-              <AppNavigator />
-            </NavigationContainer>
-          </View>
-        </LocalizationContextProvider>
-      </OrderProvider>
-    </CartProvider>
+              <NavigationContainer
+                theme={scheme === "dark" ? appDarkTheme : appLightTheme}
+              >
+                <StatusBar style="auto" />
+                <AppNavigator />
+              </NavigationContainer>
+            </View>
+          </LocalizationContextProvider>
+        </OrderProvider>
+      </CartProvider>
+    </AddressProvider>
   );
 };
 
