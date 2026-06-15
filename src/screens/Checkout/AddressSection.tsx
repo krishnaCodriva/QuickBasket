@@ -59,10 +59,12 @@ export default function AddressSection({ addresses, selectedAddress, onSelect, o
             onPress={() => onSelect(addr.id)}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.xs }}>
-              <Feather name={getAddressTypeIcon(addr.label)} size={16} color={iconColor} style={{ marginRight: spacing.xs }} />
-              <ThemedText type="defaultSemiBold" style={{ fontSize: typography.size.lg }}>{getAddressTypeLabel(addr.label)}</ThemedText>
+              <Feather name={getAddressTypeIcon(addr.type)} size={16} color={iconColor} style={{ marginRight: spacing.xs }} />
+              <ThemedText type="defaultSemiBold" style={{ fontSize: typography.size.lg }}>{getAddressTypeLabel(addr.type)}</ThemedText>
             </View>
-            <ThemedText useSecondaryText style={{ fontSize: typography.size.md, lineHeight: 20 }}>{addr.address}</ThemedText>
+            <ThemedText useSecondaryText style={{ fontSize: typography.size.md, lineHeight: 20 }}>
+              {addr.flat}, {addr.street}, {addr.city}, {addr.state} - {addr.pincode}
+            </ThemedText>
           </TouchableOpacity>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <TouchableOpacity onPress={() => onEdit(addr)} style={{ padding: spacing.sm }}>

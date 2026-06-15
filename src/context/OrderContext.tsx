@@ -5,8 +5,7 @@
  * Changes:
  * - Order.address type changed from `any` to the typed `Address` domain model
  * - OrderStatus, Order, CartItem imported from core/types (single source of truth)
- * - ORDER_STATUS_FLOW moved here until a future phase migrates it to core/constants
- * - Re-exports types so existing imports still work
+ * - Fetches real orders from the backend API.
  */
 
 import React, {
@@ -19,11 +18,10 @@ import React, {
   ReactNode,
 } from 'react';
 import type { CartItem, Order, OrderStatus } from '../core/types/domain';
+import { orderApi } from '../services/orderApi';
+import { useAuth } from './AuthContext';
 
-// Re-export for backward compatibility with existing imports
 export type { Order, OrderStatus };
-
-// ─── Order status flow ────────────────────────────────────────────────────────
 
 export const ORDER_STATUS_FLOW: OrderStatus[] = [
   'Order Placed',
@@ -34,58 +32,81 @@ export const ORDER_STATUS_FLOW: OrderStatus[] = [
   'Delivered',
 ];
 
-/** Interval (ms) for mock order progression in development */
-const ORDER_PROGRESS_INTERVAL_MS = 15000;
-
-// ─── Context type ─────────────────────────────────────────────────────────────
-
 interface OrderContextType {
   orders: Order[];
-  addOrder: (order: Omit<Order, 'status'>) => void;
+  addOrder: () => void; // Trigger a refresh instead of pushing manually
   getOrderById: (id: string) => Order | undefined;
+  fetchOrders: () => Promise<void>;
+  isLoading: boolean;
 }
-
-// ─── Context ──────────────────────────────────────────────────────────────────
 
 const OrderContext = createContext<OrderContextType | undefined>(undefined);
 
-// ─── Provider ─────────────────────────────────────────────────────────────────
-
 export const OrderProvider = ({ children }: { children: ReactNode }) => {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const { isLoading: isAuthLoading, isAuthenticated } = useAuth();
 
-  // Mock real-time order progress simulation
+  const fetchOrders = useCallback(async () => {
+    if (!isAuthenticated) return;
+    
+    setIsLoading(true);
+    try {
+      const res = await orderApi.getOrders();
+      
+      console.log("RAW ORDERS API RESPONSE:", JSON.stringify(res, null, 2));
+
+      // Account for either res.data.rows or res.rows based on typical Axios wrappers
+      let rows = [];
+      if (Array.isArray(res)) rows = res;
+      else if (Array.isArray(res?.data)) rows = res.data;
+      else if (Array.isArray(res?.data?.rows)) rows = res.data.rows;
+      else if (Array.isArray(res?.rows)) rows = res.rows;
+      else if (Array.isArray(res?.data?.data)) rows = res.data.data;
+      
+      if (Array.isArray(rows)) {
+        const mappedOrders = rows.map((o: any) => {
+          // Normalize status
+          let formattedStatus = o.status;
+          if (o.status === 'placed' || o.status === 'PLACED') formattedStatus = 'Order Placed';
+          if (o.status === 'processing' || o.status === 'PROCESSING') formattedStatus = 'Processing';
+          if (o.status === 'delivered' || o.status === 'DELIVERED') formattedStatus = 'Delivered';
+
+          return {
+            id: o.id,
+            date: o.created_at || o.createdAt || new Date().toISOString(),
+            status: formattedStatus as OrderStatus,
+            totalPayable: parseFloat(o.grandTotal || o.totalAmount || o.subtotal || '0'),
+            paymentMethod: o.paymentMethod || o.paymentStatus || '',
+            items: [], // Not returned in the list API
+            address: {} as any
+          };
+        });
+        
+        // Sort by date descending
+        mappedOrders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        setOrders(mappedOrders);
+      }
+    } catch (e) {
+      console.error('Failed to fetch orders', e);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isAuthenticated]);
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      setOrders((prevOrders) =>
-        prevOrders.map((order) => {
-          if (
-            order.status === 'Delivered' ||
-            order.status === 'Cancelled'
-          ) {
-            return order;
-          }
-          const currentIndex = ORDER_STATUS_FLOW.indexOf(order.status);
-          if (currentIndex < ORDER_STATUS_FLOW.length - 1) {
-            return {
-              ...order,
-              status: ORDER_STATUS_FLOW[currentIndex + 1] as OrderStatus,
-            };
-          }
-          return order;
-        }),
-      );
-    }, ORDER_PROGRESS_INTERVAL_MS);
+    if (!isAuthLoading && isAuthenticated) {
+      fetchOrders();
+    } else if (!isAuthenticated) {
+      // Clear orders if user logs out or becomes guest
+      setOrders([]);
+    }
+  }, [isAuthLoading, isAuthenticated, fetchOrders]);
 
-    return () => clearInterval(interval);
-  }, []);
-
-  const addOrder = useCallback((order: Omit<Order, 'status'>) => {
-    setOrders((prev) => [
-      { ...order, status: 'Order Placed' as OrderStatus },
-      ...prev,
-    ]);
-  }, []);
+  const addOrder = useCallback(() => {
+    // When a new order is added, just re-fetch the list from the server
+    fetchOrders();
+  }, [fetchOrders]);
 
   const getOrderById = useCallback(
     (id: string) => orders.find((o) => o.id === id),
@@ -93,8 +114,8 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const contextValue = useMemo(
-    () => ({ orders, addOrder, getOrderById }),
-    [orders, addOrder, getOrderById],
+    () => ({ orders, addOrder, getOrderById, fetchOrders, isLoading }),
+    [orders, addOrder, getOrderById, fetchOrders, isLoading],
   );
 
   return (
@@ -103,8 +124,6 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
     </OrderContext.Provider>
   );
 };
-
-// ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export const useOrder = (): OrderContextType => {
   const context = useContext(OrderContext);

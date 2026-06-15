@@ -4,29 +4,39 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { ThemedView, ThemedText, CustomButton, CartItemCard, CartPriceSummary, ScreenHeader, EmptyState } from '../../components';
 import ThemedInput from '../../components/ThemedInput';
-import { useCart, useOrder } from '../../context';
+import { useCart, useOrder, useAddress } from '../../context';
 import { Colors, STRINGS } from '../../constants';
 import { useThemeColor } from '../../hooks';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import { INITIAL_ADDRESSES, MOCK_PAYMENT_METHODS } from '../../data/mockData';
+import { INITIAL_ADDRESSES } from '../../data/mockData';
 import AddressFormModal from './AddressFormModal';
 import AddressSection from './AddressSection';
 import { spacing, radius, elevation } from '../../core/constants/theme';
 import PaymentMethodSection from './PaymentMethodSection';
+import { orderApi } from '../../services/orderApi';
+import RazorpayWebView, { RazorpayOptions } from './RazorpayWebView';
+
+const PAYMENT_METHODS = [
+  { id: 'pm_online', label: 'Pay Online', details: 'Cards, UPI, Netbanking, Wallets', icon: 'credit-card' },
+  { id: 'pm_cod', label: 'Cash on Delivery', details: 'Pay at your doorstep', icon: 'truck' }
+];
 
 
 export default function CheckoutScreen() {
-  const { cartItems, subtotal, clearCart, totalItems } = useCart();
+  const { cartItems, subtotal, tax, deliveryCharge, grandTotal, clearCart, totalItems } = useCart();
   const { addOrder } = useOrder();
+  const { addresses, selectedAddressId, selectAddress, addAddress, updateAddress, deleteAddress } = useAddress();
   const navigation = useNavigation<any>();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
-  const [addresses, setAddresses] = useState(INITIAL_ADDRESSES);
-  const [selectedAddress, setSelectedAddress] = useState<string>('');
   const [selectedPayment, setSelectedPayment] = useState<string>('');
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  
+  // WebView state
+  const [razorpayOptions, setRazorpayOptions] = useState<RazorpayOptions | null>(null);
+  const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
 
   const [isAddressModalVisible, setAddressModalVisible] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
@@ -45,13 +55,8 @@ export default function CheckoutScreen() {
   const cardColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.secondaryBackground }, 'secondaryBackground');
   const borderColor = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray300 }, 'gray200' as any);
 
-  const discount = subtotal > 0 ? 5 : 0; // Flat ₹5 mock discount for any order
-  const deliveryCharge = subtotal > 50 ? 0 : 5.99;
-  const taxes = subtotal * 0.08;
-  const totalPayable = subtotal - discount + deliveryCharge + taxes;
-
-  const handlePlaceOrder = () => {
-    if (!selectedAddress) {
+  const handlePlaceOrder = async () => {
+    if (!selectedAddressId) {
       Alert.alert(t(STRINGS.checkoutScreen.missingInfo), t(STRINGS.checkoutScreen.selectAddressError));
       return;
     }
@@ -60,55 +65,97 @@ export default function CheckoutScreen() {
       return;
     }
 
-    if (selectedPayment === 'pm_credit' || selectedPayment === 'pm_debit') {
-      if (!/^\d{16}$/.test(paymentDetails.cardNumber.replace(/\s/g, ''))) {
-        Alert.alert(t(STRINGS.checkoutScreen.invalidCard), t(STRINGS.checkoutScreen.invalidCardMsg));
-        return;
-      }
-      if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(paymentDetails.cardExpiry)) {
-        Alert.alert(t(STRINGS.checkoutScreen.invalidExpiry), t(STRINGS.checkoutScreen.invalidExpiryMsg));
-        return;
-      }
-      if (!/^\d{3}$/.test(paymentDetails.cardCvv)) {
-        Alert.alert(t(STRINGS.checkoutScreen.invalidCvv), t(STRINGS.checkoutScreen.invalidCvvMsg));
-        return;
-      }
-    } else if (selectedPayment === 'pm_upi') {
-      if (!paymentDetails.upiId.includes('@')) {
-        Alert.alert(t(STRINGS.checkoutScreen.invalidUpiId), t(STRINGS.checkoutScreen.invalidUpiIdMsg));
-        return;
-      }
-    }
-
+    const method = selectedPayment === 'pm_cod' ? 'COD' : 'RAZORPAY';
     setIsPlacingOrder(true);
 
-    const txId = 'TXN' + Math.floor(100000000 + Math.random() * 900000000);
-    const selectedAddrObj = addresses.find(a => a.id === selectedAddress);
-    const selectedPaymentObj = MOCK_PAYMENT_METHODS.find(p => p.id === selectedPayment);
+    try {
+      // 1. Initiate Order
+      const initRes = await orderApi.initiateOrder({
+        addressId: selectedAddressId,
+        paymentMethod: method
+      });
 
-    const orderPayload = {
-      id: txId,
-      date: new Date().toISOString(),
-      items: cartItems,
-      subtotal,
-      discount,
-      deliveryCharge,
-      taxes,
-      totalPayable,
-      address: selectedAddrObj
-        ? { ...selectedAddrObj, type: selectedAddrObj.type as 'home' | 'work' | 'other' }
-        : undefined,
-      paymentMethod: selectedPaymentObj?.label || '',
-      paymentMethodId: selectedPaymentObj?.id || '',
-      estimatedDelivery: t(STRINGS.checkoutScreen.estimatedDelivery)
-    };
+      if (!initRes.success || !initRes.data) {
+        Alert.alert('Error', initRes.message || 'Failed to initiate order');
+        setIsPlacingOrder(false);
+        return;
+      }
 
-    setTimeout(() => {
+      if (method === 'COD') {
+        // COD order placed successfully
+        clearCart();
+        addOrder();
+        const orderId = initRes.data?.id || initRes.data?.orderId || initRes.data?.order?.id;
+        navigation.navigate('OrderSuccess', { order: { id: orderId } });
+        setIsPlacingOrder(false);
+        return;
+      }
+
+      // 2. Razorpay Flow
+      const rzpData = initRes.data.razorpay || initRes.data;
+      if (!rzpData || !rzpData.razorpayOrderId) {
+        Alert.alert('Error', 'Invalid Razorpay configuration from server');
+        setIsPlacingOrder(false);
+        return;
+      }
+
+      // Save the internal order ID to verify later
+      const internalId = initRes.data?.id || initRes.data?.internalOrderId || initRes.data?.order?.id;
+      setPendingOrderId(internalId);
+
+      const options: RazorpayOptions = {
+        description: 'QuickBasket Order',
+        currency: rzpData.currency || 'INR',
+        key: rzpData.keyId || rzpData.key,
+        amount: rzpData.amount,
+        name: 'QuickBasket',
+        order_id: rzpData.razorpayOrderId,
+        theme: { color: Colors.light.primary }
+      };
+
+      // Open the WebView instead of the native SDK
+      setRazorpayOptions(options);
+      setIsPlacingOrder(false); // Stop loading since the webview will take over
+
+    } catch (e: any) {
+      console.error('Checkout error:', e);
+      Alert.alert('Error', e.response?.data?.message || e.message || 'Failed to place order');
       setIsPlacingOrder(false);
-      addOrder(orderPayload);
-      clearCart();
-      navigation.navigate('OrderSuccess', { order: orderPayload });
-    }, 2000);
+    }
+  };
+
+  const handleRazorpaySuccess = async (paymentData: any) => {
+    setRazorpayOptions(null);
+    setIsPlacingOrder(true);
+    try {
+      // 3. Verify Payment
+      const verifyRes = await orderApi.verifyPayment({
+        internalOrderId: pendingOrderId,
+        razorpay_order_id: paymentData.razorpay_order_id,
+        razorpay_payment_id: paymentData.razorpay_payment_id,
+        razorpay_signature: paymentData.razorpay_signature
+      });
+
+      if (verifyRes.success) {
+        clearCart();
+        addOrder();
+        const successOrderId = verifyRes.data?.id || verifyRes.data?.orderId || pendingOrderId;
+        navigation.navigate('OrderSuccess', { order: { id: successOrderId } });
+      } else {
+        Alert.alert('Payment Failed', verifyRes.message || 'Verification failed');
+      }
+    } catch (e: any) {
+      console.error('Verify error:', e);
+      Alert.alert('Error', 'Payment verification failed');
+    } finally {
+      setIsPlacingOrder(false);
+    }
+  };
+
+  const handleRazorpayCancel = () => {
+    setRazorpayOptions(null);
+    setIsPlacingOrder(false);
+    Alert.alert('Payment Cancelled', 'You cancelled the payment. Your cart has been saved.');
   };
 
   const openAddressForm = (addr?: any) => {
@@ -122,8 +169,8 @@ export default function CheckoutScreen() {
     setAddressModalVisible(true);
   };
 
-  const saveAddress = () => {
-    if (!form.fullName || !form.mobile || !form.flat || !form.street || !form.city || !form.state || !form.pincode) {
+  const saveAddress = async () => {
+    if (!form.fullName || !form.mobile || !form.flat || !form.city || !form.state || !form.pincode) {
       Alert.alert(t(STRINGS.checkoutScreen.error), t(STRINGS.checkoutScreen.fillFieldsError));
       return;
     }
@@ -133,24 +180,20 @@ export default function CheckoutScreen() {
       return;
     }
 
-    if (!/^\d{5,6}$/.test(form.pincode)) {
+    if (!/^\d{6}$/.test(form.pincode)) {
       Alert.alert(t(STRINGS.checkoutScreen.error), t(STRINGS.checkoutScreen.invalidPincodeMsg));
       return;
     }
 
-    const fullAddressString = `${form.flat}, ${form.street}, ${form.city}, ${form.state} ${form.pincode}`;
-
     if (editingAddressId) {
-      setAddresses(prev => prev.map(a => a.id === editingAddressId ? { ...a, ...form, label: form.type, address: fullAddressString } : a));
+      await updateAddress(editingAddressId, form);
     } else {
-      const newId = `addr_${Date.now()}`;
-      setAddresses(prev => [...prev, { id: newId, ...form, label: form.type, address: fullAddressString }]);
-      setSelectedAddress(newId);
+      await addAddress(form);
     }
     setAddressModalVisible(false);
   };
 
-  const deleteAddress = (id: string) => {
+  const handleDeleteAddress = (id: string) => {
     Alert.alert(
       t(STRINGS.checkoutScreen.deleteAddress),
       t(STRINGS.checkoutScreen.deleteAddressConfirm),
@@ -160,8 +203,7 @@ export default function CheckoutScreen() {
           text: t(STRINGS.checkoutScreen.deleteAddressConfirmBtn),
           style: 'destructive',
           onPress: () => {
-            setAddresses(prev => prev.filter(a => a.id !== id));
-            if (selectedAddress === id) setSelectedAddress('');
+            deleteAddress(id);
           }
         }
       ]
@@ -199,10 +241,10 @@ export default function CheckoutScreen() {
           {/* Address Selection */}
           <AddressSection
             addresses={addresses}
-            selectedAddress={selectedAddress}
-            onSelect={setSelectedAddress}
+            selectedAddress={selectedAddressId || ''}
+            onSelect={selectAddress}
             onEdit={(addr) => openAddressForm(addr)}
-            onDelete={deleteAddress}
+            onDelete={handleDeleteAddress}
             onAddNew={() => openAddressForm()}
           />
 
@@ -220,7 +262,7 @@ export default function CheckoutScreen() {
 
           {/* Payment Methods */}
           <PaymentMethodSection
-            paymentMethods={MOCK_PAYMENT_METHODS}
+            paymentMethods={PAYMENT_METHODS as any}
             selectedPayment={selectedPayment}
             onSelect={setSelectedPayment}
             paymentDetails={paymentDetails}
@@ -230,10 +272,10 @@ export default function CheckoutScreen() {
           {/* Order Summary */}
           <CartPriceSummary
             subtotal={subtotal}
-            discount={discount}
+            discount={0}
             deliveryCharge={deliveryCharge}
-            taxes={taxes}
-            totalPayable={totalPayable}
+            taxes={tax}
+            totalPayable={grandTotal}
           />
 
         </ScrollView>
@@ -250,7 +292,7 @@ export default function CheckoutScreen() {
           <View style={styles.bottomBarRow}>
             <View>
               <ThemedText useSecondaryText>{t(STRINGS.checkoutScreen.total)}</ThemedText>
-              <ThemedText type="subtitle">₹{totalPayable.toFixed(2)}</ThemedText>
+              <ThemedText type="subtitle">₹{grandTotal.toFixed(2)}</ThemedText>
             </View>
             <CustomButton
               title={t(STRINGS.checkoutScreen.placeOrder)}
@@ -268,6 +310,14 @@ export default function CheckoutScreen() {
           editingAddressId={editingAddressId}
           form={form}
           onFormChange={setForm}
+        />
+
+        {/* Razorpay Webview Modal */}
+        <RazorpayWebView 
+          visible={!!razorpayOptions}
+          options={razorpayOptions}
+          onSuccess={handleRazorpaySuccess}
+          onCancel={handleRazorpayCancel}
         />
       </SafeAreaView>
     </ThemedView>

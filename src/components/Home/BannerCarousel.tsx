@@ -65,7 +65,7 @@ function BannerCarousel({ banners = DEFAULT_BANNERS, onBannerPress }: Props) {
   const handleScroll = (event: any) => {
     const offsetX = event.nativeEvent.contentOffset.x;
     const index = Math.round(offsetX / slideSize);
-    
+
     // Jump logic for seamless loop
     if (index === 0) {
       // Reached the fake first item -> Jump to the real last item
@@ -97,7 +97,7 @@ function BannerCarousel({ banners = DEFAULT_BANNERS, onBannerPress }: Props) {
     if (banners.length <= 1) return;
     const timer = setInterval(() => {
       // Scroll to the next item
-      const nextIndex = activeIndex + 2; 
+      const nextIndex = activeIndex + 2;
       flatListRef.current?.scrollToOffset({
         offset: nextIndex * slideSize,
         animated: true,

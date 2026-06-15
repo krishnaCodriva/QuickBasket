@@ -19,6 +19,7 @@ import React, {
 } from 'react';
 import type { Product, CartItem } from '../core/types/domain';
 import { cartApi } from '../services/cartApi';
+import { useAuth } from './AuthContext';
 
 // Re-export CartItem so existing imports from CartContext still work
 export type { CartItem };
@@ -67,9 +68,20 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     
     // Safely handle different item arrays
     const items = cartData.items || [];
+    
+    // Sort items consistently to prevent UI jumping when updating quantities
+    items.sort((a: any, b: any) => {
+      if (a.created_at && b.created_at) {
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      }
+      const idA = a.product?._id || a.productId || a.id || '';
+      const idB = b.product?._id || b.productId || b.id || '';
+      return String(idA).localeCompare(String(idB));
+    });
+
     const mappedItems: CartItem[] = items.map((item: any) => {
-      // The product details might be nested under 'product' or 'productId' or be flat
-      const productObj = item.product || item.productId || item;
+      // The product details might be nested under 'Product', 'product', or be flat
+      const productObj = item.Product || item.product || item;
       return {
         id: productObj._id || productObj.id || item.productId || item.id,
         name: productObj.name || 'Unknown Item',
@@ -101,10 +113,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [mapBackendCart]);
 
+  const { isLoading: isAuthLoading } = useAuth();
+
   // Initial fetch
   useEffect(() => {
-    fetchCart();
-  }, [fetchCart]);
+    if (!isAuthLoading) {
+      fetchCart();
+    }
+  }, [fetchCart, isAuthLoading]);
 
   const addToCart = useCallback(async (product: Product, quantity: number = 1) => {
     setIsLoading(true);

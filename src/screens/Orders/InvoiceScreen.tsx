@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Share, ActivityIndicator, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedView, ThemedText, CustomButton, ScreenHeader } from '../../components';
@@ -23,9 +23,23 @@ export default function InvoiceScreen() {
   const { getOrderById } = useOrder();
   const { t } = useTranslation();
   const [isGenerating, setIsGenerating] = useState(false);
-  
+
   const orderId = route.params?.orderId;
-  const order = getOrderById(orderId);
+  const [order, setOrder] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (orderId) {
+      import('../../services/orderApi').then(({ orderApi }) => {
+        orderApi.getOrderById(orderId)
+          .then(res => setOrder(res.data || res))
+          .catch(console.error)
+          .finally(() => setLoading(false));
+      });
+    } else {
+      setLoading(false);
+    }
+  }, [orderId]);
   const [isSharing, setIsSharing] = useState(false);
 
   const openPdf = async (fileUri: string) => {
@@ -34,7 +48,7 @@ export default function InvoiceScreen() {
       if (fileUri.startsWith('file://')) {
         contentUri = await FileSystem.getContentUriAsync(fileUri);
       }
-      
+
       await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
         data: contentUri,
         flags: 1,
@@ -52,6 +66,19 @@ export default function InvoiceScreen() {
   const iconColor = useThemeColor({ light: Colors.light.black, dark: Colors.light.white }, 'primaryText' as any);
   const successColor = useThemeColor({ light: Colors.light.success, dark: Colors.dark.success }, 'success' as any);
 
+  if (loading) {
+    return (
+      <ThemedView style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <ScreenHeader title={t(STRINGS.invoiceScreen.title)} onBack={() => navigation.goBack()} />
+          <View style={{ flex: 1, justifyContent: 'center' }}>
+            <ActivityIndicator size="large" color={primaryColor} />
+          </View>
+        </SafeAreaView>
+      </ThemedView>
+    );
+  }
+
   if (!order) {
     return (
       <ThemedView style={styles.container}>
@@ -66,17 +93,17 @@ export default function InvoiceScreen() {
   }
 
   const invoiceNumber = `INV-${order.id.slice(-8).toUpperCase()}`;
-  
+
   const handleShare = async () => {
     try {
       setIsSharing(true);
       const html = generateInvoiceHtml();
-      
+
       const { uri } = await Print.printToFileAsync({ html });
-      
+
       if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(uri, { 
-          UTI: '.pdf', 
+        await Sharing.shareAsync(uri, {
+          UTI: '.pdf',
           mimeType: 'application/pdf',
           dialogTitle: t(STRINGS.invoiceScreen.share)
         });
@@ -131,15 +158,15 @@ export default function InvoiceScreen() {
           <div class="row">
             <div>
               <div class="section-title" style="margin-top:0;">${t(STRINGS.invoiceScreen.pdfBilledTo)}</div>
-              <strong>${order.address?.fullName}</strong><br />
-              ${order.address?.address}<br />
-              Mobile: ${order.address?.mobile}
+              <strong>${order.customer?.name || order.address?.fullName || ''}</strong><br />
+              ${order.deliveryAddress || order.address?.address || ''}<br />
+              Mobile: ${order.customer?.phone || order.address?.mobile || ''}
             </div>
             <div class="text-right">
               <div class="section-title" style="margin-top:0;">${t(STRINGS.invoiceScreen.pdfInvoiceDetails)}</div>
               <strong>${t(STRINGS.invoiceScreen.pdfInvoiceNo)}</strong> ${invoiceNumber}<br />
               <strong>${t(STRINGS.invoiceScreen.pdfOrderId)}</strong> ${order.id}<br />
-              <strong>${t(STRINGS.invoiceScreen.pdfOrderDate)}</strong> ${new Date(order.date).toLocaleDateString()}<br />
+              <strong>${t(STRINGS.invoiceScreen.pdfOrderDate)}</strong> ${new Date(order.createdAt || order.date || new Date()).toLocaleDateString()}<br />
               <strong>${t(STRINGS.invoiceScreen.pdfPaymentMethod)}</strong> ${order.paymentMethodId ? t(`checkoutScreen.paymentMethods.${order.paymentMethodId}_label` as any, { defaultValue: order.paymentMethod }) : order.paymentMethod}
             </div>
           </div>
@@ -158,26 +185,29 @@ export default function InvoiceScreen() {
           </table>
 
           <div class="totals-container">
+            ${order.subtotal !== undefined ? `
             <div class="total-row">
               <span>${t(STRINGS.invoiceScreen.pdfSubtotal)}</span>
-              <span>₹${order.subtotal?.toFixed(2)}</span>
-            </div>
+              <span>₹${Number(order.subtotal).toFixed(2)}</span>
+            </div>` : ''}
             ${order.discount > 0 ? `
             <div class="total-row" style="color: #22c55e;">
               <span>${t(STRINGS.invoiceScreen.pdfDiscount)}</span>
-              <span>-₹${order.discount?.toFixed(2)}</span>
+              <span>-₹${Number(order.discount).toFixed(2)}</span>
             </div>` : ''}
+            ${order.deliveryCharge !== undefined ? `
             <div class="total-row">
               <span>${t(STRINGS.invoiceScreen.pdfDelivery)}</span>
-              <span>₹${order.deliveryCharge?.toFixed(2)}</span>
-            </div>
+              <span>₹${Number(order.deliveryCharge).toFixed(2)}</span>
+            </div>` : ''}
+            ${order.taxes !== undefined ? `
             <div class="total-row">
               <span>${t(STRINGS.invoiceScreen.pdfTaxes)}</span>
-              <span>₹${order.taxes?.toFixed(2)}</span>
-            </div>
+              <span>₹${Number(order.taxes).toFixed(2)}</span>
+            </div>` : ''}
             <div class="total-row grand-total">
               <span>${t(STRINGS.invoiceScreen.pdfGrandTotal)}</span>
-              <span>₹${order.totalPayable?.toFixed(2)}</span>
+              <span>₹${Number(order.totalPayable || order.totalAmount || order.grandTotal || 0).toFixed(2)}</span>
             </div>
           </div>
 
@@ -193,7 +223,7 @@ export default function InvoiceScreen() {
     const base64 = await FileSystem.readAsStringAsync(pdfUri, { encoding: FileSystem.EncodingType.Base64 });
     const savedUri = await FileSystem.StorageAccessFramework.createFileAsync(directoryUri, invoiceNum, 'application/pdf');
     await FileSystem.writeAsStringAsync(savedUri, base64, { encoding: FileSystem.EncodingType.Base64 });
-    
+
     Alert.alert(
       t(STRINGS.invoiceScreen.downloadComplete),
       `${invoiceNum}.pdf ${t(STRINGS.invoiceScreen.downloadCompleteMsg)}`,
@@ -208,9 +238,9 @@ export default function InvoiceScreen() {
     try {
       setIsGenerating(true);
       const html = generateInvoiceHtml();
-      
+
       const { uri } = await Print.printToFileAsync({ html });
-      
+
       if (Platform.OS === 'android') {
         const savedDirUri = await StorageService.getItem(STORAGE_KEYS.DOWNLOAD_DIRECTORY_URI);
 
@@ -230,8 +260,8 @@ export default function InvoiceScreen() {
           t(STRINGS.invoiceScreen.setupMessage),
           [
             { text: t(STRINGS.checkoutScreen.deleteAddressCancel), style: 'cancel' },
-            { 
-              text: t(STRINGS.invoiceScreen.selectFolder), 
+            {
+              text: t(STRINGS.invoiceScreen.selectFolder),
               onPress: async () => {
                 const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
                 if (permissions.granted) {
@@ -245,8 +275,8 @@ export default function InvoiceScreen() {
       } else {
         // iOS: The standard way to download a file is through the share sheet (Save to Files)
         if (await Sharing.isAvailableAsync()) {
-          await Sharing.shareAsync(uri, { 
-            UTI: '.pdf', 
+          await Sharing.shareAsync(uri, {
+            UTI: '.pdf',
             mimeType: 'application/pdf',
             dialogTitle: 'Download Invoice'
           });
@@ -293,7 +323,7 @@ export default function InvoiceScreen() {
               </View>
               <View style={styles.rowBetween}>
                 <ThemedText useSecondaryText>{t(STRINGS.invoiceScreen.orderDate)}</ThemedText>
-                <ThemedText>{new Date(order.date).toLocaleDateString()}</ThemedText>
+                <ThemedText>{new Date(order.createdAt || order.date || new Date()).toLocaleDateString()}</ThemedText>
               </View>
               <View style={styles.rowBetween}>
                 <ThemedText useSecondaryText>{t(STRINGS.invoiceScreen.deliveryDate)}</ThemedText>
@@ -306,23 +336,23 @@ export default function InvoiceScreen() {
             {/* Customer Info */}
             <View style={[styles.section, { borderBottomColor: borderColor, borderBottomWidth: 1 }]}>
               <ThemedText type="subtitle" style={{ marginBottom: spacing.sm, fontSize: typography.size.lg }}>{t(STRINGS.invoiceScreen.customerDetails)}</ThemedText>
-              <ThemedText style={{ fontWeight: typography.weight.bold }}>{order.address?.fullName}</ThemedText>
-              <ThemedText>{order.address?.address}</ThemedText>
-              <ThemedText>Mobile: {order.address?.mobile}</ThemedText>
+              <ThemedText style={{ fontWeight: typography.weight.bold }}>{order.customer?.name || order.address?.fullName}</ThemedText>
+              <ThemedText>{order.deliveryAddress || order.address?.address}</ThemedText>
+              <ThemedText>Mobile: {order.customer?.phone || order.address?.mobile}</ThemedText>
             </View>
 
             {/* Product Table */}
             <View style={styles.section}>
               <ThemedText type="subtitle" style={{ marginBottom: spacing.smd, fontSize: typography.size.lg }}>{t(STRINGS.checkoutScreen.orderItems)}</ThemedText>
-              
+
               <View style={[styles.tableHeader, { backgroundColor: borderColor, opacity: 0.8 }]}>
                 <ThemedText style={[styles.tableCol, { flex: 3, fontWeight: typography.weight.bold }]}>{t(STRINGS.invoiceScreen.item)}</ThemedText>
                 <ThemedText style={[styles.tableCol, { flex: 1, fontWeight: typography.weight.bold, textAlign: 'center' }]}>{t(STRINGS.invoiceScreen.qty)}</ThemedText>
                 <ThemedText style={[styles.tableCol, { flex: 1, fontWeight: typography.weight.bold, textAlign: 'right' }]}>{t(STRINGS.invoiceScreen.price)}</ThemedText>
               </View>
 
-              {order.items.map(item => (
-                <View key={item.id} style={[styles.tableRow, { borderBottomColor: borderColor, borderBottomWidth: StyleSheet.hairlineWidth }]}>
+              {(order.items || []).map((item: any) => (
+                <View key={item.id || item.productId} style={[styles.tableRow, { borderBottomColor: borderColor, borderBottomWidth: StyleSheet.hairlineWidth }]}>
                   <ThemedText style={[styles.tableCol, { flex: 3 }]}>{item.name}</ThemedText>
                   <ThemedText style={[styles.tableCol, { flex: 1, textAlign: 'center' }]}>{item.quantity}</ThemedText>
                   <ThemedText style={[styles.tableCol, { flex: 1, textAlign: 'right' }]}>₹{(item.price * item.quantity).toFixed(2)}</ThemedText>
@@ -332,13 +362,13 @@ export default function InvoiceScreen() {
 
             {/* Totals */}
             <View style={[styles.section, { backgroundColor: borderColor, opacity: 0.9, borderRadius: 8, padding: 16, marginTop: 8 }]}>
-              <View style={styles.rowBetween}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.itemSubtotal)}</ThemedText><ThemedText>₹{order.subtotal?.toFixed(2)}</ThemedText></View>
-              {order.discount > 0 && <View style={styles.rowBetween}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.discounts)}</ThemedText><ThemedText style={{ color: successColor }}>-₹{order.discount?.toFixed(2)}</ThemedText></View>}
-              <View style={styles.rowBetween}><ThemedText useSecondaryText>{t(STRINGS.invoiceScreen.deliveryFee)}</ThemedText><ThemedText>₹{order.deliveryCharge?.toFixed(2)}</ThemedText></View>
-              <View style={styles.rowBetween}><ThemedText useSecondaryText>{t(STRINGS.invoiceScreen.taxes)}</ThemedText><ThemedText>₹{order.taxes?.toFixed(2)}</ThemedText></View>
+              {order.subtotal !== undefined && <View style={styles.rowBetween}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.itemSubtotal)}</ThemedText><ThemedText>₹{Number(order.subtotal).toFixed(2)}</ThemedText></View>}
+              {order.discount > 0 && <View style={styles.rowBetween}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.discounts)}</ThemedText><ThemedText style={{ color: successColor }}>-₹{Number(order.discount).toFixed(2)}</ThemedText></View>}
+              {order.deliveryCharge !== undefined && <View style={styles.rowBetween}><ThemedText useSecondaryText>{t(STRINGS.invoiceScreen.deliveryFee)}</ThemedText><ThemedText>₹{Number(order.deliveryCharge).toFixed(2)}</ThemedText></View>}
+              {order.taxes !== undefined && <View style={styles.rowBetween}><ThemedText useSecondaryText>{t(STRINGS.invoiceScreen.taxes)}</ThemedText><ThemedText>₹{Number(order.taxes).toFixed(2)}</ThemedText></View>}
               <View style={[styles.rowBetween, { borderTopWidth: 1, borderTopColor: cardColor, paddingTop: spacing.smd, marginTop: spacing.smd }]}>
                 <ThemedText style={{ fontWeight: typography.weight.bold, fontSize: typography.size.lg }}>{t(STRINGS.invoiceScreen.grandTotal)}</ThemedText>
-                <ThemedText style={{ fontWeight: typography.weight.bold, fontSize: typography.size.lg, color: primaryColor }}>₹{order.totalPayable?.toFixed(2)}</ThemedText>
+                <ThemedText style={{ fontWeight: typography.weight.bold, fontSize: typography.size.lg, color: primaryColor }}>₹{Number(order.totalPayable || order.totalAmount || order.grandTotal || 0).toFixed(2)}</ThemedText>
               </View>
             </View>
 
@@ -354,18 +384,18 @@ export default function InvoiceScreen() {
           </View>
 
           <View style={styles.footer}>
-            <CustomButton 
-              title={isGenerating ? "Generating PDF..." : "Download PDF Invoice"} 
+            <CustomButton
+              title={isGenerating ? "Generating PDF..." : "Download PDF Invoice"}
               icon="download"
-              onPress={handleDownloadInvoice} 
+              onPress={handleDownloadInvoice}
               style={[styles.actionBtn, { marginBottom: 12 }]}
               loading={isGenerating}
             />
-            <CustomButton 
-              title={isSharing ? "Preparing PDF..." : t(STRINGS.invoiceScreen.share)} 
+            <CustomButton
+              title={isSharing ? "Preparing PDF..." : t(STRINGS.invoiceScreen.share)}
               icon="share-variant"
               type="secondary"
-              onPress={handleShare} 
+              onPress={handleShare}
               style={[styles.actionBtn, { borderColor: primaryColor, borderWidth: 1 }]}
               loading={isSharing}
             />
