@@ -14,7 +14,7 @@ import { spacing, radius, typography, elevation } from '../../core/constants/the
 
 export default function OrdersScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { orders } = useOrder();
+  const { orders, fetchOrders, isLoading } = useOrder();
   const { t } = useTranslation();
   
   const cardColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.secondaryBackground }, 'secondaryBackground');
@@ -68,7 +68,9 @@ export default function OrdersScreen() {
 
         <View style={styles.cardBody}>
           <ThemedText useSecondaryText numberOfLines={1} style={styles.itemsSummary}>
-            {item.items.map(i => `${i.quantity}x ${i.name}`).join(', ')}
+            {item.items && item.items.length > 0 
+              ? item.items.map(i => `${i.quantity}x ${i.name}`).join(', ')
+              : `Payment Method: ${item.paymentMethod}`}
           </ThemedText>
         </View>
 
@@ -118,6 +120,8 @@ export default function OrdersScreen() {
           renderItem={renderOrderItem}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          onRefresh={fetchOrders}
+          refreshing={isLoading}
         />
       </SafeAreaView>
     </ThemedView>

@@ -7,7 +7,7 @@ import {
 } from "@react-navigation/native";
 import { View, useColorScheme, ActivityIndicator } from "react-native";
 import AppNavigator from "./src/navigation/AppNavigator";
-import { CartProvider, OrderProvider, AuthProvider } from "./src/context";
+import { CartProvider, OrderProvider, AuthProvider, AddressProvider } from "./src/context";
 import { LocalizationContextProvider } from "./src/context/localizationContext/LocaleContext";
 import { Colors } from "./src/constants/colors";
 import { useAuth } from "./src/context/AuthContext";

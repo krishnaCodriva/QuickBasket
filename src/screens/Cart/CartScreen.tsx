@@ -29,11 +29,10 @@ export default function CartScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
-  const { cartItems, updateQuantity, removeFromCart, totalItems, subtotal, hasOutOfStock } = useCart();
+  const { cartItems, updateQuantity, removeFromCart, totalItems, subtotal, deliveryCharge, tax, grandTotal, hasOutOfStock } = useCart();
 
-  const deliveryCharge = subtotal > 500 ? 0 : 40;
-  const taxes = subtotal * 0.05;
-  const totalPayable = subtotal > 0 ? (subtotal + deliveryCharge + taxes) : 0;
+  const taxes = tax;
+  const totalPayable = grandTotal;
 
   // Theme Colors
   const cardColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.secondaryBackground }, 'secondaryBackground');

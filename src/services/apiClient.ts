@@ -83,6 +83,38 @@ apiClient.interceptors.response.use(
         return Promise.reject(error);
       }
 
+      const userToken = await storage.getUserToken();
+      if (!userToken) {
+        // We are a guest user, and our guest token was rejected (expired or DB wiped).
+        // Prevent infinite loops if the guest session API itself fails:
+        if (originalRequest.url === API_ENDPOINTS.AUTH.GUEST_SESSION) {
+          return Promise.reject(error);
+        }
+
+        console.warn('⚠️ Guest session invalid. Fetching a fresh guest token silently...');
+        try {
+          // Use base axios to prevent interceptor loops
+          const guestResponse = await axios.post(`${API_BASE_URL}${API_ENDPOINTS.AUTH.GUEST_SESSION}`);
+          const newGuestToken = guestResponse.data?.data?.sessionToken || guestResponse.data?.sessionToken;
+
+          if (newGuestToken) {
+            await storage.setGuestToken(newGuestToken);
+            originalRequest.headers['x-guest-token'] = newGuestToken;
+            console.log('✅ Recovered guest session! Retrying original request.');
+            
+            // CRITICAL: Prevent infinite loops if the backend rejects the NEW guest token!
+            originalRequest._retry = true;
+            
+            return apiClient(originalRequest); // Retry the failed request seamlessly
+          }
+        } catch (guestError) {
+          console.error('❌ Failed to recover guest session seamlessly', guestError);
+          return Promise.reject(guestError);
+        }
+
+        return Promise.reject(error);
+      }
+
       if (isRefreshing) {
         return new Promise(function (resolve, reject) {
           failedQueue.push({ resolve, reject });

@@ -44,4 +44,20 @@ export const API_ENDPOINTS = {
     ADD: '/cart/add',
     REMOVE: (productId: string) => `/cart/items/${productId}`,
   },
+  
+  // Addresses
+  ADDRESS: {
+    GET_ALL: '/addresses',
+    CREATE: '/addresses',
+    UPDATE: (addressId: string) => `/addresses/${addressId}`,
+    DELETE: (addressId: string) => `/addresses/${addressId}`,
+  },
+  
+  // Orders
+  ORDER: {
+    INITIATE: '/orders',
+    VERIFY_PAYMENT: '/payments/verify',
+    GET: (id: string) => `/orders/${id}`,
+    GET_ALL: '/orders',
+  },
 };

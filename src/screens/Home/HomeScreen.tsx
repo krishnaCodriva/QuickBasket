@@ -162,10 +162,21 @@ export default function HomeScreen({ navigation }: Props) {
       try {
         const res = await homeApi();
         if (res?.data) {
-          setTagsData(res.data.tags || []);
-          setBannersData(res.data.banners || []);
-          setCategoriesData(res.data.categories || []);
-          setProductsData(res.data.products || []);
+          let parsedTags = res.data.tags || [];
+          if (!Array.isArray(parsedTags) && Array.isArray(parsedTags.data)) parsedTags = parsedTags.data;
+          setTagsData(parsedTags);
+          
+          let parsedBanners = res.data.banners || [];
+          if (!Array.isArray(parsedBanners) && Array.isArray(parsedBanners.data)) parsedBanners = parsedBanners.data;
+          setBannersData(parsedBanners);
+          
+          let parsedCategories = res.data.categories || [];
+          if (!Array.isArray(parsedCategories) && Array.isArray(parsedCategories.data)) parsedCategories = parsedCategories.data;
+          setCategoriesData(parsedCategories);
+          
+          let parsedProducts = res.data.products || [];
+          if (!Array.isArray(parsedProducts) && Array.isArray(parsedProducts.data)) parsedProducts = parsedProducts.data;
+          setProductsData(parsedProducts);
         }
       } catch (error) {
         console.error("Failed to fetch home API data:", error);
