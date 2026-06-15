@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, ScrollView, Animated } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, StyleSheet, ScrollView, Animated, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedView, ThemedText, CustomButton, ScreenHeader } from '../../components';
 import { Feather } from '@expo/vector-icons';
@@ -10,6 +10,7 @@ import { useOrder, ORDER_STATUS_FLOW } from '../../context';
 import { useTranslation } from 'react-i18next';
 import type { RootStackParamList } from '../../core/types/navigation';
 import { spacing, radius, typography, zIndex } from '../../core/constants/theme';
+import { orderApi } from '../../services/orderApi';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'OrderStatus'>;
 
@@ -18,8 +19,8 @@ export default function OrderStatusScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
 
   const orderId = route.params?.orderId;
-
-  const order = getOrderById(orderId);
+  const [order, setOrder] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   const cardColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.secondaryBackground }, 'secondaryBackground');
   const borderColor = useThemeColor({ light: Colors.light.gray200, dark: Colors.dark.gray300 }, 'gray200' as never);
@@ -37,7 +38,29 @@ export default function OrderStatusScreen({ navigation, route }: Props) {
       duration: 500,
       useNativeDriver: true,
     }).start();
-  }, []);
+
+    if (orderId) {
+      orderApi.getOrderById(orderId)
+        .then(res => setOrder(res.data || res))
+        .catch(console.error)
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+  }, [orderId]);
+
+  if (loading) {
+    return (
+      <ThemedView style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <ScreenHeader title={t(STRINGS.orderStatusScreen.title)} onBack={() => navigation.goBack()} />
+          <View style={{ flex: 1, justifyContent: 'center' }}>
+            <ActivityIndicator size="large" color={primaryColor} />
+          </View>
+        </SafeAreaView>
+      </ThemedView>
+    );
+  }
 
   if (!order) {
     return (
@@ -49,8 +72,10 @@ export default function OrderStatusScreen({ navigation, route }: Props) {
     );
   }
 
-  const currentStatusIndex = ORDER_STATUS_FLOW.indexOf(order.status);
-  const isCancelled = order.status === 'Cancelled';
+  let currentStatusIndex = ORDER_STATUS_FLOW.indexOf(order.status as any);
+  if (currentStatusIndex === -1 && order.status === 'placed') currentStatusIndex = 0;
+  if (currentStatusIndex === -1 && order.status === 'processing') currentStatusIndex = 2;
+  const isCancelled = order.status === 'Cancelled' || order.status === 'cancelled';
 
   const getTranslatedStatus = (status: string) => {
     switch (status) {
@@ -133,7 +158,7 @@ export default function OrderStatusScreen({ navigation, route }: Props) {
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <View style={styles.summaryHeader}>
             <ThemedText type="title" style={styles.txId}>#{order.id.slice(-8)}</ThemedText>
-            <ThemedText useSecondaryText>{new Date(order.date).toLocaleString()}</ThemedText>
+            <ThemedText useSecondaryText>{new Date(order.createdAt || order.created_at || order.date || new Date()).toLocaleString()}</ThemedText>
           </View>
 
           {/* Tracking Timeline */}
@@ -155,9 +180,15 @@ export default function OrderStatusScreen({ navigation, route }: Props) {
 
             <View style={[styles.card, { backgroundColor: cardColor, borderColor }]}>
               <ThemedText type="subtitle" style={styles.cardTitle}>{t(STRINGS.orderStatusScreen.deliveryAddress)}</ThemedText>
-              <ThemedText style={{ fontWeight: typography.weight.bold, marginBottom: spacing.xs }}>{order.address?.fullName}</ThemedText>
-              <ThemedText>{order.address?.address}</ThemedText>
-              <ThemedText style={{ marginTop: spacing.xs }}>Mobile: {order.address?.mobile}</ThemedText>
+              {(order.customer?.name || order.address?.fullName) && (
+                <ThemedText style={{ fontWeight: typography.weight.bold, marginBottom: spacing.xs }}>
+                  {order.customer?.name || order.address?.fullName}
+                </ThemedText>
+              )}
+              <ThemedText>{order.deliveryAddress || order.address?.address || order.address?.addressLine1}</ThemedText>
+              {(order.customer?.phone || order.address?.mobile) && (
+                <ThemedText style={{ marginTop: spacing.xs }}>Mobile: {order.customer?.phone || order.address?.mobile}</ThemedText>
+              )}
             </View>
 
             <View style={[styles.card, { backgroundColor: cardColor, borderColor }]}>
@@ -170,11 +201,11 @@ export default function OrderStatusScreen({ navigation, route }: Props) {
             </View>
 
             <View style={[styles.card, { backgroundColor: cardColor, borderColor }]}>
-              <ThemedText type="subtitle" style={styles.cardTitle}>{t(STRINGS.checkoutScreen.orderItems)} ({order.items?.length})</ThemedText>
-              {order.items?.map(item => (
-                <View key={item.id} style={styles.itemRow}>
-                  <ThemedText style={{ fontSize: typography.size.xl }}>{item.emoji}</ThemedText>
-                  <ThemedText style={{ flex: 1, marginLeft: spacing.smd }}>{item.name} <ThemedText useSecondaryText>x{item.quantity}</ThemedText></ThemedText>
+              <ThemedText type="subtitle" style={styles.cardTitle}>{t(STRINGS.checkoutScreen.orderItems)} ({order.items?.length || 0})</ThemedText>
+              {order.items?.map((item: any) => (
+                <View key={item.id || item.productId} style={styles.itemRow}>
+                  <ThemedText style={{ fontSize: typography.size.xl }}>{item.emoji || '📦'}</ThemedText>
+                  <ThemedText style={{ flex: 1, marginLeft: spacing.smd }}>{item.name || item.Product?.name} <ThemedText useSecondaryText>x{item.quantity}</ThemedText></ThemedText>
                   <ThemedText>₹{(item.price * item.quantity).toFixed(2)}</ThemedText>
                 </View>
               ))}
@@ -182,16 +213,16 @@ export default function OrderStatusScreen({ navigation, route }: Props) {
 
             <View style={[styles.card, { backgroundColor: cardColor, borderColor }]}>
               <ThemedText type="subtitle" style={styles.cardTitle}>{t(STRINGS.checkoutScreen.total)}</ThemedText>
-              <View style={styles.amountRow}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.itemSubtotal)}</ThemedText><ThemedText>₹{order.subtotal?.toFixed(2)}</ThemedText></View>
-              {order.discount > 0 && <View style={styles.amountRow}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.discounts)}</ThemedText><ThemedText style={{ color: successColor }}>-₹{order.discount?.toFixed(2)}</ThemedText></View>}
-              <View style={styles.amountRow}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.deliveryCharges)}</ThemedText><ThemedText>₹{order.deliveryCharge?.toFixed(2)}</ThemedText></View>
-              <View style={styles.amountRow}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.taxes)}</ThemedText><ThemedText>₹{order.taxes?.toFixed(2)}</ThemedText></View>
-              <View style={[styles.amountRow, { borderTopWidth: 1, borderTopColor: borderColor, paddingTop: spacing.smd, marginTop: spacing.smd }]}><ThemedText style={{ fontWeight: typography.weight.bold, fontSize: typography.size.lg }}>{t(STRINGS.cartScreen.totalPayable)}</ThemedText><ThemedText style={{ fontWeight: typography.weight.bold, fontSize: typography.size.lg }}>₹{order.totalPayable?.toFixed(2)}</ThemedText></View>
+              {order.subtotal !== undefined && <View style={styles.amountRow}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.itemSubtotal)}</ThemedText><ThemedText>₹{Number(order.subtotal).toFixed(2)}</ThemedText></View>}
+              {order.discount > 0 && <View style={styles.amountRow}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.discounts)}</ThemedText><ThemedText style={{ color: successColor }}>-₹{Number(order.discount).toFixed(2)}</ThemedText></View>}
+              {order.deliveryCharge !== undefined && <View style={styles.amountRow}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.deliveryCharges)}</ThemedText><ThemedText>₹{Number(order.deliveryCharge).toFixed(2)}</ThemedText></View>}
+              {order.taxes !== undefined && <View style={styles.amountRow}><ThemedText useSecondaryText>{t(STRINGS.cartScreen.taxes)}</ThemedText><ThemedText>₹{Number(order.taxes).toFixed(2)}</ThemedText></View>}
+              <View style={[styles.amountRow, { borderTopWidth: 1, borderTopColor: borderColor, paddingTop: spacing.smd, marginTop: spacing.smd }]}><ThemedText style={{ fontWeight: typography.weight.bold, fontSize: typography.size.lg }}>{t(STRINGS.cartScreen.totalPayable)}</ThemedText><ThemedText style={{ fontWeight: typography.weight.bold, fontSize: typography.size.lg }}>₹{Number(order.totalPayable || order.totalAmount || order.grandTotal || 0).toFixed(2)}</ThemedText></View>
             </View>
           </View>
 
           {/* Invoice Actions */}
-          {order.status === 'Delivered' && (
+          {order.status !== 'Cancelled' && order.status !== 'cancelled' && (
             <View style={styles.invoiceActions}>
               <CustomButton 
                 title={t(STRINGS.orderStatusScreen.viewInvoice)} 

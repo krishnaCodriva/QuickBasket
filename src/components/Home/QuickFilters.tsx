@@ -20,7 +20,7 @@ const QuickFilters = ({ tags, selectedTag, onSelectTag }: Props) => {
   return (
     <View style={styles.container}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {tags.map((tag) => {
+        {(Array.isArray(tags) ? tags : []).map((tag) => {
           const isSelected = tag.id === selectedTag;
           return (
             <TouchableOpacity
