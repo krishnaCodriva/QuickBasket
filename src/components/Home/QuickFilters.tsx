@@ -17,10 +17,22 @@ const QuickFilters = ({ tags, selectedTag, onSelectTag }: Props) => {
   console.log("tsgs is : ", tags)
   const primaryColor = useThemeColor({}, 'primary');
   const bgColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.primaryBackground }, 'primaryBackground' as any);
+  
+  const normalizedTags = (() => {
+    if (!tags) return [];
+    if (Array.isArray(tags)) return tags;
+    if (typeof tags === 'string') return tags.split(',').map(t => { const str = t.trim(); return { id: str, name: str } });
+    if (tags && typeof tags === 'object') {
+       if ('data' in tags && Array.isArray((tags as any).data)) return (tags as any).data;
+       return Object.values(tags);
+    }
+    return [];
+  })();
+
   return (
     <View style={styles.container}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {tags.map((tag) => {
+        {normalizedTags.map((tag: any) => {
           const isSelected = tag.id === selectedTag;
           return (
             <TouchableOpacity

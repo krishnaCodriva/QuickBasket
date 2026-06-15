@@ -3,6 +3,7 @@ import { View, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Pl
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedView, ThemedText, CustomButton } from '../../components';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, STRINGS } from '../../constants';
 import { useThemeColor } from '../../hooks';
 import { useTranslation } from 'react-i18next';
@@ -15,12 +16,13 @@ export default function LoginScreen() {
   const route = useRoute<any>();
   const returnTo = route.params?.returnTo;
 
-  const { signup, sendOtp } = useAuth(); // for google mock, and actual API
+  const { loginWithGoogle, sendOtp } = useAuth(); // for google mock, and actual API
 
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isOtpLoading, setIsOtpLoading] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const primaryColor = useThemeColor({}, 'primary');
   const bgColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.primaryBackground }, 'primaryBackground' as any);
@@ -32,8 +34,22 @@ export default function LoginScreen() {
   const isPhoneValid = phoneNumber.length === 10;
   const showError = hasInteracted && !isPhoneValid && phoneNumber.length > 0;
 
-  const handleGoogleLogin = () => {
-    navigation.navigate('DummyGoogleScreen', { returnTo });
+  const handleGoogleLogin = async () => {
+    try {
+      setIsGoogleLoading(true);
+      await loginWithGoogle();
+      // On success, AuthContext sets the user, and navigation will naturally re-route
+      // But if we have a returnTo, we might want to navigate back, or let the AppNavigator handle it
+      if (returnTo === 'Checkout') {
+         navigation.replace('Checkout');
+      } else {
+         navigation.replace('HomeTab');
+      }
+    } catch (error: any) {
+      Alert.alert('Google Sign-In Error', error?.message || 'Failed to sign in with Google');
+    } finally {
+      setIsGoogleLoading(false);
+    }
   };
 
   const handleSendOtp = async () => {
@@ -58,7 +74,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <ThemedView style={[styles.container, { backgroundColor: bgColor }]}>
+    <ThemedView style={[styles.container, { backgroundColor: bgColor, paddingTop: insets.top }]}>
       {returnTo === 'Checkout' && (
         <View style={[styles.banner, { backgroundColor: Colors.light.transparentGreen015 }]}>
           <Ionicons name="information-circle" size={20} color={primaryColor} style={styles.bannerIcon} />

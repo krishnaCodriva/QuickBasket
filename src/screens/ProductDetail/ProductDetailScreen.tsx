@@ -11,6 +11,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../core/types/navigation';
 import type { Product } from '../../core/types/domain';
 import { spacing, radius, typography, elevation, zIndex } from '../../core/constants/theme';
+import { formatImageUrl } from '../../config/api.config';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ProductDetail'>;
 
@@ -48,9 +49,49 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
   const [zoomedImage, setZoomedImage] = useState<any>(null);
 
   // Construct images array for carousel
-  const images = product?.gallery && product.gallery.length > 0
-    ? product.gallery.map((uri: string, index: number) => ({ id: String(index), uri, color: imageBgColor }))
-    : [ { id: '1', emoji: product?.emoji || '📦', uri: product?.imageUrl, color: imageBgColor } ];
+  const parsedImages = (() => {
+    let imgs = product?.gallery || product?.images;
+    if (typeof imgs === 'string') {
+      try { imgs = JSON.parse(imgs); } catch (e) { imgs = []; }
+    }
+    return Array.isArray(imgs) ? imgs : [];
+  })();
+
+  // Combine main imageUrl and gallery images
+  const allUris = new Set<string>();
+  const images: any[] = [];
+  let imageCounter = 0;
+
+  // 1. Always add the main imageUrl first
+  if (product?.imageUrl) {
+    allUris.add(product.imageUrl);
+    images.push({
+      id: String(imageCounter++),
+      uri: formatImageUrl(product.imageUrl),
+      color: imageBgColor
+    });
+  }
+
+  // 2. Add any extra gallery images
+  parsedImages.forEach((uri: string) => {
+    if (uri && !allUris.has(uri)) {
+      allUris.add(uri);
+      images.push({
+        id: String(imageCounter++),
+        uri: formatImageUrl(uri),
+        color: imageBgColor
+      });
+    }
+  });
+
+  // 3. Fallback to emoji if no images exist
+  if (images.length === 0) {
+    images.push({
+      id: 'fallback',
+      emoji: product?.emoji || '📦',
+      color: imageBgColor
+    });
+  }
 
   if (!product) {
     return (
@@ -59,6 +100,15 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
       </ThemedView>
     );
   }
+
+  const normalizedTags = (() => {
+    const t = product?.tags;
+    if (!t) return [];
+    if (Array.isArray(t)) return t;
+    if (typeof t === 'string') return t.split(',').map(s => { const str = s.trim(); return { id: str, name: str } });
+    if (typeof t === 'object') return Object.values(t);
+    return [];
+  })();
 
   // --- HANDLERS ---
   const handleScroll = (event: any) => {
@@ -191,7 +241,7 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
           {!!product.weight && (
              <Tag label={product.weight} variant="outline" color="secondary" />
           )}
-          {product.tags && product.tags.length > 0 && product.tags.map((tag: any) => (
+          {normalizedTags.length > 0 && normalizedTags.map((tag: any) => (
             <Tag key={tag.id || tag} label={tag.name || tag} variant="outline" color="primary" />
           ))}
         </View>
@@ -279,25 +329,33 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
 
   const renderBottomBar = () => (
     <View style={[styles.bottomBar, { backgroundColor: bottomBarBgColor, borderTopColor: bottomBarBorderColor, paddingBottom: Math.max(insets.bottom, 16) }]}>
-      {cartQuantity === 0 ? (
-        <CustomButton 
-          title={t(STRINGS.productDetail.addToCart)} 
-          type="primary" 
-          onPress={() => handleUpdateCart(1)} 
-          style={{ width: '100%', marginBottom: 0 }} 
-          disabled={product.inStock === false}
-        />
-      ) : (
-        <View style={styles.quantityControl}>
-          <QuantitySelector 
-            quantity={cartQuantity}
-            onDecrease={() => handleUpdateCart(-1)}
-            onIncrease={() => handleUpdateCart(1)}
-            disabled={product.inStock === false}
-            size="large"
-          />
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+        {/* Left Side: Add to Cart / Quantity */}
+        <View style={{ flex: 1, alignItems: 'flex-start' }}>
+          {cartQuantity === 0 ? (
+            <CustomButton 
+              title={t(STRINGS.productDetail.addToCart)} 
+              type="primary" 
+              onPress={() => handleUpdateCart(1)} 
+              style={{ width: '100%', marginBottom: 0 }} 
+              disabled={product.inStock === false}
+            />
+          ) : (
+            <QuantitySelector 
+              quantity={cartQuantity}
+              onDecrease={() => handleUpdateCart(-1)}
+              onIncrease={() => handleUpdateCart(1)}
+              disabled={product.inStock === false}
+              size="large"
+            />
+          )}
         </View>
-      )}
+
+        {/* Right Side: View Cart Icon */}
+        <View style={styles.bottomCartBtn}>
+          <CartHeaderIcon color={iconColor} size={28} badgeBorderColor={bottomBarBgColor} />
+        </View>
+      </View>
     </View>
   );
 
@@ -533,11 +591,31 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     ...elevation.lg,
   },
-  quantityControl: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
+  bottomCartBtn: {
+    height: 48,
+    width: 48,
+    borderRadius: radius.md,
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bottomCartBadge: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    backgroundColor: Colors.light.red600,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: Colors.light.white,
+    zIndex: 10,
+  },
+  bottomCartBadgeText: {
+    color: Colors.light.white,
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   modalOverlay: {
     flex: 1,

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { View, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { ThemedText } from "./ThemedText";
 import { TranslatedText } from "./TranslatedText";
@@ -46,16 +46,9 @@ const ProductCard = ({
   onRemove,
   onPress,
 }: Props) => {
-  const [isFavorite, setIsFavorite] = useState(false);
-
   const bg = useThemeColor(
     { light: Colors.light.gray100, dark: Colors.dark.primaryBackground },
     "primaryBackground" as any,
-  );
-  const hearColor = useThemeColor({}, "heart");
-  const activeHeartColor = useThemeColor(
-    { light: Colors.light.red600, dark: Colors.dark.error },
-    "error" as any,
   );
   const cardBg = useThemeColor(
     { light: Colors.light.white, dark: Colors.dark.secondaryBackground },
@@ -121,6 +114,14 @@ const ProductCard = ({
     "primary" as any
   );
 
+  const normalizedTags = (() => {
+    if (!tags) return [];
+    if (Array.isArray(tags)) return tags;
+    if (typeof tags === 'string') return tags.split(',').map(t => t.trim());
+    if (typeof tags === 'object') return Object.values(tags);
+    return [];
+  })();
+
   return (
     <TouchableOpacity
       activeOpacity={0.9}
@@ -139,24 +140,6 @@ const ProductCard = ({
           { backgroundColor: isGrid ? imageBg : bg },
         ]}
       >
-        <TouchableOpacity
-          style={[
-            styles.heartButton,
-            { backgroundColor: cardBg },
-            isGrid && styles.gridHeartButton,
-          ]}
-          onPress={(e) => {
-            e.stopPropagation();
-            setIsFavorite(!isFavorite);
-          }}
-        >
-          <Ionicons
-            name={isFavorite ? "heart" : "heart-outline"}
-            size={isGrid ? 16 : 20}
-            color={isFavorite ? activeHeartColor : hearColor}
-          />
-        </TouchableOpacity>
-
         {!!brand && (
           <View style={[styles.brandBadge, { backgroundColor: cardBg }]}>
             <ThemedText style={[styles.brandBadgeText, { color: nameColor }]} numberOfLines={1}>
@@ -178,7 +161,7 @@ const ProductCard = ({
         )}
 
         <View style={styles.pillsContainer}>
-          {tags && tags.length > 0 && tags.slice(0, 1).map((tag, idx) => (
+          {normalizedTags.length > 0 && normalizedTags.slice(0, 1).map((tag: any, idx: number) => (
             <View key={`tag-${idx}`} style={[styles.pill, { backgroundColor: tagBg }]}>
               <ThemedText style={[styles.pillText, { color: tagColor }]} numberOfLines={1}>
                 {tag.name || tag}
@@ -339,23 +322,6 @@ const styles = StyleSheet.create({
     position: "relative",
     borderRadius: radius.lg,
     overflow: "hidden",
-  },
-  heartButton: {
-    position: "absolute",
-    top: spacing.sm,
-    right: spacing.sm,
-    zIndex: zIndex.elevated,
-    width: 32,
-    height: 32,
-    borderRadius: radius.lg,
-    justifyContent: "center",
-    alignItems: "center",
-    ...elevation.sm,
-  },
-  gridHeartButton: {
-    width: 28,
-    height: 28,
-    borderRadius: radius.circle,
   },
   pillsContainer: {
     position: "absolute",

@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import * as ImagePicker from 'expo-image-picker';
 import type { RootStackParamList } from '../../core/types/navigation';
 import { spacing, radius, typography } from '../../core/constants/theme';
+import { formatImageUrl } from '../../config/api.config';
 
 type EditProfileNav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -22,8 +23,8 @@ export default function EditProfileScreen() {
 
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
-  const [mobile, setMobile] = useState(user?.mobile || '');
-  const [avatar, setAvatar] = useState(user?.avatar || '');
+  const [mobile, setMobile] = useState(user?.phone || user?.mobile || '');
+  const [avatar, setAvatar] = useState(user?.avatarUrl || user?.avatar || '');
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<{name?: string, email?: string, mobile?: string}>({});
 
@@ -115,7 +116,7 @@ export default function EditProfileScreen() {
             <View style={styles.avatarSection}>
               <View style={[styles.avatarContainer, { borderColor }]}>
                 {avatar ? (
-                  <Image source={{ uri: avatar }} style={styles.avatarImage} />
+                  <Image source={{ uri: formatImageUrl(avatar) }} style={styles.avatarImage} />
                 ) : (
                   <Feather name="user" size={60} color={iconColor} style={{ opacity: 0.5 }} />
                 )}

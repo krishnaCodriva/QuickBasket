@@ -131,7 +131,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                 {route.name === "CartTab" && totalItems > 0 && (
                   <Badge
                     count={totalItems}
-                    color="error"
+                    color="primary"
                     borderColor={bgColor}
                     style={styles.cartBadge}
                   />

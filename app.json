@@ -4,13 +4,13 @@
     "slug": "QuickBasket",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/adaptive-icon-centered.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/adaptive-icon-centered.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#0F172A"
     },
     "ios": {
       "supportsTablet": true,
@@ -18,8 +18,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/adaptive-icon-centered.png",
+        "backgroundColor": "#0F172A"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.krishnacodriva.QuickBasket",
@@ -34,6 +34,7 @@
     },
     "plugins": [
       "expo-secure-store",
+      "@react-native-google-signin/google-signin",
       [
         "expo-location",
         {

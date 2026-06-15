@@ -19,6 +19,7 @@ import { useThemeColor, useCategories } from "../../hooks";
 import { spacing, radius, typography } from "../../core/constants/theme";
 import type { Category, SubCategory } from "../../core/types/domain";
 import type { TabParamList } from "../../core/types/navigation";
+import { formatImageUrl } from "../../config/api.config";
 
 export default function CategoriesScreen() {
   const navigation = useNavigation<any>();
@@ -75,6 +76,7 @@ export default function CategoriesScreen() {
     navigation.navigate("ProductListing", {
       categoryId: subCategory.parentId || selectedCategoryId,
       subCategoryId: subCategory.id,
+      category: subCategory.nameKey || subCategory.name,
     });
   };
 
@@ -82,8 +84,9 @@ export default function CategoriesScreen() {
     const isSelected = item.id === selectedCategoryId;
     return (
       <CategoryCard
-        name={t(item.nameKey)}
+        name={t(item.nameKey || item.name)}
         emoji={item.emoji || "📦"}
+        imageUrl={item.imageUrl ? formatImageUrl(item.imageUrl) : undefined}
         colorName={item.colorName || "blue100"}
         isSelected={isSelected}
         onPress={() => setSelectedCategoryId(item.id)}
@@ -103,7 +106,7 @@ export default function CategoriesScreen() {
       onPress={() => handleSubCategoryPress(item)}
     >
       <Image
-        source={{ uri: item.imageUrl }}
+        source={{ uri: item.imageUrl ? formatImageUrl(item.imageUrl) : "https://via.placeholder.com/150" }}
         style={[styles.subCategoryImage, { backgroundColor: imageBgColor }]}
       />
       <ThemedText style={styles.subCategoryName} numberOfLines={2}>
@@ -116,7 +119,7 @@ export default function CategoriesScreen() {
     <ThemedView style={[styles.container, { backgroundColor: bgColor }]}>
       {/* Top Header */}
       <View style={[styles.header, { backgroundColor: bgColor }]}>
-        <Ionicons name="location-outline" size={24} color={iconColor} />
+        <View style={{ width: 24 }} />
         <ThemedText style={styles.headerTitle}>
           {t(STRINGS.common.appName)}
         </ThemedText>
