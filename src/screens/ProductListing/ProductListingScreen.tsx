@@ -26,6 +26,7 @@ import { typography } from '../../core/constants/theme/typography';
 import { radius } from '../../core/constants/theme/radius';
 import { elevation } from '../../core/constants/theme/elevation';
 import type { Product } from '../../core/types/domain';
+import { formatImageUrl } from '../../config/api.config';
 
 
 const { width } = Dimensions.get('window');
@@ -92,7 +93,7 @@ export default function ProductListingScreen() {
   }
 
   const renderProductCard = ({ item }: { item: any }) => {
-    const imageUrl = item.imageUrl || "https://via.placeholder.com/150";
+    const imageUrl = item.imageUrl ? formatImageUrl(item.imageUrl) : "https://via.placeholder.com/150";
 
     return (
       <ProductCard

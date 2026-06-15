@@ -159,8 +159,8 @@ const styles = StyleSheet.create({
   },
   banner: {
     width: BANNER_WIDTH,
-    // Calculate the exact height based on the image's original 362x244 dimensions to prevent cropping
-    height: BANNER_WIDTH * (244 / 362),
+    // Calculate the exact height for a 16:9 aspect ratio
+    height: BANNER_WIDTH * (9 / 16),
     borderRadius: radius.lg,
     overflow: "hidden",
     position: "relative",

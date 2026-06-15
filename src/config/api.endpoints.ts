@@ -5,8 +5,15 @@ export const API_ENDPOINTS = {
     VERIFY_OTP: '/auth/otp/verify',
     GUEST_SESSION: '/guest/session',
     REFRESH_TOKEN: '/auth/session/refresh',
+    GOOGLE_LOGIN: '/auth/google',
   },
-  
+
+  // User
+  USER: {
+    GET_PROFILE: '/users/profile',
+    UPDATE_PROFILE: '/users/profile',
+  },
+
   // Home
   HOME: {
     GET_ALL: '/home',
@@ -23,13 +30,14 @@ export const API_ENDPOINTS = {
     GET_ALL: '/categories',
     // Note: The previous api had a distinct endpoint '/category' used in homeApi.ts
     // We export both just to prevent breaking changes if they are different backend routes.
-    GET_HOME_CATEGORY: '/category', 
+    GET_HOME_CATEGORY: '/category',
   },
 
   // Location
   LOCATION: {
     SERVICEABILITY: '/location/serviceability',
   },
+
   // Cart
   CART: {
     GET: '/cart',

@@ -23,6 +23,7 @@ import {
   typography,
   elevation,
 } from "../../core/constants/theme";
+import { formatImageUrl } from "../../config/api.config";
 
 export default function ProfileScreen() {
   const { t } = useTranslation();
@@ -122,6 +123,44 @@ export default function ProfileScreen() {
     </TouchableOpacity>
   );
 
+  if (!user) {
+    return (
+      <ThemedView style={styles.container}>
+        <SafeAreaView style={styles.safeArea} edges={["top"]}>
+          <View style={styles.header}>
+            <ThemedText
+              type="title"
+              style={[styles.headerTitle, { color: primaryColor }]}
+            >
+              {t(STRINGS.profileScreen.myAccount)}
+            </ThemedText>
+          </View>
+          <View style={styles.guestContainer}>
+            <View
+              style={[
+                styles.guestIconContainer,
+                { backgroundColor: primaryColor + "15" },
+              ]}
+            >
+              <Feather name="user" size={64} color={primaryColor} />
+            </View>
+            <ThemedText type="title" style={styles.guestTitle}>
+              Welcome to QuickBasket
+            </ThemedText>
+            <ThemedText useSecondaryText style={styles.guestSubtitle}>
+              Login or sign up to track your orders, save delivery addresses, and manage your profile.
+            </ThemedText>
+            <CustomButton
+              title="Login / Sign Up"
+              onPress={() => navigation.navigate("Login")}
+              style={styles.loginBtn}
+            />
+          </View>
+        </SafeAreaView>
+      </ThemedView>
+    );
+  }
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
@@ -148,9 +187,9 @@ export default function ProfileScreen() {
             onPress={() => navigation.navigate("EditProfile")}
           >
             <View style={[styles.avatarContainer, { borderColor }]}>
-              {user?.avatar ? (
+              {user?.avatar || user?.avatarUrl ? (
                 <Image
-                  source={{ uri: user.avatar }}
+                  source={{ uri: formatImageUrl(user.avatar || user.avatarUrl) }}
                   style={styles.avatarImage}
                 />
               ) : (
@@ -167,9 +206,9 @@ export default function ProfileScreen() {
               <ThemedText type="defaultSemiBold" style={styles.userName}>
                 {user?.name || t(STRINGS.profileScreen.guestUser as any)}
               </ThemedText>
-              {user?.mobile && (
+              {(user?.mobile || user?.phone) && (
                 <ThemedText useSecondaryText style={styles.userInfoText}>
-                  {user.mobile}
+                  {user.mobile || user.phone}
                 </ThemedText>
               )}
               <ThemedText useSecondaryText style={styles.userInfoText}>
@@ -340,6 +379,36 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: typography.size.xxl,
     fontWeight: typography.weight.black,
+  },
+  guestContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: spacing.xl,
+    paddingBottom: 80,
+  },
+  guestIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: spacing.xl,
+  },
+  guestTitle: {
+    fontSize: typography.size.xxl,
+    fontWeight: typography.weight.bold,
+    marginBottom: spacing.sm,
+    textAlign: "center",
+  },
+  guestSubtitle: {
+    fontSize: typography.size.mdlg,
+    textAlign: "center",
+    lineHeight: 24,
+    marginBottom: spacing.xxl,
+  },
+  loginBtn: {
+    width: "100%",
   },
 
   profileCard: {

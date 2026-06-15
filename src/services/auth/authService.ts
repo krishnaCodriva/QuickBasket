@@ -30,5 +30,25 @@ export const authService = {
       console.error('Failed to verify OTP:', error);
       throw error;
     }
+  },
+
+  /**
+   * Calls the backend to authenticate via Google OAuth2 ID Token.
+   * @param idToken The Google ID Token
+   * @param guestToken Optional guest token to migrate cart
+   */
+  googleLogin: async (idToken: string, guestToken?: string) => {
+    try {
+      const headers = guestToken ? { 'x-guest-token': guestToken } : {};
+      const response = await apiClient.post(
+        API_ENDPOINTS.AUTH.GOOGLE_LOGIN,
+        { idToken },
+        { headers }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Failed to login with Google:', error);
+      throw error;
+    }
   }
 };

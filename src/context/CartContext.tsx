@@ -17,6 +17,7 @@ import React, {
   useEffect,
   ReactNode,
 } from 'react';
+import { Alert } from 'react-native';
 import type { Product, CartItem } from '../core/types/domain';
 import { cartApi } from '../services/cartApi';
 import { useAuth } from './AuthContext';
@@ -54,6 +55,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [deliveryCharge, setDeliveryCharge] = useState<number>(0);
   const [grandTotal, setGrandTotal] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { user } = useAuth();
 
   // Map backend cart structure to frontend state
   const mapBackendCart = useCallback((cartData: any) => {
@@ -113,6 +115,39 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [mapBackendCart]);
 
+  const previousUser = React.useRef(user);
+  const cartItemsRef = React.useRef(cartItems);
+
+  React.useEffect(() => {
+    cartItemsRef.current = cartItems;
+  }, [cartItems]);
+
+  // Initial fetch and on auth change
+  useEffect(() => {
+    const justLoggedOut = previousUser.current && !user;
+    previousUser.current = user;
+
+    if (justLoggedOut && cartItemsRef.current.length > 0) {
+      // Automatically migrate the current cart into the new guest session
+      const migrateCartToGuest = async () => {
+        setIsLoading(true);
+        try {
+          // Add all previous items to the new guest session
+          for (const item of cartItemsRef.current) {
+            await cartApi.addToCart(item.id, item.quantity);
+          }
+        } catch (e) {
+          console.error('Failed to migrate cart to guest session', e);
+        } finally {
+          fetchCart(); // Fetch the final migrated state
+        }
+      };
+      // Wait for AuthContext to finish creating the guest session, then migrate
+      setTimeout(migrateCartToGuest, 500); 
+    } else {
+      fetchCart();
+    }
+  }, [fetchCart, user]);
   const { isLoading: isAuthLoading } = useAuth();
 
   // Initial fetch

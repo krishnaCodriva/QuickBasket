@@ -37,6 +37,7 @@ import LocalizationContext from "../../context/localizationContext/LocaleContext
 import { useCart } from "../../context/CartContext";
 import i18n from "../../localization/i18";
 import { homeApi } from "../../services/homeApi";
+import { formatImageUrl } from "../../config/api.config";
 // Removed mock data as per backend-driven requirement
 
 import { SUPPORTED_LANGUAGES } from "../../core/constants/languages";
@@ -241,7 +242,7 @@ export default function HomeScreen({ navigation }: Props) {
     <SearchAndFilterBar
       searchQuery={""}
       onSearchChange={() => { }}
-      onPress={() => navigation.navigate("ProductListing" as never)}
+      onPress={() => navigation.navigate("CategoriesTab" as never)}
       containerStyle={styles.searchBarContainer}
     />
   );
@@ -266,7 +267,8 @@ export default function HomeScreen({ navigation }: Props) {
         renderItem={({ item }) => (
           <CategoryCard
             name={item.name}
-            emoji={item.emoji || "📦"} // Fallback if backend doesn't provide emoji
+            emoji={item.emoji || "📦"}
+            imageUrl={item.imageUrl ? formatImageUrl(item.imageUrl) : undefined}
             colorName={item.colorName || "blue100"}
             onPress={() =>
               navigation.navigate("CategoriesTab", { categoryId: item.id })
@@ -281,11 +283,11 @@ export default function HomeScreen({ navigation }: Props) {
     <View>
       {renderSearch()}
       <BannerCarousel
-        banners={bannersData.map(b => ({
+        banners={bannersData.length > 0 ? bannersData.map(b => ({
           ...b,
-          // Map backend URL to a format the component expects if necessary
-          source: { uri: `http://192.168.1.58:5000${b.imageUrl}` } // Ensure full URL is passed
-        }))}
+          // Handle different backend naming conventions for the image field
+          source: { uri: formatImageUrl(b.imageUrl || b.image || b.bannerUrl || b.url || b.picture) }
+        })) : undefined}
         onBannerPress={handleBannerPress}
       />
       {renderCategories()}
@@ -317,7 +319,6 @@ export default function HomeScreen({ navigation }: Props) {
       category={item.Category?.name || "Other"}
       weight={item.weight || "1 unit"}
       emoji={item.emoji || "🛍️"} // Assuming backend doesn't send emoji for products, provide a fallback
-      imageUrl={item.imageUrl}
       brand={item.brand}
       tags={item.tags}
       inStock={item.stockQuantity > 0}
@@ -333,7 +334,7 @@ export default function HomeScreen({ navigation }: Props) {
       onPress={() => navigation.navigate("ProductDetail", { product: item })}
       isGrid={true}
       containerStyle={{ width: "48%", marginBottom: 16 }}
-      imageUrl={item.imageUrl ? `http://192.168.1.58:5000${item.imageUrl}` : undefined}
+      imageUrl={formatImageUrl(item.imageUrl)}
     />
   );
 
