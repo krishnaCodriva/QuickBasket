@@ -45,7 +45,8 @@ const OrderContext = createContext<OrderContextType | undefined>(undefined);
 export const OrderProvider = ({ children }: { children: ReactNode }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { isLoading: isAuthLoading, isAuthenticated } = useAuth();
+  const { isLoading: isAuthLoading, user } = useAuth();
+  const isAuthenticated = !!user;
 
   const fetchOrders = useCallback(async () => {
     if (!isAuthenticated) return;
@@ -63,6 +64,8 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
       else if (Array.isArray(res?.data?.rows)) rows = res.data.rows;
       else if (Array.isArray(res?.rows)) rows = res.rows;
       else if (Array.isArray(res?.data?.data)) rows = res.data.data;
+      else if (Array.isArray(res?.orders)) rows = res.orders;
+      else if (Array.isArray(res?.data?.orders)) rows = res.data.orders;
       
       if (Array.isArray(rows)) {
         const mappedOrders = rows.map((o: any) => {

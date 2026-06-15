@@ -14,6 +14,22 @@ import { orderApi } from '../../services/orderApi';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'OrderStatus'>;
 
+const formatEstimatedDelivery = (dateStr?: string) => {
+  if (!dateStr) return 'Standard Delivery';
+  const d = new Date(dateStr);
+  if (!isNaN(d.getTime())) {
+    return d.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  }
+  return dateStr;
+};
+
 export default function OrderStatusScreen({ navigation, route }: Props) {
   const { getOrderById } = useOrder();
   const { t } = useTranslation();
@@ -172,9 +188,7 @@ export default function OrderStatusScreen({ navigation, route }: Props) {
             <View style={[styles.card, { backgroundColor: cardColor, borderColor }]}>
               <ThemedText type="subtitle" style={styles.cardTitle}>{t(STRINGS.orderStatusScreen.estimatedDelivery)}</ThemedText>
               <ThemedText>
-                {order.estimatedDelivery === 'Arriving in 30-45 mins' 
-                  ? t(STRINGS.orderStatusScreen.estimatedDeliveryMock as any) 
-                  : order.estimatedDelivery}
+                {formatEstimatedDelivery(order.estimatedDelivery || order.estimatedDeliveryTime)}
               </ThemedText>
             </View>
 

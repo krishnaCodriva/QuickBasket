@@ -17,6 +17,22 @@ import { spacing, radius, typography, elevation } from '../../core/constants/the
 
 
 
+const formatEstimatedDelivery = (dateStr?: string) => {
+  if (!dateStr) return 'Standard Delivery';
+  const d = new Date(dateStr);
+  if (!isNaN(d.getTime())) {
+    return d.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  }
+  return dateStr;
+};
+
 export default function InvoiceScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
@@ -328,7 +344,7 @@ export default function InvoiceScreen() {
               <View style={styles.rowBetween}>
                 <ThemedText useSecondaryText>{t(STRINGS.invoiceScreen.deliveryDate)}</ThemedText>
                 <ThemedText>
-                  {order.status === 'Delivered' ? new Date().toLocaleDateString() : 'Pending'}
+                  {order.status === 'Delivered' ? formatEstimatedDelivery(order.updatedAt || new Date().toISOString()) : formatEstimatedDelivery(order.estimatedDelivery || order.estimatedDeliveryTime)}
                 </ThemedText>
               </View>
             </View>
