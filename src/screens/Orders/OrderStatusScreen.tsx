@@ -1,11 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, ScrollView, Animated, ActivityIndicator } from 'react-native';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { View, StyleSheet, Animated, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ThemedView, ThemedText, CustomButton, ScreenHeader } from '../../components';
+import { ThemedView, ThemedText, CustomButton, ScreenHeader, RefreshableScrollView } from '../../components';
 import { Feather } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Colors, STRINGS } from '../../constants';
-import { useThemeColor } from '../../hooks';
+import { useThemeColor, useRefresh } from '../../hooks';
 import { useOrder, ORDER_STATUS_FLOW } from '../../context';
 import { useTranslation } from 'react-i18next';
 import type { RootStackParamList } from '../../core/types/navigation';
@@ -48,6 +48,18 @@ export default function OrderStatusScreen({ navigation, route }: Props) {
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
+  const fetchOrderDetails = useCallback(async () => {
+    if (!orderId) return;
+    try {
+      const res = await orderApi.getOrderById(orderId);
+      setOrder(res.data || res);
+    } catch (err) {
+      console.error(err);
+    }
+  }, [orderId]);
+
+  const { refreshing, onRefresh } = useRefresh(fetchOrderDetails);
+
   useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: 1,
@@ -56,14 +68,11 @@ export default function OrderStatusScreen({ navigation, route }: Props) {
     }).start();
 
     if (orderId) {
-      orderApi.getOrderById(orderId)
-        .then(res => setOrder(res.data || res))
-        .catch(console.error)
-        .finally(() => setLoading(false));
+      fetchOrderDetails().finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
-  }, [orderId]);
+  }, [orderId, fetchOrderDetails]);
 
   if (loading) {
     return (
@@ -88,9 +97,21 @@ export default function OrderStatusScreen({ navigation, route }: Props) {
     );
   }
 
+  const getFlowIndex = (statusStr: string) => {
+    const s = (statusStr || '').toLowerCase();
+    if (s.includes('place') || s.includes('pending')) return 0;
+    if (s.includes('process')) return 1;
+    if (s.includes('out') || s.includes('delivery')) return 2;
+    if (s.includes('deliver')) return 3;
+    return -1;
+  };
+
   let currentStatusIndex = ORDER_STATUS_FLOW.indexOf(order.status as any);
-  if (currentStatusIndex === -1 && order.status === 'placed') currentStatusIndex = 0;
-  if (currentStatusIndex === -1 && order.status === 'processing') currentStatusIndex = 2;
+  if (currentStatusIndex === -1) {
+    currentStatusIndex = getFlowIndex(order.status);
+  }
+  if (currentStatusIndex === -1) currentStatusIndex = 0;
+
   const isCancelled = order.status === 'Cancelled' || order.status === 'cancelled';
 
   const getTranslatedStatus = (status: string) => {
@@ -120,12 +141,29 @@ export default function OrderStatusScreen({ navigation, route }: Props) {
       );
     }
 
+    const timelineMap: Record<number, any> = {};
+    if (Array.isArray(order.timeline)) {
+      order.timeline.forEach((event: any) => {
+        const idx = getFlowIndex(event.status);
+        if (idx !== -1) timelineMap[idx] = event;
+      });
+    }
+    
+    // Always enforce the actual creation date for the 'Order Placed' step (idx 0),
+    // because admin edits while pending shouldn't change the placement time.
+    if (timelineMap[0]) {
+      timelineMap[0] = { ...timelineMap[0], timestamp: order.createdAt || order.date || timelineMap[0].timestamp };
+    } else if (order.createdAt || order.date) {
+      timelineMap[0] = { timestamp: order.createdAt || order.date };
+    }
+
     return (
       <View style={styles.timelineContainer}>
         {ORDER_STATUS_FLOW.map((status, index) => {
           const isActive = index <= currentStatusIndex;
           const isCurrent = index === currentStatusIndex;
           const isLast = index === ORDER_STATUS_FLOW.length - 1;
+          const event = timelineMap[index];
 
           return (
             <View key={status} style={styles.timelineStep}>
@@ -148,11 +186,19 @@ export default function OrderStatusScreen({ navigation, route }: Props) {
                 <ThemedText style={[styles.timelineTitle, isActive ? { color: primaryColor } : { color: iconColor }]}>
                   {getTranslatedStatus(status)}
                 </ThemedText>
-                {isCurrent && (
-                  <Animated.View style={{ opacity: fadeAnim }}>
-                    <ThemedText useSecondaryText style={styles.timelineSubText}>
-                      {getTranslatedStatus(status)}
-                    </ThemedText>
+                
+                {isActive && (
+                  <Animated.View style={isCurrent ? { opacity: fadeAnim } : {}}>
+                    {event?.timestamp && (
+                      <ThemedText useSecondaryText style={styles.timelineSubText}>
+                        {formatEstimatedDelivery(event.timestamp)}
+                      </ThemedText>
+                    )}
+                    {event?.notes ? (
+                      <ThemedText useSecondaryText style={[styles.timelineSubText, { marginTop: 4, fontStyle: 'italic' }]}>
+                        {event.notes}
+                      </ThemedText>
+                    ) : null}
                   </Animated.View>
                 )}
               </View>
@@ -171,7 +217,12 @@ export default function OrderStatusScreen({ navigation, route }: Props) {
           onBack={() => navigation.goBack()}
         />
 
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <RefreshableScrollView 
+          contentContainerStyle={styles.scrollContent} 
+          showsVerticalScrollIndicator={false}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+        >
           <View style={styles.summaryHeader}>
             <ThemedText type="title" style={styles.txId}>#{order.id.slice(-8)}</ThemedText>
             <ThemedText useSecondaryText>{new Date(order.createdAt || order.created_at || order.date || new Date()).toLocaleString()}</ThemedText>
@@ -246,7 +297,7 @@ export default function OrderStatusScreen({ navigation, route }: Props) {
               />
             </View>
           )}
-        </ScrollView>
+        </RefreshableScrollView>
       </SafeAreaView>
     </ThemedView>
   );

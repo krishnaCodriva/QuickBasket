@@ -15,7 +15,7 @@ import {
   ScreenHeader
 } from '../../components';
 import { Colors, STRINGS } from '../../constants';
-import { useThemeColor } from '../../hooks';
+import { useThemeColor, useRefresh } from '../../hooks';
 import { useCart, useAuth } from '../../context';
 import { useTranslation } from 'react-i18next';
 import type { RootStackParamList } from '../../core/types/navigation';
@@ -29,7 +29,8 @@ export default function CartScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
-  const { cartItems, updateQuantity, removeFromCart, totalItems, subtotal, deliveryCharge, tax, grandTotal, hasOutOfStock } = useCart();
+  const { cartItems, updateQuantity, removeFromCart, totalItems, subtotal, deliveryCharge, tax, grandTotal, hasOutOfStock, fetchCart } = useCart();
+  const { refreshing, onRefresh } = useRefresh(fetchCart);
 
   const taxes = tax;
   const totalPayable = grandTotal;
@@ -97,6 +98,8 @@ export default function CartScreen() {
             )}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.listContent}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
           />
         )}
 

@@ -25,9 +25,7 @@ export type { Order, OrderStatus };
 
 export const ORDER_STATUS_FLOW: OrderStatus[] = [
   'Order Placed',
-  'Order Confirmed',
   'Processing',
-  'Packed',
   'Out for Delivery',
   'Delivered',
 ];
@@ -71,7 +69,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
         const mappedOrders = rows.map((o: any) => {
           // Normalize status
           let formattedStatus = o.status;
-          if (o.status === 'placed' || o.status === 'PLACED') formattedStatus = 'Order Placed';
+          if (o.status === 'placed' || o.status === 'PLACED' || o.status === 'Pending' || o.status === 'pending') formattedStatus = 'Order Placed';
           if (o.status === 'processing' || o.status === 'PROCESSING') formattedStatus = 'Processing';
           if (o.status === 'delivered' || o.status === 'DELIVERED') formattedStatus = 'Delivered';
 

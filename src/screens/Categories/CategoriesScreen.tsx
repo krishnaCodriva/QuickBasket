@@ -15,7 +15,7 @@ import { useTranslation } from "react-i18next";
 import { ThemedView, ThemedText, CartHeaderIcon } from "../../components";
 import { CategoryCard } from "../../components/Home";
 import { Colors, STRINGS } from "../../constants";
-import { useThemeColor, useCategories } from "../../hooks";
+import { useThemeColor, useCategories, useRefresh } from "../../hooks";
 import { spacing, radius, typography } from "../../core/constants/theme";
 import type { Category, SubCategory } from "../../core/types/domain";
 import type { TabParamList } from "../../core/types/navigation";
@@ -26,7 +26,8 @@ export default function CategoriesScreen() {
   const route = useRoute<RouteProp<TabParamList, "CategoriesTab">>();
   const { t } = useTranslation();
 
-  const { categories, isLoading: categoriesLoading } = useCategories();
+  const { categories, isLoading: categoriesLoading, refresh } = useCategories();
+  const { refreshing, onRefresh } = useRefresh(refresh);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     null,
   );
@@ -160,6 +161,8 @@ export default function CategoriesScreen() {
               renderItem={renderCategoryItem}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ paddingBottom: spacing.xxl }}
+              refreshing={refreshing}
+              onRefresh={onRefresh}
             />
           )}
         </View>
@@ -172,12 +175,6 @@ export default function CategoriesScreen() {
               color={primaryColor}
               style={{ marginTop: spacing.xxxl }}
             />
-          ) : subCategories.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <ThemedText useSecondaryText>
-                {t(STRINGS.productListing.noProducts)}
-              </ThemedText>
-            </View>
           ) : (
             <FlatList
               data={subCategories}
@@ -185,8 +182,17 @@ export default function CategoriesScreen() {
               renderItem={renderSubCategoryItem}
               numColumns={2}
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.subCatListContent}
-              columnWrapperStyle={styles.subCatColumnWrapper}
+              contentContainerStyle={[styles.subCatListContent, subCategories.length === 0 && { flex: 1 }]}
+              columnWrapperStyle={subCategories.length > 0 ? styles.subCatColumnWrapper : undefined}
+              ListEmptyComponent={
+                <View style={styles.emptyContainer}>
+                  <ThemedText useSecondaryText>
+                    {t(STRINGS.productListing.noProducts)}
+                  </ThemedText>
+                </View>
+              }
+              refreshing={refreshing}
+              onRefresh={onRefresh}
             />
           )}
         </View>
