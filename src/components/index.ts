@@ -5,6 +5,7 @@ export * from './TranslatedText';
 export * from './SearchAndFilterBar';
 
 // ─── Layout ───────────────────────────────────────────────────────────────────
+export { RefreshableScrollView } from './RefreshableScrollView';
 /** Reusable screen header with back button, centred title, and optional right element */
 export { ScreenHeader } from './ScreenHeader';
 export type { ScreenHeaderProps } from './ScreenHeader';

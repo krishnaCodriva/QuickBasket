@@ -13,7 +13,7 @@ import {
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { StorageService, STORAGE_KEYS } from "../../services";
-import { useThemeColor, useCategories } from "../../hooks";
+import { useThemeColor, useCategories, useRefresh } from "../../hooks";
 import {
   ThemedText,
   ThemedView,
@@ -157,32 +157,36 @@ export default function HomeScreen({ navigation }: Props) {
     return unsubscribe;
   }, [navigation]);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await homeApi();
-        if (res?.data) {
-          let parsedTags = res.data.tags || [];
-          if (!Array.isArray(parsedTags) && Array.isArray(parsedTags.data)) parsedTags = parsedTags.data;
-          setTagsData(parsedTags);
-          
-          let parsedBanners = res.data.banners || [];
-          if (!Array.isArray(parsedBanners) && Array.isArray(parsedBanners.data)) parsedBanners = parsedBanners.data;
-          setBannersData(parsedBanners);
-          
-          let parsedCategories = res.data.categories || [];
-          if (!Array.isArray(parsedCategories) && Array.isArray(parsedCategories.data)) parsedCategories = parsedCategories.data;
-          setCategoriesData(parsedCategories);
-          
-          let parsedProducts = res.data.products || [];
-          if (!Array.isArray(parsedProducts) && Array.isArray(parsedProducts.data)) parsedProducts = parsedProducts.data;
-          setProductsData(parsedProducts);
-        }
-      } catch (error) {
-        console.error("Failed to fetch home API data:", error);
+  const fetchHomeData = useCallback(async () => {
+    try {
+      const res = await homeApi();
+      if (res?.data) {
+        let parsedTags = res.data.tags || [];
+        if (!Array.isArray(parsedTags) && Array.isArray(parsedTags.data)) parsedTags = parsedTags.data;
+        setTagsData(parsedTags);
+        
+        let parsedBanners = res.data.banners || [];
+        if (!Array.isArray(parsedBanners) && Array.isArray(parsedBanners.data)) parsedBanners = parsedBanners.data;
+        setBannersData(parsedBanners);
+        
+        let parsedCategories = res.data.categories || [];
+        if (!Array.isArray(parsedCategories) && Array.isArray(parsedCategories.data)) parsedCategories = parsedCategories.data;
+        setCategoriesData(parsedCategories);
+        
+        let parsedProducts = res.data.products || [];
+        if (!Array.isArray(parsedProducts) && Array.isArray(parsedProducts.data)) parsedProducts = parsedProducts.data;
+        setProductsData(parsedProducts);
       }
-    })();
+    } catch (error) {
+      console.error("Failed to fetch home API data:", error);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchHomeData();
+  }, [fetchHomeData]);
+
+  const { refreshing, onRefresh } = useRefresh(fetchHomeData);
   // ─── Language switch ───────────────────────────────────────────────────────
   const handleLanguageSelect = useCallback(
     (code: LanguageCode) => {
@@ -357,6 +361,8 @@ export default function HomeScreen({ navigation }: Props) {
         ListHeaderComponent={renderListHeader}
         ListEmptyComponent={renderEmptyState}
         renderItem={renderProductItem}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
       />
 
       <LocationModal

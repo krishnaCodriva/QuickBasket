@@ -40,6 +40,7 @@ interface CartContextType {
   grandTotal: number;
   hasOutOfStock: boolean;
   isLoading: boolean;
+  fetchCart: () => Promise<void>;
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -245,7 +246,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       deliveryCharge,
       grandTotal,
       hasOutOfStock,
-      isLoading
+      isLoading,
+      fetchCart
     }),
     [
       cartItems,
@@ -259,7 +261,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       deliveryCharge,
       grandTotal,
       hasOutOfStock,
-      isLoading
+      isLoading,
+      fetchCart
     ]
   );
 

@@ -2,6 +2,7 @@
   "expo": {
     "name": "QuickBasket",
     "slug": "QuickBasket",
+    "scheme": "quickbasket",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/adaptive-icon-centered.png",
