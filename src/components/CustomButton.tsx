@@ -33,7 +33,11 @@ export function CustomButton({
   let textStyle;
   let iconColor;
 
-  if (isPrimary) {
+  if (disabled) {
+    buttonStyle = [styles.primaryButton, { backgroundColor: Colors.light.gray300 }];
+    textStyle = [styles.primaryButtonText, { color: Colors.light.gray500 }];
+    iconColor = Colors.light.gray500;
+  } else if (isPrimary) {
     buttonStyle = [styles.primaryButton, { backgroundColor: primaryColor }];
     textStyle = styles.primaryButtonText;
     iconColor = Colors.light.white;
@@ -49,13 +53,13 @@ export function CustomButton({
 
   return (
     <TouchableOpacity
-      style={[buttonStyle, style, (disabled || loading) && { opacity: 0.7 }]}
+      style={[buttonStyle, style]}
       activeOpacity={0.8}
       disabled={disabled || loading}
       {...rest}
     >
       {loading ? (
-        <ActivityIndicator color={isPrimary ? Colors.light.white : Colors.light.gray900} />
+        <ActivityIndicator color={isPrimary && !disabled ? Colors.light.white : Colors.light.gray900} />
       ) : (
         <View style={styles.buttonContent}>
           {icon && (

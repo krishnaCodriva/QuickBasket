@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Dimensions, Image } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { ThemedText } from '../ThemedText';
 import QuantitySelector from '../QuantitySelector';
@@ -8,6 +8,7 @@ import { spacing, radius, typography, elevation } from '../../core/constants/the
 import { useTranslation } from 'react-i18next';
 import { useThemeColor } from '../../hooks';
 import type { CartItem } from '../../core/types/domain';
+import { formatImageUrl } from '../../config/api.config';
 
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -41,7 +42,15 @@ export default function CartItemCard({ item, onUpdateQuantity, onRemove, readOnl
       >
         <View style={[styles.card, { width: SCREEN_WIDTH, backgroundColor: cardColor, borderBottomColor: separatorColor }]}>
           <View style={[styles.imageContainer, { backgroundColor: imageBgColor }]}>
-            <ThemedText style={styles.itemEmoji}>{item.emoji}</ThemedText>
+            {item.imageUrl ? (
+              <Image
+                source={{ uri: formatImageUrl(item.imageUrl) }}
+                style={{ width: '80%', height: '80%' }}
+                resizeMode="contain"
+              />
+            ) : (
+              <ThemedText style={styles.itemEmoji}>{item.emoji}</ThemedText>
+            )}
           </View>
 
           <View style={styles.itemDetails}>

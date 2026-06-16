@@ -104,7 +104,7 @@ export default function ProductListingScreen() {
         category={item.Category?.name || "Grocery"}
         weight={item.weight || "1 unit"}
         emoji={item.emoji || "📦"}
-        inStock={item.stockQuantity > 0 || item.isActive}
+        inStock={item.inStock !== false && (item.stockQuantity === undefined || Number(item.stockQuantity) > 0)}
         imageUrl={imageUrl}
         brand={item.brand}
         tags={item.tags}
