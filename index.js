@@ -1,3 +1,7 @@
+if (__DEV__) {
+  require('./src/ReactotronConfig');
+}
+
 import { registerRootComponent } from 'expo';
 
 import App from './App';
