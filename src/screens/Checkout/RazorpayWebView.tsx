@@ -1,5 +1,6 @@
 import React from 'react';
-import { Modal, StyleSheet, SafeAreaView, View, ActivityIndicator } from 'react-native';
+import { Modal, StyleSheet, View, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 
 export type RazorpayOptions = {
