@@ -259,7 +259,7 @@ export default function ProfileScreen() {
               {renderListItem(
                 "settings",
                 t(STRINGS.profileScreen.settings),
-                () => {},
+                () => { },
                 true,
               )}
             </View>
@@ -279,12 +279,12 @@ export default function ProfileScreen() {
               {renderListItem(
                 "message-square",
                 t(STRINGS.profileScreen.helpCenter),
-                () => {},
+                () => { },
               )}
               {renderListItem(
                 "headphones",
                 t(STRINGS.profileScreen.contactSupport),
-                () => {},
+                () => { },
                 true,
               )}
             </View>

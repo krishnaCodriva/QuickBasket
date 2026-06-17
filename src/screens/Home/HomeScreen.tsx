@@ -9,6 +9,7 @@ import {
   useColorScheme,
   Platform,
   StatusBar,
+  ActivityIndicator,
 } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 
@@ -157,8 +158,11 @@ export default function HomeScreen({ navigation }: Props) {
     return unsubscribe;
   }, [navigation]);
 
+  const [isLoading, setIsLoading] = useState(true);
+
   const fetchHomeData = useCallback(async () => {
     try {
+      setIsLoading(true);
       const res = await homeApi();
       if (res?.data) {
         let parsedTags = res.data.tags || [];
@@ -179,6 +183,8 @@ export default function HomeScreen({ navigation }: Props) {
       }
     } catch (error) {
       console.error("Failed to fetch home API data:", error);
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
@@ -286,14 +292,16 @@ export default function HomeScreen({ navigation }: Props) {
   const renderListHeader = () => (
     <View>
       {renderSearch()}
-      <BannerCarousel
-        banners={bannersData.length > 0 ? bannersData.map(b => ({
-          ...b,
-          // Handle different backend naming conventions for the image field
-          source: { uri: formatImageUrl(b.imageUrl || b.image || b.bannerUrl || b.url || b.picture) }
-        })) : undefined}
-        onBannerPress={handleBannerPress}
-      />
+      {bannersData.length > 0 && (
+        <BannerCarousel
+          banners={bannersData.map(b => ({
+            ...b,
+            // Handle different backend naming conventions for the image field
+            source: { uri: formatImageUrl(b.imageUrl || b.image || b.bannerUrl || b.url || b.picture) }
+          }))}
+          onBannerPress={handleBannerPress}
+        />
+      )}
       {renderCategories()}
       <View style={{ marginBottom: spacing.md }}>
         <QuickFilters
@@ -343,6 +351,21 @@ export default function HomeScreen({ navigation }: Props) {
   );
 
 
+
+  if (isLoading) {
+    return (
+      <ThemedView style={styles.container}>
+        <StatusBar
+          barStyle={isDark ? "light-content" : "dark-content"}
+          backgroundColor={statusBarBg}
+        />
+        {renderHeader()}
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <ActivityIndicator size="large" color={primaryColor} />
+        </View>
+      </ThemedView>
+    );
+  }
 
   return (
     <ThemedView style={styles.container}>

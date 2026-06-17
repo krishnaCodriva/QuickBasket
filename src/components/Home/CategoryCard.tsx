@@ -1,5 +1,6 @@
 import { Colors } from '../../constants/colors';
 import React from 'react';
+import { formatImageUrl } from '../../config/api.config';
 import { View, StyleSheet, TouchableOpacity, StyleProp, ViewStyle, Image } from 'react-native';
 import { ThemedText } from '../ThemedText';
 import { useThemeColor } from '../../hooks';
