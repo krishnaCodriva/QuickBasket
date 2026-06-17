@@ -26,6 +26,7 @@ export type RootStackParamList = {
   OrderStatus: { orderId: string };
   Invoice: { orderId: string };
   EditProfile: undefined;
+  Orders: undefined;
 };
 
 // ─── Tab Stack ────────────────────────────────────────────────────────────────

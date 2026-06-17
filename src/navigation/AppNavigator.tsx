@@ -26,6 +26,7 @@ import {
   OrderStatusScreen,
   InvoiceScreen,
   EditProfileScreen,
+  OrdersScreen,
 } from '../screens';
 import TabNavigator from './TabNavigator';
 import { Colors } from '../constants/colors';
@@ -67,6 +68,7 @@ export default function AppNavigator() {
       <Stack.Screen name="OrderStatus" component={OrderStatusScreen} />
       <Stack.Screen name="Invoice" component={InvoiceScreen} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+      <Stack.Screen name="Orders" component={OrdersScreen} />
     </Stack.Navigator>
   );
 }

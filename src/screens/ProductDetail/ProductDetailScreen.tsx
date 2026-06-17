@@ -163,7 +163,7 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
           <TouchableOpacity activeOpacity={0.9} onPress={() => openZoom(item)}>
             <View style={[styles.imageSlide, { width: SCREEN_WIDTH, backgroundColor: item.color || imageBgColor }]}>
               {item.uri ? (
-                <Image source={{ uri: item.uri }} style={{ width: '80%', height: '80%' }} resizeMode="contain" />
+                <Image source={{ uri: item.uri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
               ) : (
                 <ThemedText style={styles.imageEmoji}>{item.emoji}</ThemedText>
               )}
@@ -218,13 +218,6 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
             mrp={mrpNum}
             size="lg"
           />
-          {discount > 0 && (
-            <View style={{ backgroundColor: Colors.light.green100, paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.xs, marginLeft: 8, marginBottom: 4 }}>
-              <ThemedText style={{ color: Colors.light.green800, fontSize: typography.size.xs, fontWeight: 'bold' }}>
-                {discount}% OFF
-              </ThemedText>
-            </View>
-          )}
         </View>
 
         {/* Trust Badges & Quick Info */}
