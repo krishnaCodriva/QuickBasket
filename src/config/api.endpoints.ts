@@ -59,5 +59,6 @@ export const API_ENDPOINTS = {
     VERIFY_PAYMENT: '/payments/verify',
     GET: (id: string) => `/orders/${id}`,
     GET_ALL: '/orders',
+    INVOICE: (id: string) => `/orders/${id}/invoice`,
   },
 };

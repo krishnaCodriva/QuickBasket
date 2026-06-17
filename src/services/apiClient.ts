@@ -127,9 +127,18 @@ apiClient.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
-    console.error(`❌ [API RESPONSE ERROR]:`, error.response?.status, error.message);
-    if (error.response?.data) {
-      console.error(`🩸 [ERROR DETAILS]:`, JSON.stringify(error.response.data, null, 2));
+    
+    // Suppress scary logs for known harmless 404s (like removing an item that's already gone from cart)
+    const isCart404 = error.response?.status === 404 && originalRequest?.url?.includes('/cart');
+    const isCart400 = error.response?.status === 400 && originalRequest?.url?.includes('/cart');
+
+    if (!isCart404 && !isCart400) {
+      console.error(`❌ [API RESPONSE ERROR]:`, error.response?.status, error.message);
+      if (error.response?.data) {
+        console.error(`🩸 [ERROR DETAILS]:`, JSON.stringify(error.response.data, null, 2));
+      }
+    } else {
+      console.log(`⚠️ [CART SYNC]: Syncing cart state with backend (${error.response?.status}). Safely handled.`);
     }
 
     if (error.response && error.response.status === 401 && !originalRequest._retry) {
