@@ -230,7 +230,7 @@ export default function ProfileScreen() {
               "package",
               t(STRINGS.profileScreen.myOrders),
               t(STRINGS.profileScreen.myOrdersDesc),
-              () => navigation.navigate("HomeTab", { screen: "OrdersTab" }),
+              () => navigation.navigate("Orders"),
             )}
             {renderGridCard(
               "home",

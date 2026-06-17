@@ -152,7 +152,7 @@ const ProductCard = ({
           <Image 
             source={{ uri: imageUrl }} 
             style={[styles.productImage, isGrid && styles.gridProductImage]} 
-            resizeMode="contain" 
+            resizeMode="cover" 
           />
         ) : (
           <ThemedText style={[styles.emoji, isGrid && styles.gridEmoji]}>
@@ -348,12 +348,12 @@ const styles = StyleSheet.create({
     fontSize: 64,
   },
   productImage: {
-    width: "70%",
-    height: "70%",
+    width: "100%",
+    height: "100%",
   },
   gridProductImage: {
-    width: "60%",
-    height: "60%",
+    width: "100%",
+    height: "100%",
   },
   infoContainer: {
     paddingTop: spacing.smd,
