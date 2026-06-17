@@ -22,7 +22,7 @@
         "foregroundImage": "./assets/adaptive-icon-centered.png",
         "backgroundColor": "#0F172A"
       },
-      "edgeToEdgeEnabled": true,
+      "edgeToEdgeEnabled": false,
       "package": "com.krishnacodriva.QuickBasket",
       "permissions": [
         "android.permission.ACCESS_COARSE_LOCATION",

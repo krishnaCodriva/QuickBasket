@@ -33,7 +33,7 @@ export default function OtpScreen() {
   const textColor = useThemeColor({}, 'primaryText');
   const secondaryTextColor = useThemeColor({}, 'secondaryText');
   const borderColor = useThemeColor({ light: Colors.light.gray300, dark: Colors.dark.gray300 }, 'gray300' as any);
-  const inputBgColor = useThemeColor({ light: Colors.light.gray100, dark: Colors.dark.gray800 }, 'gray100' as any);
+  const inputBgColor = useThemeColor({ light: Colors.light.gray100, dark: Colors.dark.gray100 }, 'gray100' as any);
   const activeBorderColor = primaryColor;
 
   const isOtpComplete = otp.every(digit => digit !== '');

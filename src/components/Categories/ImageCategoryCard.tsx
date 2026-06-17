@@ -5,6 +5,7 @@ import { Colors, ThemeDimension } from '../../constants';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { spacing, radius, typography, elevation } from '../../core/constants/theme';
+import { formatImageUrl } from '../../config/api.config';
 
 export type ImageCategoryCardProps = {
   name: string;

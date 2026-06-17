@@ -2,6 +2,7 @@ import axios from 'axios';
 import { storage } from '../utils/storage';
 import { API_BASE_URL } from '../config/api.config';
 import { API_ENDPOINTS } from '../config/api.endpoints';
+import { formatImageUrl } from '../config/api.config';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -53,6 +54,22 @@ apiClient.interceptors.request.use(
       console.log(`📦 [PAYLOAD]:`, JSON.stringify(config.data, null, 2));
     }
 
+    // Custom Reactotron Logger (DO NOT DELETE: Required for Axios)
+    if ((console as any).tron) {
+      // Reactotron cannot serialize FormData objects, so we must extract the _parts
+      let safeData = config.data;
+      if (config.data && config.data._parts) {
+        safeData = { FormData: config.data._parts };
+      }
+
+      (console as any).tron.display({
+        name: `🚀 API REQUEST`,
+        preview: `${config.method?.toUpperCase()} ${config.url}`,
+        value: { url: fullUrl, method: config.method, headers: config.headers, data: safeData },
+        important: true,
+      });
+    }
+
     return config;
   },
   (error) => {
@@ -61,11 +78,51 @@ apiClient.interceptors.request.use(
   }
 );
 
+// --- Global Image Formatter ---
+const imageKeys = ['imageUrl', 'image', 'avatar', 'brandLogoUrl'];
+const imageArrayKeys = ['gallery'];
+
+const formatResponseImages = (data: any): any => {
+  if (Array.isArray(data)) {
+    return data.map(item => formatResponseImages(item));
+  } else if (data !== null && typeof data === 'object') {
+    const formattedData: any = {};
+    for (const key in data) {
+      if (imageKeys.includes(key) && typeof data[key] === 'string') {
+        formattedData[key] = formatImageUrl(data[key]);
+      } else if (imageArrayKeys.includes(key) && Array.isArray(data[key])) {
+        formattedData[key] = data[key].map((url: any) =>
+          typeof url === 'string' ? formatImageUrl(url) : url
+        );
+      } else {
+        formattedData[key] = formatResponseImages(data[key]);
+      }
+    }
+    return formattedData;
+  }
+  return data;
+};
+
 // Response Interceptor: Handle global errors and log responses
 apiClient.interceptors.response.use(
   (response) => {
+    // Automatically format all image URLs in the response data
+    if (response.data) {
+      response.data = formatResponseImages(response.data);
+    }
+
     console.log(`✅ [API RESPONSE]: ${response.status} from ${response.config.url}`);
     console.log(`🎁 [DATA]:`, JSON.stringify(response.data, null, 2));
+    
+    // Custom Reactotron Logger (DO NOT DELETE: Required for Axios)
+    if ((console as any).tron) {
+      (console as any).tron.display({
+        name: `✅ API RESPONSE`,
+        preview: `${response.status} ${response.config.url}`,
+        value: { status: response.status, data: response.data },
+      });
+    }
+    
     return response;
   },
   async (error) => {
@@ -101,10 +158,10 @@ apiClient.interceptors.response.use(
             await storage.setGuestToken(newGuestToken);
             originalRequest.headers['x-guest-token'] = newGuestToken;
             console.log('✅ Recovered guest session! Retrying original request.');
-            
+
             // CRITICAL: Prevent infinite loops if the backend rejects the NEW guest token!
             originalRequest._retry = true;
-            
+
             return apiClient(originalRequest); // Retry the failed request seamlessly
           }
         } catch (guestError) {

@@ -58,7 +58,7 @@ export default function EditProfileScreen() {
     setErrors({});
     
     try {
-      await updateProfile({ name, email, mobile, avatar });
+      await updateProfile({ name, email, avatar }); // Mobile intentionally excluded so it can never be changed
       Alert.alert(t(STRINGS.editProfileScreen.success), t(STRINGS.editProfileScreen.profileUpdated), [
         { text: 'OK', onPress: () => {
           if (navigation.canGoBack()) {
@@ -145,6 +145,8 @@ export default function EditProfileScreen() {
                 keyboardType="phone-pad"
                 placeholder={t(STRINGS.editProfileScreen.mobile)}
                 error={errors.mobile}
+                editable={false}
+                style={{ opacity: 0.5 }}
               />
 
               <FormInput
