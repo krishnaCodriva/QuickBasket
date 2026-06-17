@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, Animated, ScrollView, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Animated, ScrollView, ActivityIndicator, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedView, ThemedText, CustomButton } from '../../components';
 import { Feather } from '@expo/vector-icons';
@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import type { RootStackParamList } from '../../core/types/navigation';
 import { spacing, radius, typography, elevation } from '../../core/constants/theme';
 import { orderApi } from '../../services/orderApi';
+import { formatImageUrl } from '../../config/api.config';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'OrderSuccess'>;
 
@@ -140,8 +141,16 @@ export default function OrderSuccessScreen({ navigation, route }: Props) {
                 <ThemedText type="subtitle" style={styles.cardTitle}>{t(STRINGS.checkoutScreen.orderItems)} ({order.items?.length})</ThemedText>
                 {order.items?.map((item: any) => (
                   <View key={item.id || item.productId} style={styles.itemRow}>
-                    <ThemedText style={{ fontSize: typography.size.xl }}>{item.emoji || '📦'}</ThemedText>
-                    <ThemedText style={{ flex: 1, marginLeft: spacing.smd }}>
+                    {item.image || item.imageUrl || item.Product?.image ? (
+                      <Image 
+                        source={{ uri: formatImageUrl(item.image || item.imageUrl || item.Product?.image || item.Product?.imageUrl) }} 
+                        style={{ width: 40, height: 40, borderRadius: 8, marginRight: 12 }} 
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <ThemedText style={{ fontSize: typography.size.xl, marginRight: 12 }}>{item.emoji || '📦'}</ThemedText>
+                    )}
+                    <ThemedText style={{ flex: 1 }}>
                       {item.name || item.Product?.name} <ThemedText useSecondaryText>x{item.quantity}</ThemedText>
                     </ThemedText>
                     <ThemedText>₹{(item.price * item.quantity).toFixed(2)}</ThemedText>
