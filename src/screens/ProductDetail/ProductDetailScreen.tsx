@@ -134,25 +134,20 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
 
   // --- RENDER SECTIONS ---
   const renderHeader = () => (
-    <ScreenHeader
-      title=""
-      onBack={() => navigation.goBack()}
-      rightElement={
-        <CartHeaderIcon
-          color={iconColor}
-          size={28}
-          badgeBorderColor={bottomBarBgColor}
-        />
-      }
-      showBorder={false}
-      style={{
-        position: 'absolute',
-        top: Math.max(insets.top, 10),
-        left: 0,
-        right: 0,
-        zIndex: zIndex.elevated,
-      }}
-    />
+    <View style={{ paddingTop: insets.top, backgroundColor: bottomBarBgColor }}>
+      <ScreenHeader
+        title=""
+        onBack={() => navigation.goBack()}
+        rightElement={
+          <CartHeaderIcon
+            color={iconColor}
+            size={28}
+            badgeBorderColor={bottomBarBgColor}
+          />
+        }
+        showBorder={false}
+      />
+    </View>
   );
 
   const renderImageGallery = () => (
@@ -379,7 +374,7 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
 
   return (
     <ThemedView style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar barStyle={bottomBarBgColor === Colors.dark.black ? "light-content" : "dark-content"} translucent backgroundColor="transparent" />
       {renderHeader()}
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {renderImageGallery()}

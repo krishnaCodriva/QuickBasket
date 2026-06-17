@@ -92,19 +92,7 @@ function BannerCarousel({ banners = DEFAULT_BANNERS, onBannerPress }: Props) {
     index,
   });
 
-  // Auto-play effect
-  useEffect(() => {
-    if (banners.length <= 1) return;
-    const timer = setInterval(() => {
-      // Scroll to the next item
-      const nextIndex = activeIndex + 2;
-      flatListRef.current?.scrollToOffset({
-        offset: nextIndex * slideSize,
-        animated: true,
-      });
-    }, 3000);
-    return () => clearInterval(timer);
-  }, [activeIndex, banners.length, slideSize]);
+  // Auto-play effect removed as requested
 
   const renderItem = ({ item }: { item: BannerType }) => (
     <TouchableOpacity

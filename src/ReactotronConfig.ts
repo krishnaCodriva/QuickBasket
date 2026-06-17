@@ -1,11 +1,23 @@
 import Reactotron from 'reactotron-react-native';
 import { NativeModules } from 'react-native';
+import Constants from 'expo-constants';
 
 let reactotron;
 
 if (__DEV__) {
-  // Hardcoded to your computer's local IP so your phone can connect over Wi-Fi
-  const scriptHostname = '192.168.1.10';
+  let scriptHostname = 'localhost';
+  
+  // Try getting IP from Expo first (most reliable for Expo Go)
+  const hostUri = Constants?.expoConfig?.hostUri;
+  if (hostUri) {
+    scriptHostname = hostUri.split(':')[0];
+  } else {
+    // Fallback to NativeModules for bare React Native
+    const scriptURL = NativeModules.SourceCode?.scriptURL;
+    if (scriptURL) {
+      scriptHostname = scriptURL.split('://')[1].split(':')[0];
+    }
+  }
 
   reactotron = Reactotron
     .configure({ 
