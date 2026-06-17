@@ -333,7 +333,7 @@ export default function HomeScreen({ navigation }: Props) {
       emoji={item.emoji || "🛍️"} // Assuming backend doesn't send emoji for products, provide a fallback
       brand={item.brand}
       tags={item.tags}
-      inStock={item.stockQuantity > 0}
+      inStock={item.inStock !== false && (item.stockQuantity === undefined || Number(item.stockQuantity) > 0)}
       quantity={getProductQuantity(item.id)}
       onAdd={() => {
         if (getProductQuantity(item.id) > 0) {

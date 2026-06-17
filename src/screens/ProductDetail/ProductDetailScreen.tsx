@@ -110,6 +110,8 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
     return [];
   })();
 
+  const isOutOfStock = product?.inStock === false || (product?.stockQuantity !== undefined && Number(product?.stockQuantity) <= 0);
+
   // --- HANDLERS ---
   const handleScroll = (event: any) => {
     const slideSize = event.nativeEvent.layoutMeasurement.width;
@@ -191,7 +193,6 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
     const mrpNum = product.compareAtPrice ? parseFloat(product.compareAtPrice) : (product.mrp ? parseFloat(product.mrp) : undefined);
     const discount = mrpNum && mrpNum > priceNum ? Math.round(((mrpNum - priceNum) / mrpNum) * 100) : 0;
     const storeObj = product.Store || product.store;
-    const isOutOfStock = product.stockQuantity <= 0 && product.stockQuantity !== undefined;
 
     return (
       <View style={styles.infoContainer}>
@@ -333,14 +334,14 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
               type="primary" 
               onPress={() => handleUpdateCart(1)} 
               style={{ width: '100%', marginBottom: 0 }} 
-              disabled={product.inStock === false}
+              disabled={isOutOfStock}
             />
           ) : (
             <QuantitySelector 
               quantity={cartQuantity}
               onDecrease={() => handleUpdateCart(-1)}
               onIncrease={() => handleUpdateCart(1)}
-              disabled={product.inStock === false}
+              disabled={isOutOfStock}
               size="large"
             />
           )}

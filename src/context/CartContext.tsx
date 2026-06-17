@@ -92,6 +92,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         emoji: productObj.emoji || '📦',
         quantity: item.quantity || 1,
         inStock: productObj.inStock !== false,
+        imageUrl: productObj.imageUrl,
       };
     });
 

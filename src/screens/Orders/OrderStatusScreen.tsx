@@ -113,6 +113,8 @@ export default function OrderStatusScreen({ navigation, route }: Props) {
   if (currentStatusIndex === -1) currentStatusIndex = 0;
 
   const isCancelled = order.status === 'Cancelled' || order.status === 'cancelled';
+  const isDelivered = order.status === 'Delivered' || order.status === 'delivered';
+  const isCod = order.paymentMethodId === 'cod' || order.paymentMethod?.toLowerCase() === 'cod' || order.paymentMethod?.toLowerCase().includes('cash on delivery');
 
   const getTranslatedStatus = (status: string) => {
     switch (status) {
@@ -224,7 +226,7 @@ export default function OrderStatusScreen({ navigation, route }: Props) {
           onRefresh={onRefresh}
         >
           <View style={styles.summaryHeader}>
-            <ThemedText type="title" style={styles.txId}>#{order.id.slice(-8)}</ThemedText>
+            <ThemedText type="title" style={styles.txId}>#{order.id.slice(-8).toUpperCase()}</ThemedText>
             <ThemedText useSecondaryText>{new Date(order.createdAt || order.created_at || order.date || new Date()).toLocaleString()}</ThemedText>
           </View>
 
@@ -287,7 +289,7 @@ export default function OrderStatusScreen({ navigation, route }: Props) {
           </View>
 
           {/* Invoice Actions */}
-          {order.status !== 'Cancelled' && order.status !== 'cancelled' && (
+          {!isCancelled && (!isCod || isDelivered) && (
             <View style={styles.invoiceActions}>
               <CustomButton 
                 title={t(STRINGS.orderStatusScreen.viewInvoice)} 

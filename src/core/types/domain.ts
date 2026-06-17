@@ -39,6 +39,7 @@ export interface CartItem {
   emoji: string;
   quantity: number;
   inStock: boolean;
+  imageUrl?: string;
 }
 
 // ─── Address ─────────────────────────────────────────────────────────────────

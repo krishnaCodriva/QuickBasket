@@ -99,7 +99,7 @@ export default function OrderSuccessScreen({ navigation, route }: Props) {
             
             <View style={[styles.txBox, { backgroundColor: cardColor, borderColor, borderWidth: 1 }]}>
               <ThemedText useSecondaryText style={styles.txLabel}>{t(STRINGS.invoiceScreen.orderId)}</ThemedText>
-              <ThemedText type="defaultSemiBold" style={styles.txId}>{txId}</ThemedText>
+              <ThemedText type="defaultSemiBold" style={styles.txId}>#{txId.slice(-8).toUpperCase()}</ThemedText>
             </View>
           </View>
 

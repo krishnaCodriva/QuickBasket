@@ -65,7 +65,7 @@ export default function OrdersScreen() {
           <View style={{ flex: 1 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.xs }}>
               <Feather name="box" size={16} color={iconColor} style={{ marginRight: spacing.sm }} />
-              <ThemedText style={styles.orderId}>{t(STRINGS.ordersScreen.orderId)}#{item.id.slice(-8)}</ThemedText>
+              <ThemedText style={styles.orderId}>{t(STRINGS.ordersScreen.orderId)}#{item.id.slice(-8).toUpperCase()}</ThemedText>
             </View>
             <ThemedText useSecondaryText style={styles.orderDate}>{formattedDate}</ThemedText>
           </View>
