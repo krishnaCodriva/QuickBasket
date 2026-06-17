@@ -5,7 +5,7 @@ let reactotron;
 
 if (__DEV__) {
   // Hardcoded to your computer's local IP so your phone can connect over Wi-Fi
-  const scriptHostname = '192.168.1.50';
+  const scriptHostname = '192.168.1.10';
 
   reactotron = Reactotron
     .configure({ 

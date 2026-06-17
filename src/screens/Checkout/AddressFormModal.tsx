@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, Modal, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Modal, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { ThemedText, CustomButton } from '../../components';
+import * as Location from 'expo-location';
 import ThemedInput from '../../components/ThemedInput';
 import { Colors, STRINGS } from '../../constants';
 import { useThemeColor } from '../../hooks';
@@ -19,6 +20,51 @@ interface AddressFormModalProps {
 
 export default function AddressFormModal({ visible, onClose, onSave, editingAddressId, form, onFormChange }: AddressFormModalProps) {
   const { t } = useTranslation();
+  const [isLoadingLocation, setIsLoadingLocation] = React.useState(false);
+
+  const handleUseCurrentLocation = async () => {
+    setIsLoadingLocation(true);
+    try {
+      const gpsEnabled = await Location.hasServicesEnabledAsync();
+      if (!gpsEnabled) {
+        Alert.alert('GPS Disabled', 'Please turn on GPS to use this feature.');
+        setIsLoadingLocation(false);
+        return;
+      }
+
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'Location permission is required to autofill address.');
+        setIsLoadingLocation(false);
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      if (location) {
+        let addressObj = await Location.reverseGeocodeAsync({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
+
+        if (addressObj && addressObj.length > 0) {
+          const first = addressObj[0];
+          
+          onFormChange({
+            ...form,
+            street: first.street || first.name || first.subregion || form.street,
+            city: first.city || first.district || first.region || form.city,
+            state: first.region || first.subregion || form.state,
+            pincode: first.postalCode || form.pincode
+          });
+        }
+      }
+    } catch (e) {
+      console.log('Error fetching location', e);
+      Alert.alert('Error', 'Failed to get current location');
+    } finally {
+      setIsLoadingLocation(false);
+    }
+  };
 
   const primaryColor = useThemeColor({}, 'primary');
   const cardColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.secondaryBackground }, 'secondaryBackground');
@@ -58,6 +104,18 @@ export default function AddressFormModal({ visible, onClose, onSave, editingAddr
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+            <TouchableOpacity 
+              style={[styles.useLocationBtn, { backgroundColor: primaryColor + '15', borderColor: primaryColor }]} 
+              onPress={handleUseCurrentLocation}
+              disabled={isLoadingLocation}
+            >
+              <Feather name="map-pin" size={18} color={primaryColor} />
+              <ThemedText style={{ color: primaryColor, marginLeft: 8, fontWeight: 'bold', flex: 1 }}>
+                {isLoadingLocation ? 'Fetching location...' : 'Use Current Location'}
+              </ThemedText>
+              {isLoadingLocation && <ActivityIndicator size="small" color={primaryColor} />}
+            </TouchableOpacity>
+
             <ThemedInput icon={null} placeholder={t(STRINGS.checkoutScreen.fullName)} value={form.fullName} onChangeText={(t) => onFormChange({ ...form, fullName: t })} styleWrapper={[styles.input, { borderColor: borderColor }]} />
             <ThemedInput icon={null} placeholder={t(STRINGS.checkoutScreen.mobile)} value={form.mobile} onChangeText={(t) => onFormChange({ ...form, mobile: t })} keyboardType="phone-pad" styleWrapper={[styles.input, { borderColor: borderColor }]} />
 
@@ -146,6 +204,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     borderRadius: radius.md,
     borderWidth: 1,
+  },
+  useLocationBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    marginBottom: spacing.md,
   },
   typeRow: {
     flexDirection: 'row',

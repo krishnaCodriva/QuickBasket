@@ -160,6 +160,23 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, [fetchCart, isAuthLoading]);
 
   const addToCart = useCallback(async (product: Product, quantity: number = 1) => {
+    // Optimistic update
+    setCartItems(prev => {
+      const existing = prev.find(i => i.id === product.id);
+      if (existing) {
+        return prev.map(i => i.id === product.id ? { ...i, quantity: i.quantity + quantity } : i);
+      }
+      return [...prev, {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        emoji: product.emoji || '📦',
+        quantity: quantity,
+        inStock: true,
+        imageUrl: product.imageUrl,
+      }];
+    });
+
     setIsLoading(true);
     try {
       const res = await cartApi.addToCart(product.id, quantity);
@@ -178,8 +195,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     if (!item) return;
 
     const newQuantity = item.quantity + delta;
-    setIsLoading(true);
     
+    // Optimistic update to prevent rapid clicking race conditions
+    setCartItems(prev => {
+      if (newQuantity <= 0) {
+        return prev.filter(i => i.id !== id);
+      }
+      return prev.map(i => i.id === id ? { ...i, quantity: newQuantity } : i);
+    });
+
+    setIsLoading(true);
     try {
       if (newQuantity <= 0) {
         const res = await cartApi.removeFromCart(id);
@@ -201,6 +226,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, [cartItems, mapBackendCart, fetchCart]);
 
   const removeFromCart = useCallback(async (id: string) => {
+    // Optimistic update
+    setCartItems(prev => prev.filter(i => i.id !== id));
+    
     setIsLoading(true);
     try {
       const res = await cartApi.removeFromCart(id);
@@ -215,8 +243,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, [mapBackendCart, fetchCart]);
 
   const clearCart = useCallback(async () => {
-    console.warn("Backend CLEAR endpoint not provided yet. Cannot clear fully via API.");
-    // Temporarily clear locally since no endpoint is provided
+    // The backend automatically clears the cart on successful payment/order verification.
+    // We only need to clear the local frontend state here.
     mapBackendCart(null);
   }, [mapBackendCart]);
 

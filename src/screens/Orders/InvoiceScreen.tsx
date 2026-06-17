@@ -8,7 +8,6 @@ import { Colors, STRINGS } from '../../constants';
 import { useThemeColor } from '../../hooks';
 import { useOrder } from '../../context';
 import { useTranslation } from 'react-i18next';
-import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as IntentLauncher from 'expo-intent-launcher';
@@ -17,7 +16,7 @@ import { spacing, radius, typography, elevation } from '../../core/constants/the
 
 
 
-const formatEstimatedDelivery = (dateStr?: string) => {
+const formatDateTime = (dateStr?: string) => {
   if (!dateStr) return 'Standard Delivery';
   const d = new Date(dateStr);
   if (!isNaN(d.getTime())) {
@@ -108,14 +107,21 @@ export default function InvoiceScreen() {
     );
   }
 
-  const invoiceNumber = `INV-${order.id.slice(-8).toUpperCase()}`;
+  const invoiceNumber = order.invoiceNumber || order.invoiceNo || order.invoice_number;
+  const displayInvoiceNumber = invoiceNumber || t(STRINGS.invoiceScreen.orderId) + ': ' + order.id.slice(-8).toUpperCase();
+  const fileSaveName = invoiceNumber || `Order-${order.id.slice(-8).toUpperCase()}`;
 
   const handleShare = async () => {
     try {
       setIsSharing(true);
-      const html = generateInvoiceHtml();
-
-      const { uri } = await Print.printToFileAsync({ html });
+      const { orderApi } = await import('../../services/orderApi');
+      const res = await orderApi.downloadInvoice(order.id);
+      
+      if (!res.success || !res.uri) {
+        throw new Error(res.message || "Failed to fetch invoice from server");
+      }
+      
+      const uri = res.uri;
 
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri, {
@@ -134,106 +140,7 @@ export default function InvoiceScreen() {
     }
   };
 
-  const generateInvoiceHtml = () => {
-    const itemsHtml = order.items.map((item: any) => `
-      <tr>
-        <td>${item.name}</td>
-        <td class="text-center">${item.quantity}</td>
-        <td class="text-right">₹${(item.price * item.quantity).toFixed(2)}</td>
-      </tr>
-    `).join('');
 
-    return `
-      <html>
-        <head>
-          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
-          <style>
-            body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #333; }
-            .header { text-align: center; border-bottom: 2px solid #0f9b58; padding-bottom: 20px; margin-bottom: 20px; }
-            .company-name { font-size: 28px; font-weight: bold; color: #0f9b58; }
-            .invoice-title { font-size: 20px; color: #555; margin-top: 5px; }
-            .row { display: flex; justify-content: space-between; margin-bottom: 10px; }
-            .section-title { font-size: 18px; font-weight: bold; margin-top: 30px; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-            th { background-color: #f8f9fa; color: #333; }
-            .text-right { text-align: right; }
-            .text-center { text-align: center; }
-            .totals-container { margin-top: 30px; width: 50%; float: right; }
-            .total-row { display: flex; justify-content: space-between; padding: 8px 0; }
-            .grand-total { font-size: 20px; font-weight: bold; border-top: 2px solid #333; padding-top: 10px; margin-top: 10px; }
-            .footer { margin-top: 100px; text-align: center; color: #888; font-size: 12px; clear: both; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div class="company-name">QuickBasket</div>
-            <div class="invoice-title">Tax Invoice / Bill of Supply</div>
-          </div>
-
-          <div class="row">
-            <div>
-              <div class="section-title" style="margin-top:0;">${t(STRINGS.invoiceScreen.pdfBilledTo)}</div>
-              <strong>${order.customer?.name || order.address?.fullName || ''}</strong><br />
-              ${order.deliveryAddress || order.address?.address || ''}<br />
-              Mobile: ${order.customer?.phone || order.address?.mobile || ''}
-            </div>
-            <div class="text-right">
-              <div class="section-title" style="margin-top:0;">${t(STRINGS.invoiceScreen.pdfInvoiceDetails)}</div>
-              <strong>${t(STRINGS.invoiceScreen.pdfInvoiceNo)}</strong> ${invoiceNumber}<br />
-              <strong>${t(STRINGS.invoiceScreen.pdfOrderId)}</strong> ${order.id}<br />
-              <strong>${t(STRINGS.invoiceScreen.pdfOrderDate)}</strong> ${new Date(order.createdAt || order.date || new Date()).toLocaleDateString()}<br />
-              <strong>${t(STRINGS.invoiceScreen.pdfPaymentMethod)}</strong> ${order.paymentMethodId ? t(`checkoutScreen.paymentMethods.${order.paymentMethodId}_label` as any, { defaultValue: order.paymentMethod }) : order.paymentMethod}
-            </div>
-          </div>
-
-          <table>
-            <thead>
-              <tr>
-                <th>${t(STRINGS.invoiceScreen.pdfItemDescription)}</th>
-                <th class="text-center">${t(STRINGS.invoiceScreen.qty)}</th>
-                <th class="text-right">${t(STRINGS.invoiceScreen.price)}</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${itemsHtml}
-            </tbody>
-          </table>
-
-          <div class="totals-container">
-            ${order.subtotal !== undefined ? `
-            <div class="total-row">
-              <span>${t(STRINGS.invoiceScreen.pdfSubtotal)}</span>
-              <span>₹${Number(order.subtotal).toFixed(2)}</span>
-            </div>` : ''}
-            ${order.discount > 0 ? `
-            <div class="total-row" style="color: #22c55e;">
-              <span>${t(STRINGS.invoiceScreen.pdfDiscount)}</span>
-              <span>-₹${Number(order.discount).toFixed(2)}</span>
-            </div>` : ''}
-            ${order.deliveryCharge !== undefined ? `
-            <div class="total-row">
-              <span>${t(STRINGS.invoiceScreen.pdfDelivery)}</span>
-              <span>₹${Number(order.deliveryCharge).toFixed(2)}</span>
-            </div>` : ''}
-            ${order.taxes !== undefined ? `
-            <div class="total-row">
-              <span>${t(STRINGS.invoiceScreen.pdfTaxes)}</span>
-              <span>₹${Number(order.taxes).toFixed(2)}</span>
-            </div>` : ''}
-            <div class="total-row grand-total">
-              <span>${t(STRINGS.invoiceScreen.pdfGrandTotal)}</span>
-              <span>₹${Number(order.totalPayable || order.totalAmount || order.grandTotal || 0).toFixed(2)}</span>
-            </div>
-          </div>
-
-          <div class="footer">
-            ${t(STRINGS.invoiceScreen.pdfFooter)}
-          </div>
-        </body>
-      </html>
-    `;
-  };
 
   const savePdfToAndroidDir = async (pdfUri: string, directoryUri: string, invoiceNum: string) => {
     const base64 = await FileSystem.readAsStringAsync(pdfUri, { encoding: FileSystem.EncodingType.Base64 });
@@ -253,16 +160,21 @@ export default function InvoiceScreen() {
   const handleDownloadInvoice = async () => {
     try {
       setIsGenerating(true);
-      const html = generateInvoiceHtml();
-
-      const { uri } = await Print.printToFileAsync({ html });
+      const { orderApi } = await import('../../services/orderApi');
+      const res = await orderApi.downloadInvoice(order.id);
+      
+      if (!res.success || !res.uri) {
+        throw new Error(res.message || "Failed to fetch invoice from server");
+      }
+      
+      const uri = res.uri;
 
       if (Platform.OS === 'android') {
         const savedDirUri = await StorageService.getItem(STORAGE_KEYS.DOWNLOAD_DIRECTORY_URI);
 
         if (savedDirUri) {
           try {
-            await savePdfToAndroidDir(uri, savedDirUri, invoiceNumber);
+            await savePdfToAndroidDir(uri, savedDirUri, fileSaveName);
             return;
           } catch (e) {
             // Permission might have been revoked or folder deleted, fall through to ask again
@@ -282,7 +194,7 @@ export default function InvoiceScreen() {
                 const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
                 if (permissions.granted) {
                   await StorageService.setItem(STORAGE_KEYS.DOWNLOAD_DIRECTORY_URI, permissions.directoryUri);
-                  await savePdfToAndroidDir(uri, permissions.directoryUri, invoiceNumber);
+                  await savePdfToAndroidDir(uri, permissions.directoryUri, fileSaveName);
                 }
               }
             }
@@ -325,10 +237,8 @@ export default function InvoiceScreen() {
             <View style={[styles.section, { borderBottomColor: borderColor, borderBottomWidth: 1 }]}>
               <View style={styles.rowBetween}>
                 <ThemedText type="subtitle">{t(STRINGS.invoiceScreen.companyName as any)}</ThemedText>
-                <ThemedText style={{ fontWeight: 'bold' }}>{invoiceNumber}</ThemedText>
+                {invoiceNumber && <ThemedText style={{ fontWeight: 'bold' }}>{invoiceNumber}</ThemedText>}
               </View>
-              <ThemedText useSecondaryText>123 Grocery Lane, Fresh City</ThemedText>
-              <ThemedText useSecondaryText>GSTIN: 22AAAAA0000A1Z5</ThemedText>
             </View>
 
             {/* Order Info */}
@@ -339,12 +249,12 @@ export default function InvoiceScreen() {
               </View>
               <View style={styles.rowBetween}>
                 <ThemedText useSecondaryText>{t(STRINGS.invoiceScreen.orderDate)}</ThemedText>
-                <ThemedText>{new Date(order.createdAt || order.date || new Date()).toLocaleDateString()}</ThemedText>
+                <ThemedText>{formatDateTime(order.createdAt || order.date || new Date().toISOString())}</ThemedText>
               </View>
               <View style={styles.rowBetween}>
                 <ThemedText useSecondaryText>{t(STRINGS.invoiceScreen.deliveryDate)}</ThemedText>
                 <ThemedText>
-                  {order.status === 'Delivered' ? formatEstimatedDelivery(order.updatedAt || new Date().toISOString()) : formatEstimatedDelivery(order.estimatedDelivery || order.estimatedDeliveryTime)}
+                  {order.status === 'Delivered' ? formatDateTime(order.updatedAt || new Date().toISOString()) : formatDateTime(order.estimatedDelivery || order.estimatedDeliveryTime)}
                 </ThemedText>
               </View>
             </View>
