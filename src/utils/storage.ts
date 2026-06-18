@@ -24,7 +24,7 @@ export const storage = {
       return null;
     }
   },
-  
+
   // Guest Token (Secure)
   setGuestToken: async (token: string) => {
     try {
@@ -51,5 +51,13 @@ export const storage = {
     } catch (e) {
       console.error('Error clearing tokens', e);
     }
-  }
+  },
+
+  clearGuestToken: async () => {
+    try {
+      await SecureStore.deleteItemAsync(KEYS.GUEST_TOKEN);
+    } catch (e) {
+      console.error('Error clearing guest token', e);
+    }
+  },
 };

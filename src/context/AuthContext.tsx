@@ -14,19 +14,20 @@ const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreCl
 
 // Safe mock for Expo Go
 let GoogleSignin: any = {
-  configure: () => {},
-  hasPlayServices: async () => {},
+  configure: () => { },
+  hasPlayServices: async () => { },
   signIn: async () => { throw new Error('Google Sign-In is not supported in Expo Go. Please use the EAS APK.'); },
-  signOut: async () => {},
+  signOut: async () => { },
 };
 let isSuccessResponse: any = () => false;
-
+console.log(isExpoGo, 4444)
 if (!isExpoGo) {
   try {
     const RNGoogleSignin = require('@react-native-google-signin/google-signin');
     GoogleSignin = RNGoogleSignin.GoogleSignin;
     isSuccessResponse = RNGoogleSignin.isSuccessResponse;
 
+    console.log('--- GOOGLE_WEB_CLIENT_ID AT RUNTIME ---', GOOGLE_WEB_CLIENT_ID);
     GoogleSignin.configure({
       webClientId: GOOGLE_WEB_CLIENT_ID,
       offlineAccess: true,
@@ -150,7 +151,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       };
 
       const res = await userService.updateProfile(payload);
-      
+
       if (res.success && res.data) {
         setUser((prev) => ({
           ...prev,
@@ -170,7 +171,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       await storage.clearTokens();
       await GoogleSignin.signOut();
-      
+
       // Immediately create a new guest session so the user can continue shopping as a guest
       await sessionService.createGuestSession();
     } catch (e) {
@@ -181,12 +182,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const loginWithGoogle = useCallback(async () => {
     try {
       await GoogleSignin.hasPlayServices();
+      console.log(123456)
+
       const response = await GoogleSignin.signIn();
-      
+      console.log(response, 123456)
       if (isSuccessResponse(response) && response.data.idToken) {
         const guestToken = await storage.getGuestToken() || undefined;
         const res = await authService.googleLogin(response.data.idToken, guestToken);
-        
+
         if (res.success && res.data) {
           const { accessToken, user: userProfile } = res.data;
           await storage.setUserToken(accessToken);
@@ -201,7 +204,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw new Error('No ID Token from Google');
       }
     } catch (error) {
-      console.error('Failed to login with Google:', error);
+      console.error('Failed to login with Google:', JSON.stringify(error));
       throw error;
     }
   }, []);
