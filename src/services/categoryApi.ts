@@ -50,6 +50,40 @@ export const categoryApi = {
     }
   },
 
+  getPaginatedCategories: async (page = 1, limit = 10, parentId: string | null = null, extraParams: Record<string, any> = {}) => {
+    try {
+      const params: any = { page, limit, ...extraParams };
+      if (parentId !== undefined) {
+        params.parentId = parentId;
+      }
+      const response = await apiClient.get(API_ENDPOINTS.CATEGORIES.GET_ALL, { params });
+      
+      if (response.data && response.data.data) {
+        const categoriesData = response.data.data;
+        const mappedData = categoriesData.map((cat: any) => ({
+          ...cat,
+          id: cat.id,
+          name: cat.name,
+          nameKey: cat.name,
+          imageUrl: formatImageUrl(cat.image || cat.imageUrl),
+        }));
+
+        return { 
+          success: true, 
+          data: mappedData,
+          meta: response.data.meta || { page, limit, total: mappedData.length } 
+        };
+      }
+      return { success: false, error: 'Failed to parse categories data' };
+    } catch (error: any) {
+      console.error('Error fetching paginated categories:', error);
+      return { 
+        success: false, 
+        error: error.response?.data?.message || error.message || 'Unknown error' 
+      };
+    }
+  },
+
   clearCache: () => {
     cachedCategories = null;
     cacheTimestamp = 0;

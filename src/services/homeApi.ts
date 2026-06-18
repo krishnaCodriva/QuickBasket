@@ -1,9 +1,11 @@
 import { apiClient } from "../services/apiClient";
 import { API_ENDPOINTS } from "../config/api.endpoints";
 
-export const homeApi = async () => {
+export const homeApi = async (page: number = 1, limit: number = 10, tag?: string) => {
     try {
-        const response = await apiClient.get(API_ENDPOINTS.HOME.GET_ALL);
+        const response = await apiClient.get(API_ENDPOINTS.HOME.GET_ALL, {
+            params: { page, limit, tag }
+        });
         return response.data;
     } catch (error) {
         console.error('Error fetching home data:', error);

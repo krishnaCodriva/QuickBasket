@@ -159,40 +159,71 @@ export default function HomeScreen({ navigation }: Props) {
   }, [navigation]);
 
   const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadMore, setIsLoadMore] = useState(false);
 
-  const fetchHomeData = useCallback(async () => {
+  const fetchHomeData = useCallback(async (pageNum: number = 1, reset: boolean = false, currentTag: string | null = null) => {
     try {
-      setIsLoading(true);
-      const res = await homeApi();
+      if (pageNum === 1) setIsLoading(true);
+      else setIsLoadMore(true);
+
+      const res = await homeApi(pageNum, 10, currentTag || undefined);
       if (res?.data) {
-        let parsedTags = res.data.tags || [];
-        if (!Array.isArray(parsedTags) && Array.isArray(parsedTags.data)) parsedTags = parsedTags.data;
-        setTagsData(parsedTags);
-        
-        let parsedBanners = res.data.banners || [];
-        if (!Array.isArray(parsedBanners) && Array.isArray(parsedBanners.data)) parsedBanners = parsedBanners.data;
-        setBannersData(parsedBanners);
-        
-        let parsedCategories = res.data.categories || [];
-        if (!Array.isArray(parsedCategories) && Array.isArray(parsedCategories.data)) parsedCategories = parsedCategories.data;
-        setCategoriesData(parsedCategories);
+        if (reset) {
+          let parsedTags = res.data.tags || [];
+          if (!Array.isArray(parsedTags) && Array.isArray(parsedTags.data)) parsedTags = parsedTags.data;
+          setTagsData(parsedTags);
+          
+          let parsedBanners = res.data.banners || [];
+          if (!Array.isArray(parsedBanners) && Array.isArray(parsedBanners.data)) parsedBanners = parsedBanners.data;
+          setBannersData(parsedBanners);
+          
+          let parsedCategories = res.data.categories || [];
+          if (!Array.isArray(parsedCategories) && Array.isArray(parsedCategories.data)) parsedCategories = parsedCategories.data;
+          setCategoriesData(parsedCategories);
+        }
         
         let parsedProducts = res.data.products || [];
         if (!Array.isArray(parsedProducts) && Array.isArray(parsedProducts.data)) parsedProducts = parsedProducts.data;
-        setProductsData(parsedProducts);
+        
+        setProductsData(prev => reset ? parsedProducts : [...prev, ...parsedProducts]);
+        setPage(pageNum);
+
+        if (res.data.pagination) {
+          setHasMore(pageNum < res.data.pagination.pages);
+        } else {
+          setHasMore(parsedProducts.length === 10);
+        }
       }
     } catch (error) {
       console.error("Failed to fetch home API data:", error);
     } finally {
       setIsLoading(false);
+      setIsLoadMore(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchHomeData();
+    fetchHomeData(1, true);
   }, [fetchHomeData]);
 
-  const { refreshing, onRefresh } = useRefresh(fetchHomeData);
+  const handleRefresh = useCallback(() => {
+    fetchHomeData(1, true, selectedTag);
+  }, [fetchHomeData, selectedTag]);
+
+  const { refreshing, onRefresh } = useRefresh(handleRefresh);
+
+  const handleTagSelect = useCallback((tag: string | null) => {
+    setSelectedTag(tag);
+    fetchHomeData(1, true, tag);
+  }, [fetchHomeData]);
+
+  const handleLoadMore = useCallback(() => {
+    if (hasMore && !isLoadMore && !isLoading) {
+      fetchHomeData(page + 1, false, selectedTag);
+    }
+  }, [hasMore, isLoadMore, isLoading, page, fetchHomeData, selectedTag]);
   // ─── Language switch ───────────────────────────────────────────────────────
   const handleLanguageSelect = useCallback(
     (code: LanguageCode) => {
@@ -307,7 +338,7 @@ export default function HomeScreen({ navigation }: Props) {
         <QuickFilters
           tags={tagsData}
           selectedTag={selectedTag}
-          onSelectTag={setSelectedTag}
+          onSelectTag={handleTagSelect}
         />
       </View>
     </View>
@@ -386,6 +417,15 @@ export default function HomeScreen({ navigation }: Props) {
         renderItem={renderProductItem}
         refreshing={refreshing}
         onRefresh={onRefresh}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          isLoadMore ? (
+            <View style={{ paddingVertical: 20 }}>
+              <ActivityIndicator size="small" color={primaryColor} />
+            </View>
+          ) : null
+        }
       />
 
       <LocationModal
