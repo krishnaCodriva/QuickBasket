@@ -44,8 +44,8 @@ export default function ProductListingScreen() {
   const primaryColor = useThemeColor({}, 'primary');
   const iconColor = useThemeColor({ light: Colors.light.black, dark: Colors.light.white }, 'primaryText' as any);
   const actionBtnBg = useThemeColor({ light: Colors.light.green100, dark: Colors.light.transparentWhite02 }, 'secondaryBackground' as any);
-  const bgColor = useThemeColor({ light: Colors.light.gray100, dark: Colors.dark.black }, 'primaryBackground' as any);
-  const modalBgColor = useThemeColor({ light: Colors.light.white, dark: Colors.dark.secondaryBackground }, 'secondaryBackground' as any);
+  const bgColor = useThemeColor({}, 'primaryBackground' as any);
+  const modalBgColor = useThemeColor({}, 'secondaryBackground' as any);
 
   const { cartItems, totalItems, subtotal } = useCart();
   const [sortModalVisible, setSortModalVisible] = useState(false);

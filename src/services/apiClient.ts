@@ -10,6 +10,8 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
     'ngrok-skip-browser-warning': 'true',
+    'Cache-Control': 'no-cache',
+
   },
   timeout: 10000,
 });
@@ -113,7 +115,7 @@ apiClient.interceptors.response.use(
 
     console.log(`✅ [API RESPONSE]: ${response.status} from ${response.config.url}`);
     console.log(`🎁 [DATA]:`, JSON.stringify(response.data, null, 2));
-    
+
     // Custom Reactotron Logger (DO NOT DELETE: Required for Axios)
     if ((console as any).tron) {
       (console as any).tron.display({
@@ -122,12 +124,12 @@ apiClient.interceptors.response.use(
         value: { status: response.status, data: response.data },
       });
     }
-    
+
     return response;
   },
   async (error) => {
     const originalRequest = error.config;
-    
+
     // Suppress scary logs for known harmless 404s (like removing an item that's already gone from cart)
     const isCart404 = error.response?.status === 404 && originalRequest?.url?.includes('/cart');
     const isCart400 = error.response?.status === 400 && originalRequest?.url?.includes('/cart');
