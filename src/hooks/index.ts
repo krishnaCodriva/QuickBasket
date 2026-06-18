@@ -3,3 +3,4 @@ export * from './useCategories';
 export * from './useProductDetail';
 export * from './useLocationServiceability';
 export * from './useRefresh';
+export * from './usePaginatedCategories';

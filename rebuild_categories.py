@@ -1,32 +1,17 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Platform,
-  StatusBar,
-  FlatList,
-  ActivityIndicator,
-  Image,
-} from "react-native";
-import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
-import { Ionicons } from "@expo/vector-icons";
-import { useTranslation } from "react-i18next";
-import { ThemedView, ThemedText, CartHeaderIcon } from "../../components";
-import { CategoryCard } from "../../components/Home";
-import { Colors, STRINGS } from "../../constants";
-import { useThemeColor, usePaginatedCategories } from "../../hooks";
-import { spacing, radius, typography } from "../../core/constants/theme";
-import type { Category, SubCategory } from "../../core/types/domain";
-import type { TabParamList } from "../../core/types/navigation";
-import { formatImageUrl } from "../../config/api.config";
+import re
 
-export default function CategoriesScreen() {
-  const navigation = useNavigation<any>();
-  const route = useRoute<RouteProp<TabParamList, "CategoriesTab">>();
-  const { t } = useTranslation();
+file_path = "/home/satyam/Downloads/QuickBasket/src/screens/Categories/CategoriesScreen.tsx"
+with open(file_path, "r") as f:
+    content = f.read()
 
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+# Replace useCategories with usePaginatedCategories
+content = content.replace(
+    'import { useThemeColor, useCategories, useRefresh } from "../../hooks";',
+    'import { useThemeColor, usePaginatedCategories } from "../../hooks";'
+)
+
+# Update state variables
+new_state = """  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
 
   const {
     data: categories,
@@ -34,7 +19,7 @@ export default function CategoriesScreen() {
     isRefreshing: mainRefreshing,
     handleRefresh: handleMainRefresh,
     handleLoadMore: handleMainLoadMore,
-  } = usePaginatedCategories(null, 10, { status: "Active" });
+  } = usePaginatedCategories(null);
 
   const {
     data: subCategoriesData,
@@ -42,7 +27,7 @@ export default function CategoriesScreen() {
     isRefreshing: subCategoriesRefreshing,
     handleRefresh: handleSubRefresh,
     handleLoadMore: handleSubLoadMore,
-  } = usePaginatedCategories(selectedCategoryId, 10, { status: "Active" });
+  } = usePaginatedCategories(selectedCategoryId);
 
   // Auto-select first category when loaded or categoryId from params
   useEffect(() => {
@@ -58,42 +43,33 @@ export default function CategoriesScreen() {
   }, [categories, selectedCategoryId, route.params?.categoryId, navigation]);
 
   const subCategories = subCategoriesData || [];
+"""
 
-  const bgColor = useThemeColor(
-    { light: Colors.light.white, dark: Colors.dark.primaryBackground },
-    "primaryBackground" as any,
-  );
-  const iconColor = useThemeColor({}, "iconColor" as any);
-  const searchBg = useThemeColor(
-    { light: Colors.light.gray100, dark: "rgba(255,255,255,0.1)" },
-    "gray100" as any,
-  );
-  const primaryColor = useThemeColor({}, "primary");
+content = re.sub(
+    r'  const \{ categories, isLoading: categoriesLoading, refresh \} = useCategories\(\);\n.*?const subCategoriesLoading = false;\n',
+    new_state,
+    content,
+    flags=re.DOTALL
+)
 
-  const leftColBg = useThemeColor(
-    { light: Colors.light.gray50, dark: Colors.dark.secondaryBackground },
-    "secondaryBackground" as any,
-  );
-  const selectedCatBg = useThemeColor(
-    { light: Colors.light.white, dark: Colors.dark.primaryBackground },
-    "primaryBackground" as any,
-  );
-  const imageBgColor = useThemeColor(
+# Add inactive styling
+colors_hook = """  const imageBgColor = useThemeColor(
     { light: "rgba(0,0,0,0.05)", dark: "rgba(255,255,255,0.05)" },
     "transparentWhite04" as any,
   );
   const inactiveStickerBg = useThemeColor({}, "primaryText" as any);
   const inactiveStickerText = useThemeColor({}, "primaryBackground" as any);
+"""
 
-  const handleSubCategoryPress = (subCategory: SubCategory) => {
-    navigation.navigate("ProductListing", {
-      categoryId: subCategory.parentId || selectedCategoryId,
-      subCategoryId: subCategory.id,
-      category: subCategory.nameKey || subCategory.name,
-    });
-  };
+content = re.sub(
+    r'  const imageBgColor = useThemeColor\(\n    \{ light: "rgba\(0,0,0,0\.05\)", dark: "rgba\(255,255,255,0\.05\)" \},\n    "transparentWhite04" as any,\n  \);\n',
+    colors_hook,
+    content,
+    flags=re.DOTALL
+)
 
-  const renderCategoryItem = ({ item }: { item: any }) => {
+# Update render items
+render_items = """  const renderCategoryItem = ({ item }: { item: any }) => {
     const isSelected = item.id === selectedCategoryId;
     const isInactive = item.status === "Inactive" || item.isActive === false;
     
@@ -152,39 +128,17 @@ export default function CategoriesScreen() {
         )}
       </TouchableOpacity>
     );
-  };
-  return (
-    <ThemedView style={[styles.container, { backgroundColor: bgColor }]}>
-      {/* Top Header */}
-      <View style={[styles.header, { backgroundColor: bgColor }]}>
-        <View style={{ width: 24 }} />
-        <ThemedText style={styles.headerTitle}>
-          {t(STRINGS.common.appName)}
-        </ThemedText>
-        <CartHeaderIcon color={iconColor} badgeBorderColor={bgColor} />
-      </View>
+  };"""
 
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <TouchableOpacity
-          style={[styles.searchBar, { backgroundColor: searchBg }]}
-          onPress={() => navigation.navigate("ProductListing")}
-        >
-          <Ionicons
-            name="search-outline"
-            size={20}
-            color={Colors.light.gray400}
-            style={styles.searchIcon}
-          />
-          <ThemedText style={styles.searchPlaceholder}>
-            {t(STRINGS.homeScreen.searchPlaceholder)}
-          </ThemedText>
-        </TouchableOpacity>
-      </View>
+content = re.sub(
+    r'  const renderCategoryItem = .*?\};\n\n  const renderSubCategoryItem = .*?\n  \);\n',
+    render_items,
+    content,
+    flags=re.DOTALL
+)
 
-      <View style={styles.contentContainer}>
-        {/* Left Column: Main Categories */}
-        <View style={[styles.leftColumn, { backgroundColor: leftColBg }]}>
+# Update the Left Column FlatList
+left_flatlist = """        <View style={[styles.leftColumn, { backgroundColor: leftColBg }]}>
           {categoriesLoading && categories.length === 0 ? (
             <ActivityIndicator
               size="small"
@@ -209,10 +163,17 @@ export default function CategoriesScreen() {
               }
             />
           )}
-        </View>
+        </View>"""
 
-        {/* Right Column: Sub Categories */}
-        <View style={styles.rightColumn}>
+content = re.sub(
+    r'        <View style=\{\[styles\.leftColumn, \{ backgroundColor: leftColBg \}\]\}>\n.*?        </View>',
+    left_flatlist,
+    content,
+    flags=re.DOTALL
+)
+
+# Update the Right Column FlatList
+right_flatlist = """        <View style={styles.rightColumn}>
           {subCategoriesLoading && subCategories.length === 0 ? (
             <ActivityIndicator
               size="large"
@@ -246,87 +207,17 @@ export default function CategoriesScreen() {
               }
             />
           )}
-        </View>
-      </View>
-    </ThemedView>
-  );
-}
+        </View>"""
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: spacing.md,
-    paddingTop:
-      Platform.OS === "android"
-        ? (StatusBar.currentHeight ?? 0) + spacing.smd
-        : spacing.xxxl,
-    paddingBottom: spacing.sm,
-  },
-  headerTitle: {
-    fontSize: typography.size.xxl,
-    fontWeight: typography.weight.bold,
-  },
-  searchContainer: {
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.md,
-  },
-  searchBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    height: 44,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-  },
-  searchIcon: {
-    marginRight: spacing.sm,
-  },
-  searchPlaceholder: {
-    color: Colors.light.gray400,
-    fontSize: typography.size.sm,
-    flex: 1,
-  },
-  contentContainer: {
-    flex: 1,
-    flexDirection: "row",
-  },
-  leftColumn: {
-    width: "21%",
-    height: "100%",
-  },
-  rightColumn: {
-    width: "79%",
-    height: "100%",
-  },
-  subCatListContent: {
-    padding: spacing.md,
-    paddingBottom: spacing.xxxl,
-  },
-  subCatColumnWrapper: {
-    justifyContent: "space-between",
-  },
-  subCategoryCard: {
-    width: "47%",
-    borderRadius: radius.md,
-    overflow: "hidden",
-    marginBottom: spacing.md,
-    alignItems: "center",
-  },
-  subCategoryImage: {
-    width: "100%",
-    height: 80,
-  },
-  subCategoryName: {
-    fontSize: typography.size.xs,
-    fontWeight: typography.weight.medium,
-    textAlign: "center",
-    padding: spacing.sm,
-  },
-  emptyContainer: {
+content = re.sub(
+    r'        <View style=\{styles\.rightColumn\}>\n.*?        </View>',
+    right_flatlist,
+    content,
+    flags=re.DOTALL
+)
+
+# Add Styles
+styles_content = """  emptyContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
@@ -361,4 +252,14 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     overflow: "hidden",
   },
-});
+});"""
+
+content = re.sub(
+    r'  emptyContainer: \{\n    flex: 1,\n    justifyContent: "center",\n    alignItems: "center",\n  \},\n\}\);',
+    styles_content,
+    content,
+    flags=re.DOTALL
+)
+
+with open(file_path, "w") as f:
+    f.write(content)

@@ -302,7 +302,7 @@ export default function OrderStatusScreen({ navigation, route }: Props) {
             <View style={styles.invoiceActions}>
               <CustomButton 
                 title={t(STRINGS.orderStatusScreen.viewInvoice)} 
-                icon="receipt"
+                icon="file-document-outline"
                 onPress={() => navigation.navigate('Invoice', { orderId: order.id })}
                 style={styles.invoiceBtn}
               />

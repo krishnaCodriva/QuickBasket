@@ -132,7 +132,7 @@ export function useProductListing(params: ProductListingParams): UseProductListi
           sortBy = 'popularity';
         }
 
-        const limit = 20;
+        const limit = 10;
         const offset = (pageNumber - 1) * limit;
 
         const response = await productApi.getProducts({

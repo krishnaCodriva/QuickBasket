@@ -31,9 +31,12 @@ export default function OrdersScreen() {
   const successColor = useThemeColor({ light: Colors.light.success, dark: Colors.dark.success }, 'success' as any);
 
   const getStatusColor = (status: string) => {
-    if (status === 'Delivered') return successColor;
-    if (status === 'Cancelled') return errorColor;
-    return primaryColor; // use existing primaryColor
+    const s = (status || '').toLowerCase();
+    if (s === 'cancelled') return '#F44336';
+    if (s === 'delivered') return '#4CAF50';
+    if (s.includes('out') || s.includes('delivery')) return '#00BCD4';
+    if (s.includes('process') || s.includes('pack') || s.includes('confirm')) return '#2196F3';
+    return '#9C27B0'; // Placed / Pending
   };
 
   const getTranslatedStatus = (status: string) => {
