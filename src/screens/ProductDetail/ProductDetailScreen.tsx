@@ -45,8 +45,6 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
   // State
   const { cartItems, addToCart, updateQuantity, totalItems } = useCart();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [isZoomVisible, setIsZoomVisible] = useState(false);
-  const [zoomedImage, setZoomedImage] = useState<any>(null);
 
   // Construct images array for carousel
   const parsedImages = (() => {
@@ -119,11 +117,6 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
     setActiveImageIndex(Math.round(index));
   };
 
-  const openZoom = (img: any) => {
-    setZoomedImage(img);
-    setIsZoomVisible(true);
-  };
-
   const handleBrandPress = () => {
     navigation.navigate('ProductListing', { category: product.brand });
   };
@@ -160,15 +153,13 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
         onScroll={handleScroll}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
-          <TouchableOpacity activeOpacity={0.9} onPress={() => openZoom(item)}>
-            <View style={[styles.imageSlide, { width: SCREEN_WIDTH, backgroundColor: item.color || imageBgColor }]}>
-              {item.uri ? (
-                <Image source={{ uri: item.uri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-              ) : (
-                <ThemedText style={styles.imageEmoji}>{item.emoji}</ThemedText>
-              )}
-            </View>
-          </TouchableOpacity>
+          <View style={[styles.imageSlide, { width: SCREEN_WIDTH, backgroundColor: item.color || imageBgColor }]}>
+            {item.uri ? (
+              <Image source={{ uri: item.uri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+            ) : (
+              <ThemedText style={styles.imageEmoji}>{item.emoji}</ThemedText>
+            )}
+          </View>
         )}
       />
       {/* Pagination Dots */}
@@ -348,23 +339,6 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
     </View>
   );
 
-  const renderZoomModal = () => (
-    <Modal visible={isZoomVisible} transparent={true} animationType="fade" onRequestClose={() => setIsZoomVisible(false)}>
-      <TouchableWithoutFeedback onPress={() => setIsZoomVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <TouchableWithoutFeedback>
-            <View style={[styles.zoomBox, { backgroundColor: zoomedImage?.color || Colors.light.black }]}>
-              <ThemedText style={styles.zoomEmoji}>{zoomedImage?.emoji}</ThemedText>
-              <TouchableOpacity style={styles.closeZoom} onPress={() => setIsZoomVisible(false)}>
-                <Feather name="x" size={28} color={Colors.light.white} />
-              </TouchableOpacity>
-            </View>
-          </TouchableWithoutFeedback>
-        </View>
-      </TouchableWithoutFeedback>
-    </Modal>
-  );
-
   return (
     <ThemedView style={styles.container}>
       <StatusBar barStyle={bottomBarBgColor === Colors.dark.black ? "light-content" : "dark-content"} translucent backgroundColor="transparent" />
@@ -375,7 +349,6 @@ export default function ProductDetailScreen({ navigation, route }: Props) {
         {renderRelatedProducts()}
       </ScrollView>
       {renderBottomBar()}
-      {renderZoomModal()}
     </ThemedView>
   );
 }
@@ -605,30 +578,5 @@ const styles = StyleSheet.create({
     color: Colors.light.white,
     fontSize: 10,
     fontWeight: 'bold',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: Colors.light.transparentBlack09,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  zoomBox: {
-    width: SCREEN_WIDTH - 32,
-    height: SCREEN_WIDTH - 32,
-    borderRadius: radius.xxl,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  zoomEmoji: {
-    fontSize: 150,
-  },
-  closeZoom: {
-    position: 'absolute',
-    top: spacing.md,
-    right: spacing.md,
-    backgroundColor: Colors.light.transparentBlack05,
-    borderRadius: radius.xl,
-    padding: spacing.sm,
   }
 });
