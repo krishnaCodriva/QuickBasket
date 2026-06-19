@@ -54,7 +54,9 @@ export default function AddressFormModal({ visible, onClose, onSave, editingAddr
             street: first.street || first.name || first.subregion || form.street,
             city: first.city || first.district || first.region || form.city,
             state: first.region || first.subregion || form.state,
-            pincode: first.postalCode || form.pincode
+            pincode: first.postalCode || form.pincode,
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude
           });
         }
       }

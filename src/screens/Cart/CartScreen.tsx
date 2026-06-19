@@ -66,7 +66,7 @@ export default function CartScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+      <SafeAreaView style={{ flex: 1 }}>
         {renderHeader()}
         <CartWarningBanner visible={hasOutOfStock} />
 

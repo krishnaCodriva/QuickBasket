@@ -214,7 +214,7 @@ export default function OrderStatusScreen({ navigation, route }: Props) {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <SafeAreaView style={styles.safeArea}>
         <ScreenHeader
           title={t(STRINGS.orderStatusScreen.title)}
           onBack={() => navigation.goBack()}

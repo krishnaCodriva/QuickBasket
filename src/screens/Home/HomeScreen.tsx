@@ -1,6 +1,6 @@
 
 
-import React, { useState, useEffect, useContext, useCallback } from "react";
+import React, { useState, useEffect, useContext, useCallback, useRef, useMemo } from "react";
 import {
   StyleSheet,
   View,
@@ -162,26 +162,31 @@ export default function HomeScreen({ navigation }: Props) {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadMore, setIsLoadMore] = useState(false);
+  const isFetchingRef = useRef(false);
 
-  const fetchHomeData = useCallback(async (pageNum: number = 1, reset: boolean = false, currentTag: string | null = null) => {
+  const fetchHomeData = useCallback(async (pageNum: number = 1, reset: boolean = false, currentTag: string | null = null, isInitialLoad: boolean = false, isTagClick: boolean = false) => {
+    if (isFetchingRef.current && pageNum > 1) return;
+    isFetchingRef.current = true;
     try {
-      if (pageNum === 1) setIsLoading(true);
-      else setIsLoadMore(true);
+      if (pageNum === 1 && isInitialLoad) setIsLoading(true);
+      else if (pageNum > 1) setIsLoadMore(true);
 
       const res = await homeApi(pageNum, 10, currentTag || undefined);
       if (res?.data) {
         if (reset) {
-          let parsedTags = res.data.tags || [];
-          if (!Array.isArray(parsedTags) && Array.isArray(parsedTags.data)) parsedTags = parsedTags.data;
-          setTagsData(parsedTags);
-          
-          let parsedBanners = res.data.banners || [];
-          if (!Array.isArray(parsedBanners) && Array.isArray(parsedBanners.data)) parsedBanners = parsedBanners.data;
-          setBannersData(parsedBanners);
-          
-          let parsedCategories = res.data.categories || [];
-          if (!Array.isArray(parsedCategories) && Array.isArray(parsedCategories.data)) parsedCategories = parsedCategories.data;
-          setCategoriesData(parsedCategories);
+          if (!isTagClick) {
+            let parsedTags = res.data.tags || [];
+            if (!Array.isArray(parsedTags) && Array.isArray(parsedTags.data)) parsedTags = parsedTags.data;
+            setTagsData(parsedTags);
+            
+            let parsedBanners = res.data.banners || [];
+            if (!Array.isArray(parsedBanners) && Array.isArray(parsedBanners.data)) parsedBanners = parsedBanners.data;
+            setBannersData(parsedBanners);
+            
+            let parsedCategories = res.data.categories || [];
+            if (!Array.isArray(parsedCategories) && Array.isArray(parsedCategories.data)) parsedCategories = parsedCategories.data;
+            setCategoriesData(parsedCategories);
+          }
         }
         
         let parsedProducts = res.data.products || [];
@@ -201,11 +206,12 @@ export default function HomeScreen({ navigation }: Props) {
     } finally {
       setIsLoading(false);
       setIsLoadMore(false);
+      isFetchingRef.current = false;
     }
   }, []);
 
   useEffect(() => {
-    fetchHomeData(1, true);
+    fetchHomeData(1, true, null, true);
   }, [fetchHomeData]);
 
   const handleRefresh = useCallback(() => {
@@ -216,11 +222,11 @@ export default function HomeScreen({ navigation }: Props) {
 
   const handleTagSelect = useCallback((tag: string | null) => {
     setSelectedTag(tag);
-    fetchHomeData(1, true, tag);
+    fetchHomeData(1, true, tag, false, true);
   }, [fetchHomeData]);
 
   const handleLoadMore = useCallback(() => {
-    if (hasMore && !isLoadMore && !isLoading) {
+    if (hasMore && !isLoadMore && !isLoading && !isFetchingRef.current) {
       fetchHomeData(page + 1, false, selectedTag);
     }
   }, [hasMore, isLoadMore, isLoading, page, fetchHomeData, selectedTag]);
@@ -320,16 +326,20 @@ export default function HomeScreen({ navigation }: Props) {
     </View>
   );
 
+  const formattedBanners = useMemo(() => {
+    return bannersData.map(b => ({
+      ...b,
+      // Handle different backend naming conventions for the image field
+      source: { uri: formatImageUrl(b.imageUrl || b.image || b.bannerUrl || b.url || b.picture) }
+    }));
+  }, [bannersData]);
+
   const renderListHeader = () => (
     <View>
       {renderSearch()}
       {bannersData.length > 0 && (
         <BannerCarousel
-          banners={bannersData.map(b => ({
-            ...b,
-            // Handle different backend naming conventions for the image field
-            source: { uri: formatImageUrl(b.imageUrl || b.image || b.bannerUrl || b.url || b.picture) }
-          }))}
+          banners={formattedBanners}
           onBannerPress={handleBannerPress}
         />
       )}
@@ -412,7 +422,7 @@ export default function HomeScreen({ navigation }: Props) {
         columnWrapperStyle={{ justifyContent: "space-between" }}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
-        ListHeaderComponent={renderListHeader}
+        ListHeaderComponent={renderListHeader()}
         ListEmptyComponent={renderEmptyState}
         renderItem={renderProductItem}
         refreshing={refreshing}
