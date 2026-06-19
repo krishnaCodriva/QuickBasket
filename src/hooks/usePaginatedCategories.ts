@@ -32,9 +32,7 @@ export function usePaginatedCategories(
     isLoadingRef.current = true;
     setIsLoading(true);
 
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-
-    timeoutRef.current = setTimeout(async () => {
+    const fetchCategories = async () => {
       try {
         const response = await categoryApi.getPaginatedCategories(pageNumber, limit, parentId, extraParams);
         
@@ -50,7 +48,9 @@ export function usePaginatedCategories(
         setIsLoading(false);
         setIsRefreshing(false);
       }
-    }, 500);
+    };
+    
+    fetchCategories();
   }, [parentId, limit, JSON.stringify(extraParams)]);
 
   useEffect(() => {

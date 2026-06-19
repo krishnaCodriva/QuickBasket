@@ -8,7 +8,7 @@ interface AddressContextType {
   isLoading: boolean;
   fetchAddresses: () => Promise<void>;
   addAddress: (data: AddressPayload) => Promise<Address | null>;
-  updateAddress: (id: string, data: Partial<AddressPayload>) => Promise<boolean>;
+  updateAddress: (id: string, data: Partial<AddressPayload>) => Promise<Address | null>;
   deleteAddress: (id: string) => Promise<boolean>;
   selectAddress: (id: string) => void;
 }
@@ -79,12 +79,12 @@ export const AddressProvider = ({ children }: { children: ReactNode }) => {
       const response = await addressApi.updateAddress(id, data);
       if (response.success && response.data) {
         setAddresses(prev => prev.map(a => a.id === id ? response.data : a));
-        return true;
+        return response.data;
       }
-      return false;
+      return null;
     } catch (error) {
       console.error('Failed to update address:', error);
-      return false;
+      return null;
     } finally {
       setIsLoading(false);
     }

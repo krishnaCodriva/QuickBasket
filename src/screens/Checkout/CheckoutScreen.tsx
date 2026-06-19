@@ -6,7 +6,7 @@ import { ThemedView, ThemedText, CustomButton, CartItemCard, CartPriceSummary, S
 import ThemedInput from '../../components/ThemedInput';
 import { useCart, useOrder, useAddress } from '../../context';
 import { Colors, STRINGS } from '../../constants';
-import { useThemeColor } from '../../hooks';
+import { useThemeColor, useLocationServiceability } from '../../hooks';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { INITIAL_ADDRESSES } from '../../data/mockData';
@@ -30,6 +30,7 @@ export default function CheckoutScreen() {
   const navigation = useNavigation<any>();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { verifyLocation } = useLocationServiceability();
 
   const [selectedPayment, setSelectedPayment] = useState<string>('');
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
@@ -185,11 +186,62 @@ export default function CheckoutScreen() {
       return;
     }
 
+    let checkLat = (form as any).latitude;
+    let checkLon = (form as any).longitude;
+
+    if (!checkLat || !checkLon) {
+      // Geocode the typed address - omit 'flat' as OSM struggles with specific apartment/shop names
+      const primaryAddress = `${form.street}, ${form.city}, ${form.state}, ${form.pincode}`;
+      const fallbackAddress = `${form.pincode}, ${form.city}, ${form.state}`;
+      
+      try {
+        // First attempt: Street + City + State + Pincode
+        let response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(primaryAddress)}&limit=1`, {
+          headers: { "User-Agent": "QuickBasketApp/1.0" }
+        });
+        let data = await response.json();
+        
+        // Second attempt (Fallback): Pincode + City + State (Less accurate but ensures we get *some* location)
+        if (!data || data.length === 0) {
+           response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fallbackAddress)}&limit=1`, {
+            headers: { "User-Agent": "QuickBasketApp/1.0" }
+          });
+          data = await response.json();
+        }
+
+        if (data && data.length > 0) {
+          checkLat = parseFloat(data[0].lat);
+          checkLon = parseFloat(data[0].lon);
+          // Attach to form so we send it to backend
+          (form as any).latitude = checkLat;
+          (form as any).longitude = checkLon;
+        } else {
+          Alert.alert("Address Not Found", "We couldn't locate this address on the map. Please try re-wording your street or city.");
+          return;
+        }
+      } catch (err) {
+        Alert.alert("Error", "Failed to verify address location.");
+        return;
+      }
+    }
+
+    // Verify distance
+    const isServiceable = await verifyLocation(checkLat, checkLon);
+    if (!isServiceable) {
+      Alert.alert(
+        "Delivery Unavailable",
+        "Sorry, we do not deliver to this address as it is beyond our delivery range.",
+        [{ text: "OK" }]
+      );
+      return; // Do NOT save to backend
+    }
+
     if (editingAddressId) {
       await updateAddress(editingAddressId, form);
     } else {
       await addAddress(form);
     }
+
     setAddressModalVisible(false);
   };
 
@@ -234,7 +286,7 @@ export default function CheckoutScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+      <SafeAreaView style={{ flex: 1 }}>
         {renderHeader()}
         <ScrollView contentContainerStyle={styles.scrollContent}>
 
